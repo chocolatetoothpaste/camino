@@ -1,0 +1,13 @@
+{
+	"name": "camino",
+	"version": "0.0.1",
+	"description": "Power-house routing for web applications",
+	"author": {
+		"name": "Ross Paskett",
+		"email": "rpaskett@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/chocolatetoothpaste/camino"
+	}
+}
