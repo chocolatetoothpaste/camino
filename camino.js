@@ -3,7 +3,7 @@
 	// callback is the function to execute when route is matched
 	// context is a filter of some kind. GET-POST-PUT-DELETE on the server,
 	// arbitrary in the browser
-	var VERSION = '0.0.3',
+	var VERSION = '0.0.4',
 		routes = {},
 		root = this,
 		emitter = null,
@@ -29,12 +29,13 @@
 
 	camino.fn = Camino.prototype = {
 		route: function( route, callback, context ) {
+			var params = [],
+				matches,
+				rx = /[@|%](\w+)/g;
+
 			// extract var name(s) from route
-			var params = route.match( /[@|%](\w+)/g );
-			if( params !== null )
-				params = params.map( function( itr ) {
-					return itr.replace( /[@|%]/g, "" );
-				});
+			while( ( matches = rx.exec( route ) ) !== null )
+				params.push( matches[1] );
 
 			// replace var names with regexes
 			route = route.replace( /@(\w+)/g, "(\\w+)" )
@@ -46,7 +47,11 @@
 
 			// add route, params, context and callbacks to the stack
 			route = '^' + route + '$';
-			routes[route] = { callback: callback, params: params, context: context };
+			routes[route] = {
+				callback: callback,
+				params: params,
+				context: context
+			};
 
 			// if camino has already started listening, append route to the
 			// joined route string
@@ -62,36 +67,47 @@
 		},
 
 		call: function( route ) {
-			var rx = new RegExp(route_str, 'i');
-			var match = rx.test( route );
+			// var rx = new RegExp(route_str, "g");
+			var sub;
 
-			if( match === true )
-			{
-				// find the sub pattern in the regex that matched the request URL
-				var end = route_str.indexOf( "|", rx.lastIndex );
-				var start = route_str.substr( 0, end ).lastIndexOf( "|" );
+			// I wish this stuff had worked...
+			// 	find the sub pattern in the regex that matched the request URL
+			// 	var end = route_str.indexOf( "|", rx.lastIndex );
+			// 	var start = route_str.substr( 0, end ).lastIndexOf( "|" );
 
-				// found it!
-				var sub = route_str.substring( start + 1, end );
+			// 	found it!
+			// 	var sub = route_str.substring( start + 1, end );
 
-				// grab params through regex, strip out the extra junk
-				// wish we had some flags to make the output cleaner...
-				var req_params = RegExp( sub, "g" ).exec( route );
-				var par = {};
-
-				if( req_params ) {
-					delete req_params.index;
-					delete req_params.input;
-					req_params.shift();
-
-					for( var ii = 0, l = req_params.length; ii < l; ++ii )
-						par[routes[sub].params[ii]] = req_params[ii];
+			// loop through and try to find a route that matches the request
+			for( r in routes ) {
+				var rx = new RegExp( r, "g" );
+				if( rx.test(route) === true ) {
+					sub = r;
+					break;
 				}
-
-				return routes[sub].callback.call(null, par);
 			}
-			else
+
+			if( sub === undefined ) {
 				throw new Error( 'Route not found.' );
+			}
+
+			// grab params through regex, strip out the extra junk
+			// wish we had some flags to make the output cleaner...
+			var req_params = RegExp( sub, "g" ).exec( route );
+			var par = {};
+
+			if( req_params ) {
+				// clean up the misc "info"
+				delete req_params.index;
+				delete req_params.input;
+				req_params.shift();
+
+				// merge the param names and values
+				for( var ii = 0, l = req_params.length; ii < l; ++ii )
+					par[routes[sub].params[ii]] = req_params[ii];
+			}
+
+			return routes[sub].callback.call(null, par);
 		},
 
 		listen: function() {
