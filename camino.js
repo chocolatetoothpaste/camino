@@ -3,7 +3,7 @@
 	// callback is the function to execute when route is matched
 	// context is a filter of some kind. GET-POST-PUT-DELETE on the server,
 	// arbitrary in the browser
-	var VERSION = '0.0.4',
+	var VERSION = '0.0.5',
 		routes = {},
 		root = this,
 		emitter = null,
