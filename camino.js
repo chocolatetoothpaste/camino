@@ -3,27 +3,33 @@
 	// callback is the function to execute when route is matched
 	// context is a filter of some kind. GET-POST-PUT-DELETE on the server,
 	// arbitrary in the browser
-	var VERSION = '0.0.5',
-		routes = {},
+	var routes = {},
 		root = this,
 		emitter = null,
-		route_str = '',
-		ev = null;
+		ev = null,
+		browser = true,
+		route_str = '';
+
+	// this is fine for browsers, but server still has nothing to route...
+	// var request = function() { return root.location.hash };
 
 	function Camino() { };
 	function camino() { return new Camino; };
 
 	if( typeof module !== 'undefined' && module.exports ) {
 		module.exports = camino;
-		// set listener for http/s server
-		// emitter = root.on ?
+		// since camino will likely be execute within the scope of a http/s
+		// server, "this" will most likely be bound to that scope, so these
+		// should be very safe defaults and reasonable assumptions
+		emitter = root.addListener;
+		ev = "request";
+		browser = false;
 	}
 
 	else {
 		root.camino = camino;
-		emitter = root.addEventListener;
-		ev = 'hashchange';
-		req = function() { return root.location.hash };
+		emitter = root.addEventListener
+		ev = "hashchange";
 	}
 
 
@@ -87,6 +93,8 @@
 				}
 			}
 
+			console.log(sub);
+
 			if( sub === undefined ) {
 				throw new Error( 'Route not found.' );
 			}
@@ -110,16 +118,34 @@
 			return routes[sub].callback.call(null, par);
 		},
 
-		listen: function() {
+		request: function() {
+			var r;
+			if( browser )
+				r = root.location.hash;
+			else {
+				// not sure what to do here yet
+				r = '';
+			}
+
+			return r;
+		},
+
+		listen: function( em ) {
+			emitter = em || emitter;
+
 			// create the joined string of routes
-			var r = [], ii = 0;
-			for( r[ii++] in routes );
-			route_str = r.join('|');
+			// var r = [], ii = 0;
+			// for( r[ii++] in routes );
+			// route_str = r.join('|');
 
 			var c = this;
-			emitter( ev, function() {
-				c.call( req() );
-			} );
+
+			if( emitter ) {
+				emitter( ev, function() {
+					console.log(c.request());
+					c.call( c.request() );
+				} );
+			}
 		}
 	};
 })();
