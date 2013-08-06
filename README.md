@@ -5,6 +5,7 @@
 
 ###### Server
 This would be nice, and is the goal, but not quite there yet:
+
     camino().route( "/api/user/@id", user.init, "*" );
     camino().route( "/api/user/@user_id/image", function() {
 	    // run code to get user images from static file storage...
