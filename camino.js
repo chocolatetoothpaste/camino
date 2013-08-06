@@ -93,8 +93,6 @@
 				}
 			}
 
-			console.log(sub);
-
 			if( sub === undefined ) {
 				throw new Error( 'Route not found.' );
 			}
@@ -138,12 +136,11 @@
 			// for( r[ii++] in routes );
 			// route_str = r.join('|');
 
-			var c = this;
+			var that = this;
 
 			if( emitter ) {
 				emitter( ev, function() {
-					console.log(c.request());
-					c.call( c.request() );
+					that.call( that.request() );
 				} );
 			}
 		}
