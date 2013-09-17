@@ -5,10 +5,8 @@
 	// arbitrary in the browser
 	var routes = {},
 		root = this,
-		emitter = null,
-		ev = null,
-		browser = true,
-		route_str = '';
+		browser = true;
+		// route_str = '';
 
 	// this is fine for browsers, but server still has nothing to route...
 	// var request = function() { return root.location.hash };
@@ -18,18 +16,14 @@
 
 	if( typeof module !== 'undefined' && module.exports ) {
 		module.exports = camino;
-		// since camino will likely be execute within the scope of a http/s
+		// since camino will likely be executed within the scope of a http/s
 		// server, "this" will most likely be bound to that scope, so these
 		// should be very safe defaults and reasonable assumptions
-		emitter = root.addListener;
-		ev = "request";
 		browser = false;
 	}
 
 	else {
 		root.camino = camino;
-		emitter = root.addEventListener
-		ev = "hashchange";
 	}
 
 
@@ -44,10 +38,10 @@
 				params.push( matches[1] );
 
 			// replace var names with regexes
+			// optional/required params could be rolled into one. if not,
+			// the following needs to be fixed to accomodate optional params
+			// that are not preceeded by a / (like hash routing)
 			route = route.replace( /@(\w+)/g, "(\\w+)" )
-				// optional/required params could be rolled into one. if not,
-				// the following needs to be fixed to accomodate params that
-				// are not preceeded by a / (like hash routing)
 				.replace( /\/%(\w+)/g, "/?(\\w+)*" )
 				.replace( /\//g, "\\/" );
 
@@ -61,8 +55,8 @@
 
 			// if camino has already started listening, append route to the
 			// joined route string
-			if( route_str.length > 0 )
-				route_str += route;
+			// if( route_str.length > 0 )
+			// 	route_str += route;
 		},
 
 		// this function may have no practical use, but for testing/dev
@@ -76,13 +70,14 @@
 			// var rx = new RegExp(route_str, "g");
 			var sub;
 
-			// I wish this stuff had worked...
+			/* I wish this stuff had worked...
 			// 	find the sub pattern in the regex that matched the request URL
 			// 	var end = route_str.indexOf( "|", rx.lastIndex );
 			// 	var start = route_str.substr( 0, end ).lastIndexOf( "|" );
 
 			// 	found it!
 			// 	var sub = route_str.substring( start + 1, end );
+			*/
 
 			// loop through and try to find a route that matches the request
 			for( r in routes ) {
@@ -94,7 +89,8 @@
 			}
 
 			if( sub === undefined ) {
-				throw new Error( 'Route not found.' );
+				console.log( 'Route not found: ' + route );
+				return;
 			}
 
 			// grab params through regex, strip out the extra junk
@@ -116,33 +112,42 @@
 			return routes[sub].callback.call(null, par);
 		},
 
-		request: function() {
-			var r;
-			if( browser )
-				r = root.location.hash;
-			else {
-				// not sure what to do here yet
-				r = '';
-			}
-
-			return r;
-		},
-
-		listen: function( em ) {
-			emitter = em || emitter;
-
-			// create the joined string of routes
-			// var r = [], ii = 0;
-			// for( r[ii++] in routes );
-			// route_str = r.join('|');
-
+		listen: function( emitter ) {
 			var that = this;
 
-			if( emitter ) {
-				emitter( ev, function() {
-					that.call( that.request() );
-				} );
+			if( browser ) {
+				emitter.addEventListener( "hashchange", function() {
+					that.call( emitter.location.hash );
+				});
+				emitter.dispatchEvent( new Event("hashchange") );
 			}
+
+			else {
+				emitter.on( "request", function( req, res ) {
+					var url = require( 'url' );
+					that.call( url.parse( req.url, true ).path );
+					res.end();
+				});
+			}
+
+			// var on = ( browser ? emitter.addEventListener : emitter.on );
+			// var e = ( browser ? "hashchange" : "request" );
+
+			// var n = emitter.on;
+
+			// n( "request", function(req, res) {
+			// 	// console.log(browser);
+			// 	// if( browser ) {
+			// 	// 	that.call(emitter.location.hash);
+			// 	// }
+
+			// 	// else {
+			// 		console.log('served')
+			// 	// 	var url = require('url');
+			// 	// 	that.call(url.parse( req.url, true ));
+			// 	// 	res.end('called!')
+			// 	// }
+			// })
 		}
 	};
 })();
