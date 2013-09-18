@@ -26,5 +26,8 @@
 
     camino.listen(window);
 
+    // fire a hashchange event for initial page loads
+    window.dispatchEvent( new Event("hashchange") );
+
 Note: contexts in the browser are arbitrarily derived, until such a time as any are discovered. Please submit suggestions to GitHub repository.
 Crappy examples, but you get the point.

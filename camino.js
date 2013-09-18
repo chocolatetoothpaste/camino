@@ -1,15 +1,8 @@
 (function() {
-	// route is a URL or a hash
-	// callback is the function to execute when route is matched
-	// context is a filter of some kind. GET-POST-PUT-DELETE on the server,
-	// arbitrary in the browser
 	var routes = {},
 		root = this,
-		browser = true;
+		node = false;
 		// route_str = '';
-
-	// this is fine for browsers, but server still has nothing to route...
-	// var request = function() { return root.location.hash };
 
 	function Camino() { };
 	function camino() { return new Camino; };
@@ -19,7 +12,7 @@
 		// since camino will likely be executed within the scope of a http/s
 		// server, "this" will most likely be bound to that scope, so these
 		// should be very safe defaults and reasonable assumptions
-		browser = false;
+		node = true;
 	}
 
 	else {
@@ -66,7 +59,8 @@
 			return r;
 		},
 
-		call: function( route ) {
+		call: function( route, context ) {
+			context = context || undefined;
 			// var rx = new RegExp(route_str, "g");
 			var sub;
 
@@ -109,43 +103,56 @@
 					par[routes[sub].params[ii]] = req_params[ii];
 			}
 
-			return routes[sub].callback.call(null, par);
+			// check if the context requested is accepted by the callback
+			if( routes[sub].context && context ) {
+				if( routes[sub].context.indexOf( context ) !== -1 ) {
+					return routes[sub].callback.call(null, par);
+				}
+
+				else {
+					// this is just a place holder, not acceptable for prod
+					console.log('method not allowed: ' + context);
+				}
+			}
+
+			else {
+				return routes[sub].callback.call(null, par);
+			}
 		},
 
 		listen: function( emitter ) {
 			var that = this;
 
-			if( browser ) {
-				emitter.addEventListener( "hashchange", function() {
-					that.call( emitter.location.hash );
-				});
-				emitter.dispatchEvent( new Event("hashchange") );
-			}
-
-			else {
-				emitter.on( "request", function( req, res ) {
+			if( node ) {
+				emitter.addListener( "request", function( req, res ) {
 					var url = require( 'url' );
-					that.call( url.parse( req.url, true ).path );
+					that.call( url.parse( req.url, true ).path, req.method );
 					res.end();
 				});
 			}
 
-			// var on = ( browser ? emitter.addEventListener : emitter.on );
-			// var e = ( browser ? "hashchange" : "request" );
+			else {
+				emitter.addEventListener( "hashchange", function() {
+					that.call( emitter.location.hash );
+				});
+			}
+
+			// var on = ( node ? emitter.on : emitter.addEventListener );
+			// var e = ( node ? "request" : "hashchange" );
 
 			// var n = emitter.on;
 
 			// n( "request", function(req, res) {
-			// 	// console.log(browser);
-			// 	// if( browser ) {
-			// 	// 	that.call(emitter.location.hash);
-			// 	// }
-
-			// 	// else {
+			// 	// console.log(node);
+			// 	// if( node ) {
 			// 		console.log('served')
 			// 	// 	var url = require('url');
 			// 	// 	that.call(url.parse( req.url, true ));
 			// 	// 	res.end('called!')
+			// 	// }
+
+			// 	// else {
+			// 	// 	that.call(emitter.location.hash);
 			// 	// }
 			// })
 		}
