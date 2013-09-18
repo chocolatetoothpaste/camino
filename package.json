@@ -1,6 +1,6 @@
 {
 	"name": "camino",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"description": "One-stop routing for server- and client-side web applications",
 	"author": {
 		"name": "Ross Paskett",
