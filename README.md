@@ -6,7 +6,7 @@
 ###### Server
     var camino = require('./camino')();
 
-    camino.route( "/api/user/@id", user.init, "*" );
+    camino.route( "/api/user/@id", user.init );
     camino.route( "/api/user/@user_id/image", function() {
         // run code to get user images from static file storage...
     }, [ "GET", "POST" ] );
