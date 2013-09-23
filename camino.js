@@ -104,27 +104,27 @@
 			}
 
 			// check if the context requested is accepted by the callback
-			if( routes[sub].context && context ) {
-				if( routes[sub].context.indexOf( context ) !== -1 ) {
-					return routes[sub].callback.call(null, par);
-				}
-
-				else {
-					// this is just a place holder, not acceptable for prod
-					console.log('method not allowed: ' + context);
-				}
+			if( routes[sub].context === undefined || routes[sub].context.indexOf( context ) !== -1 ) {
+				return routes[sub].callback.call(null, context, par);
 			}
 
 			else {
-				return routes[sub].callback.call(null, par);
+				// do some better error handling
+				console.log('method not allowed: ' + context);
 			}
 		},
 
 		listen: function( emitter ) {
-			var that = this;
+			var that = this,
+				listener = ( node ? emitter.addListener : emitter.addEventListener );
 
+			// for some reason I don't yet understand, the var "listener" is not
+			// resolving correctly, so for now I have to separate the listeners
+			// into separate blocks. would love to streamline this, perhaps
+			// after slaying some dragons
 			if( node ) {
 				emitter.addListener( "request", function( req, res ) {
+					// console.log(em())
 					var url = require( 'url' );
 					that.call( url.parse( req.url, true ).path, req.method );
 					res.end();
@@ -132,29 +132,11 @@
 			}
 
 			else {
-				emitter.addEventListener( "hashchange", function() {
+				// listener is resolving fine in the browser though... help!
+				listener( "hashchange", function() {
 					that.call( emitter.location.hash );
 				});
 			}
-
-			// var on = ( node ? emitter.on : emitter.addEventListener );
-			// var e = ( node ? "request" : "hashchange" );
-
-			// var n = emitter.on;
-
-			// n( "request", function(req, res) {
-			// 	// console.log(node);
-			// 	// if( node ) {
-			// 		console.log('served')
-			// 	// 	var url = require('url');
-			// 	// 	that.call(url.parse( req.url, true ));
-			// 	// 	res.end('called!')
-			// 	// }
-
-			// 	// else {
-			// 	// 	that.call(emitter.location.hash);
-			// 	// }
-			// })
 		}
 	};
 })();
