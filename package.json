@@ -1,7 +1,8 @@
 {
 	"name": "camino",
-	"version": "0.0.9",
+	"version": "0.0.10",
 	"description": "One-stop routing for server- and client-side web applications",
+	"main": "./camino.js",
 	"author": {
 		"name": "Ross Paskett",
 		"email": "ross@pasket.me"
