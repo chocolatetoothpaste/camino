@@ -5,22 +5,10 @@
 		// route_str = '';
 
 	function Camino() { };
-	function camino() { return new Camino; };
+	// function camino() { return new Camino; };
 
-	if( typeof module !== 'undefined' && module.exports ) {
-		module.exports = camino;
-		// since camino will likely be executed within the scope of a http/s
-		// server, "this" will most likely be bound to that scope, so these
-		// should be very safe defaults and reasonable assumptions
-		node = true;
-	}
-
-	else {
-		root.camino = camino;
-	}
-
-
-	camino.fn = Camino.prototype = {
+	//camino.fn = Camino.prototype = {
+	Camino.prototype = {
 		route: function( route, callback, context ) {
 			var params = [],
 				matches,
@@ -59,7 +47,7 @@
 			return r;
 		},
 
-		call: function( route, context ) {
+		call: function( route, context, data ) {
 			context = context || undefined;
 			// var rx = new RegExp(route_str, "g");
 			var sub;
@@ -105,7 +93,7 @@
 
 			// check if the context requested is accepted by the callback
 			if( routes[sub].context === undefined || routes[sub].context.indexOf( context ) !== -1 ) {
-				return routes[sub].callback.call(null, context, par);
+				return routes[sub].callback.call( null, context, par, data );
 			}
 
 			else {
@@ -124,10 +112,18 @@
 			// after slaying some dragons
 			if( node ) {
 				emitter.addListener( "request", function( req, res ) {
-					// console.log(em())
-					var url = require( 'url' );
-					that.call( url.parse( req.url, true ).path, req.method );
-					res.end();
+					var body = "", url = require("url");
+
+					req.on( "data", function( chunk ) {
+						body += chunk;
+					});
+
+					req.on( "end", function() {
+						// console.log( 'POSTed: ' + body );
+						res.writeHead( 200 );
+						res.write(that.call( url.parse( req.url, true ).path, req.method, body ));
+						res.end();
+					});
 				});
 			}
 
@@ -139,4 +135,17 @@
 			}
 		}
 	};
+
+
+	if( typeof module !== 'undefined' && module.exports ) {
+		module.exports = new Camino;
+		// since camino will likely be executed within the scope of a http/s
+		// server, "this" will most likely be bound to that scope, so these
+		// should be very safe defaults and reasonable assumptions
+		node = true;
+	}
+
+	else {
+		root.camino = new Camino;
+	}
 })();
