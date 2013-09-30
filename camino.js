@@ -97,17 +97,11 @@
 		},
 
 		listen: function( emitter ) {
-			var that = this,
-				listener = ( node
-					? emitter.addListener
-					: emitter.addEventListener );
+			var that = this;
 
-			// for some reason I don't yet understand, the var "listener" is not
-			// resolving correctly, so for now I have to separate the listeners
-			// into separate blocks. would love to streamline this, perhaps
-			// after slaying some dragons
 			if( node ) {
-				emitter.addListener( "request", function( req, res ) {
+				var listener = emitter.addListener, event = "request";
+				var callback = function( req, res ) {
 					var body = "", url = require("url"), qs = require("querystring");
 
 					req.on( "data", function( chunk ) {
@@ -125,17 +119,22 @@
 							"Content-Length": exec.length,
 							"Content-Type": "application/json"
 						} );
+
 						res.end( exec );
 					});
-				});
+				};
 			}
 
 			else {
 				// listener is resolving fine in the browser though... help!
-				listener( "hashchange", function() {
+				var listener = emitter.addEventListener, event = "hashchange";
+				var callback = function() {
 					that.call( emitter.location.hash );
-				});
+				};
 			}
+
+
+			listener.call( emitter, event, callback );
 		}
 	};
 
