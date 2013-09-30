@@ -46,8 +46,6 @@
 
 		call: function( route, context, data ) {
 			context = context || undefined;
-			// var rx = new RegExp(route_str, "g");
-			var sub;
 
 			/* I wish this stuff had worked...
 			// 	find the sub pattern in the regex that matched the request URL
@@ -58,6 +56,7 @@
 			// 	var sub = route_str.substring( start + 1, end );
 			*/
 
+			var sub;
 			// loop through and try to find a route that matches the request
 			for( r in routes ) {
 				var rx = new RegExp( r, "g" );
@@ -73,23 +72,23 @@
 
 			// grab params through regex, strip out the extra junk
 			// wish we had some flags to make the output cleaner...
-			var req_params = RegExp( sub, "g" ).exec( route );
-			var par = {};
+			var rxp = RegExp( sub, "g" ).exec( route );
+			var rpar = {};
 
-			if( req_params ) {
+			if( rxp ) {
 				// clean up the misc "info"
-				delete req_params.index;
-				delete req_params.input;
-				req_params.shift();
+				delete rxp.index;
+				delete rxp.input;
+				rxp.shift();
 
 				// merge the param names and values
-				for( var ii = 0, l = req_params.length; ii < l; ++ii )
-					par[routes[sub].params[ii]] = req_params[ii];
+				for( var ii = 0, l = rxp.length; ii < l; ++ii )
+					rpar[routes[sub].params[ii]] = rxp[ii];
 			}
 
 			// check if the context requested is accepted by the callback
 			if( routes[sub].context === undefined || routes[sub].context.indexOf( context ) !== -1 ) {
-				return routes[sub].callback.call( null, context, par, data );
+				return routes[sub].callback.call( null, context, rpar, data );
 			}
 
 			else {
@@ -119,9 +118,14 @@
 						body = qs.parse( body );
 						var path = url.parse( req.url, true ).path;
 						var exec = that.call( path, req.method, body );
+						var status = exec.status;
+						exec = JSON.stringify( exec );
 
-						res.writeHead( exec.status );
-						res.end( JSON.stringify( exec ) );
+						res.writeHead( status, {
+							"Content-Length": exec.length,
+							"Content-Type": "application/json"
+						} );
+						res.end( exec );
 					});
 				});
 			}
