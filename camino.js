@@ -2,12 +2,9 @@
 	var routes = {},
 		root = this,
 		node = false;
-		// route_str = '';
 
 	function Camino() { };
-	// function camino() { return new Camino; };
 
-	//camino.fn = Camino.prototype = {
 	Camino.prototype = {
 		route: function( route, callback, context ) {
 			var params = [],
@@ -71,8 +68,7 @@
 			}
 
 			if( sub === undefined ) {
-				console.log( 'Route not found: ' + route );
-				return;
+				return { status: 404, success: false };
 			}
 
 			// grab params through regex, strip out the extra junk
@@ -97,14 +93,15 @@
 			}
 
 			else {
-				// do some better error handling
-				console.log('method not allowed: ' + context);
+				return { status: 405, success: false };
 			}
 		},
 
 		listen: function( emitter ) {
 			var that = this,
-				listener = ( node ? emitter.addListener : emitter.addEventListener );
+				listener = ( node
+					? emitter.addListener
+					: emitter.addEventListener );
 
 			// for some reason I don't yet understand, the var "listener" is not
 			// resolving correctly, so for now I have to separate the listeners
@@ -112,17 +109,19 @@
 			// after slaying some dragons
 			if( node ) {
 				emitter.addListener( "request", function( req, res ) {
-					var body = "", url = require("url");
+					var body = "", url = require("url"), qs = require("querystring");
 
 					req.on( "data", function( chunk ) {
 						body += chunk;
 					});
 
 					req.on( "end", function() {
-						// console.log( 'POSTed: ' + body );
-						res.writeHead( 200 );
-						res.write(that.call( url.parse( req.url, true ).path, req.method, body ));
-						res.end();
+						body = qs.parse( body );
+						var path = url.parse( req.url, true ).path;
+						var exec = that.call( path, req.method, body );
+
+						res.writeHead( exec.status );
+						res.end( JSON.stringify( exec ) );
 					});
 				});
 			}
@@ -137,7 +136,7 @@
 	};
 
 
-	if( typeof module !== 'undefined' && module.exports ) {
+	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = new Camino;
 		// since camino will likely be executed within the scope of a http/s
 		// server, "this" will most likely be bound to that scope, so these
