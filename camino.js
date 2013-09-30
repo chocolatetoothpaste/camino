@@ -24,7 +24,8 @@
 				.replace( /\//g, "\\/" );
 
 			// add route, params, context and callbacks to the stack
-			route = '^' + route + '$';
+			route = [ "^", route, "$" ].join("");
+
 			routes[route] = {
 				callback: callback,
 				params: params,
@@ -44,7 +45,7 @@
 			return r;
 		},
 
-		call: function( route, context, data ) {
+		exec: function( route, context, data ) {
 			context = context || undefined;
 
 			/* I wish this stuff had worked...
@@ -58,7 +59,7 @@
 
 			var sub;
 			// loop through and try to find a route that matches the request
-			for( r in routes ) {
+			for( var r in routes ) {
 				var rx = new RegExp( r, "g" );
 				if( rx.test(route) === true ) {
 					sub = r;
@@ -87,7 +88,8 @@
 			}
 
 			// check if the context requested is accepted by the callback
-			if( routes[sub].context === undefined || routes[sub].context.indexOf( context ) !== -1 ) {
+			if( typeof routes[sub].context === "undefined"
+			|| routes[sub].context.indexOf( context ) !== -1 ) {
 				return routes[sub].callback.call( null, context, rpar, data );
 			}
 
@@ -102,7 +104,8 @@
 			if( node ) {
 				var listener = emitter.addListener, event = "request";
 				var callback = function( req, res ) {
-					var body = "", url = require("url"), qs = require("querystring");
+					var qs = require( "querystring" ), url = require( "url" ),
+						body = "", path = url.parse( req.url, true ).path;
 
 					req.on( "data", function( chunk ) {
 						body += chunk;
@@ -110,8 +113,7 @@
 
 					req.on( "end", function() {
 						body = qs.parse( body );
-						var path = url.parse( req.url, true ).path;
-						var exec = that.call( path, req.method, body );
+						var exec = that.exec( path, req.method, body );
 						var status = exec.status;
 						exec = JSON.stringify( exec );
 
@@ -121,7 +123,7 @@
 						} );
 
 						res.end( exec );
-					});
+					} );
 				};
 			}
 
@@ -129,10 +131,9 @@
 				// listener is resolving fine in the browser though... help!
 				var listener = emitter.addEventListener, event = "hashchange";
 				var callback = function() {
-					that.call( emitter.location.hash );
+					that.exec( emitter.location.hash );
 				};
 			}
-
 
 			listener.call( emitter, event, callback );
 		}
