@@ -45,7 +45,7 @@
 			return r;
 		},
 
-		exec: function( route, context, data ) {
+		exec: function( route, context, data, callback ) {
 			context = context || undefined;
 
 			/* I wish this stuff had worked...
@@ -90,7 +90,7 @@
 			// check if the context requested is accepted by the callback
 			if( typeof routes[sub].context === "undefined"
 			|| routes[sub].context.indexOf( context ) !== -1 ) {
-				return routes[sub].callback.call( null, context, rpar, data );
+				return routes[sub].callback.call( null, context, rpar, data, callback );
 			}
 
 			else {
@@ -99,7 +99,7 @@
 		},
 
 		listen: function( emitter ) {
-			var that = this;
+			var self = this;
 
 			if( node ) {
 				var listener = emitter.addListener, event = "request";
@@ -113,16 +113,17 @@
 
 					req.on( "end", function() {
 						body = qs.parse( body );
-						var exec = that.exec( path, req.method, body );
-						var status = exec.status;
-						exec = JSON.stringify( exec );
+						self.exec( path, req.method, body, function( data ) {
+							var status = data.status;
+							data = JSON.stringify( data );
 
-						res.writeHead( status, {
-							"Content-Length": exec.length,
-							"Content-Type": "application/json"
+							res.writeHead( status, {
+								"Content-Length": data.length,
+								"Content-Type": "application/json"
+							} );
+
+							res.end(data);
 						} );
-
-						res.end( exec );
 					} );
 				};
 			}
@@ -131,7 +132,7 @@
 				// listener is resolving fine in the browser though... help!
 				var listener = emitter.addEventListener, event = "hashchange";
 				var callback = function() {
-					that.exec( emitter.location.hash );
+					self.exec( emitter.location.hash );
 				};
 			}
 
