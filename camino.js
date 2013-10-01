@@ -20,7 +20,7 @@
 			// the following needs to be fixed to accomodate optional params
 			// that are not preceeded by a / (like hash routing)
 			route = route.replace( /@(\w+)/g, "(\\w+)" )
-				.replace( /\/%(\w+)/g, "/?(\\w+)*" )
+				.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))*" )
 				.replace( /\//g, "\\/" );
 
 			// add route, params, context and callbacks to the stack
@@ -68,7 +68,7 @@
 			}
 
 			if( sub === undefined ) {
-				return { status: 404, success: false };
+				return callback( { status: 404, success: false } );
 			}
 
 			// grab params through regex, strip out the extra junk
@@ -94,7 +94,7 @@
 			}
 
 			else {
-				return { status: 405, success: false };
+				return callback( { status: 405, success: false } );
 			}
 		},
 
