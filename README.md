@@ -6,10 +6,11 @@
 
 #### Example usage:
 
-##### Your callback should accept 3 parameters, context, params, and data.
+##### Your callback should accept 4 parameters, context, params, data, and another callback.
 ###### context is a string, in the case of a server GET, POST, PUT, DELETE, etc... whatever you want really.
 ###### params is an object, key-value pair of data extracted from the URLs.
 ###### data is the request body, from a HTML for example, and should be ignored for get request since many servers will drop it in transmission.
+###### callback is what you pass your data into after your code has run, so under Node it can be passed to the response object and sent to the requester. this behavior will likely extend to the browser in the near future.
 
 ##### @param translates to a "required" parameter for the URL, %param is an optional param. If a URL contains a required param and one is not passed, it behaves as the the route has not been defined (404, in HTTP terms).
 ##### What to return: an object, with at least 2 properties--status and success.  Status should be a HTTP status code, and success should be a boolean value.  Other than that, you can include a message, maybe a data property with data from your server.  I even like to send a debug property with some great info when working under a dev environment.
@@ -18,9 +19,10 @@
     var camino = require("camino"); // changed from require("camino")();
 
     camino.route( "/api/user/@id", user.init );
-    camino.route( "/api/user/@user_id/image/%id", function( context, params, data ) {
+    camino.route( "/api/user/@user_id/image/%id", function( context, params, data, callback ) {
     	// check that context is one this URL accepts, process params...
         // run code to get user images from static file storage...
+        callback( { some: "data" } );
     }, [ "GET", "POST", "PUT", "DELETE" ] );
     camino.route( "/api/organization/@id", org.init, [ "GET", "POST" ] );
 
