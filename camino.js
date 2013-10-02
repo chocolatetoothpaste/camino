@@ -1,5 +1,6 @@
 (function() {
 	var routes = {},
+		route_str = "",
 		root = this,
 		node = false;
 
@@ -16,16 +17,14 @@
 				params.push( matches[1] );
 
 			// replace var names with regexes
-			// optional/required params could be rolled into one. if not,
-			// the following needs to be fixed to accomodate optional params
-			// that are not preceeded by a / (like hash routing)
 			route = route.replace( /@(\w+)/g, "(\\w+)" )
-				.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))*" )
+				.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" )
 				.replace( /\//g, "\\/" );
 
-			// add route, params, context and callbacks to the stack
+			// complete and isolate the route
 			route = [ "^", route, "$" ].join("");
 
+			// add the route and it's crap to the stack
 			routes[route] = {
 				callback: callback,
 				params: params,
@@ -35,16 +34,18 @@
 			// if camino has already started listening, append route to the
 			// joined route string
 			// if( route_str.length > 0 )
-			// 	route_str += route;
+			// 	route_str.concat("(", route, ")");
 		},
 
 		// this function may have no practical use, but for testing/dev
+		// list all registered routes
 		list: function() {
 			var r = [], ii = 0;
 			for( r[ii++] in routes );
 			return r;
 		},
 
+		// execute the callback associated with a route
 		exec: function( route, context, data, callback ) {
 			context = context || undefined;
 
@@ -57,7 +58,9 @@
 			// 	var sub = route_str.substring( start + 1, end );
 			*/
 
+			// placeholder for a sub-pattern match to the route
 			var sub;
+
 			// loop through and try to find a route that matches the request
 			for( var r in routes ) {
 				var rx = new RegExp( r, "g" );
@@ -84,7 +87,10 @@
 
 				// merge the param names and values
 				for( var ii = 0, l = rxp.length; ii < l; ++ii )
-					rpar[routes[sub].params[ii]] = rxp[ii];
+					// the optional param regex causes issues with params list,
+					// so check that a param has a value (or improve the regex)
+					if( typeof rxp[ii] !== "undefined" )
+						rpar[routes[sub].params[ii]] = rxp[ii];
 			}
 
 			// check if the context requested is accepted by the callback
@@ -98,8 +104,17 @@
 			}
 		},
 
+		/**
+		 * Attach the appropriate listener to the emitting object, and wait for
+		 * an event.
+		 */
+
 		listen: function( emitter ) {
 			var self = this;
+
+			// var r = [], ii = 0;
+			// for( r[ii++] in routes );
+			// route_str = "(" + r.join(")|(") + ")";
 
 			if( node ) {
 				var listener = emitter.addListener, event = "request";
@@ -107,12 +122,15 @@
 					var qs = require( "querystring" ), url = require( "url" ),
 						body = "", path = url.parse( req.url, true ).path;
 
+					// grab the request body, if applicable
 					req.on( "data", function( chunk ) {
 						body += chunk;
 					});
 
 					req.on( "end", function() {
 						body = qs.parse( body );
+						// I hate using a callback here, it is SOOOO specific
+						// to the response object from the http server...
 						self.exec( path, req.method, body, function( data ) {
 							var status = data.status;
 							data = JSON.stringify( data );
@@ -143,9 +161,6 @@
 
 	if( typeof module !== "undefined" && module.exports ) {
 		module.exports = new Camino;
-		// since camino will likely be executed within the scope of a http/s
-		// server, "this" will most likely be bound to that scope, so these
-		// should be very safe defaults and reasonable assumptions
 		node = true;
 	}
 
