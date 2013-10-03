@@ -1,39 +1,75 @@
 # Camino - One-stop routing for server- and client-side web applications
 ## Breaking API change made to params passed to your callback, see docs below
+## Another breaking API change: see the listening section, then the "using the response object" comment in the server examplef.
 ## API recently changed, see examples below for proper usage.
 ### Active development, please submit bugs and suggestions to GitHub repository!
 
 ### Camino only routes requests to a callback, it is not a full-fledged REST API server or any such sort. It's only job is to dispatch requests.
 
-#### Example usage:
+##### Defining Routes
+The routing function accepts 3 parameters, the first 2 are required: route (string), callback (function), and context (array).
 
-##### Your callback should accept 2 parameters, another callback to send a response (to the server), and a map with 4 properties: query, context, params, data.
-###### map.query is the query string received by the server
-###### map.context is a string, in the case of a server GET, POST, PUT, DELETE, etc... whatever you want really.
-###### map.params is an object, key-value pair of data extracted from the URLs.
-###### map.data is the request body, from a HTML for example, and should be ignored for get request since many servers will drop it in transmission.
-###### callback is what you pass your data into after your code has run, so under Node it can be passed to the response object and sent to the requester. this behavior will likely extend to the browser in the near future.
+The route is the URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match.
+/api/user/%id matches /api/user, /api/user/ and /api/user/23
+/api/user/@id matches /api/user/23, but not /api/user
 
-##### @param translates to a "required" parameter for the URL, %param is an optional param. If a URL contains a required param and one is not passed, it behaves as the the route has not been defined (404, in HTTP terms).
-##### What to return: an object, with at least 2 properties--status and success.  Status should be a HTTP status code, and success should be a boolean value.  Other than that, you can include a message, maybe a data property with data from your server.  I even like to send a debug property with some great info when working under a dev environment.
+The callback parameter is YOUR code that is run when a request is matched to a route.
+See callback section below for usage.
 
-###### Server
+Lastly, the optional context parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, who knows? Maybe we'll figure something out one day...
+If you don't pass in a context, your code will always execute if a request matches a route.
+
+##### Callback
+Your callback should accept 2 parameters: a response object, and a map object.
+
+The map object contains 4 properties: query, context, params, data.
+map.query: the query string received by the server
+map.context: a string, in the case of a server GET, POST, PUT, DELETE, etc... whatever you want really.
+map.params: an object, key-value pair of data extracted from the URLs.
+map.data: the request body, from a HTML for example, and should be ignored for get request since many servers will drop it in transmission.
+
+##### Listening
+When you call the listen() function, you have the option of passing in a custom "response" object/function.
+In the browser, this could be a data parser, a message box, or something like that.
+On the server, it defaults to the HTTP response object, but feel free to be creative :) Define your own as a shortcut if you always respond with the same content type or something like that.
+The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
+
+#### Usage:
+
+Server
+
     var camino = require("camino"); // changed from require("camino")();
 
     camino.route( "/api/user/@id", user.init );
-    camino.route( "/api/user/@user_id/image/%id", function( route, callback ) {
-    	// check that context is one this URL accepts, process params...
-        // run code to get user images from static file storage...
-        callback( { some: "data" } );
-    }, [ "GET", "POST", "PUT", "DELETE" ] );
-    camino.route( "/api/organization/@id", org.init, [ "GET", "POST" ] );
+
+    // using the response object
+    camino.route( "/api/user/@user_id/message/%id", function( route, response ) {
+        var data = {
+            status: 200,
+            success: true,
+            data: route
+        };
+
+        data = JSON.stringify( data );
+
+        // HTTP response object passed from node
+        response.writeHead( 200, {
+            "Content-Length": data.length,
+            "Content-Type": "application/json"
+        } );
+
+        response.end(data);
+    }, ["GET", "POST"] );
+
+    camino.route( "/api/organization/@id", org.init, [ "GET", "POST", "PUT", "DELETE" ] );
 
     var http = require('http');
     var server = http.createServer().listen(31415, '127.0.0.1');
 
     camino.listen(server);
 
-###### Browser
+Browser
+
     <script src="path/to/camino.js"></script>
     // var camino = camino() is no longer required
 
@@ -43,6 +79,8 @@
     camino.route( "#!/video:%playlist_id", playlist.init );
 
     camino.listen(window);
+    OR
+    camino.listen(window, "CustomResponderObject?");
 
     // fire a hashchange event for initial page loads
     window.dispatchEvent( new Event("hashchange") );
