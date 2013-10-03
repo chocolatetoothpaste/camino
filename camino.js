@@ -7,10 +7,12 @@
 	function Camino() { };
 
 	Camino.prototype = {
-		route: function( route, cb, context ) {
+		route: function( map, cb, responder ) {
 			var params = [],
 				matches,
 				rx = /[@|%](\w+)/g;
+
+			var route = ( typeof map === "object" ? map.route : map );
 
 			// extract var name(s) from route
 			while( ( matches = rx.exec( route ) ) !== null )
@@ -25,23 +27,34 @@
 			route = [ "^", route, "$" ].join("");
 
 			// add the route and it's crap to the stack
-			routes[route] = {
+			var ret = {
 				callback: cb,
-				params: params,
-				context: context
+				params: params
 			};
+
+			if( typeof responder !== "undefined" )
+				ret.responder = responder;
+
+			if( typeof map.context !== "undefined" )
+				ret.context = map.context;
+
+			routes[route] = ret;
 		},
 
 		// this function may have no practical use, but for testing/dev
 		// list all registered routes
 		list: function() {
 			var r = [], ii = 0;
-			for( r[ii++] in routes );
+			for( i in routes )
+				r.push(routes[i]);
+
 			return r;
 		},
 
 		// execute the callback associated with a route
-		exec: function( map, cb ) {
+		exec: function( map, responder ) {
+			// console.log(process);
+			// responder.end();
 			// placeholder for a sub-pattern match to the route
 			var sub;
 
@@ -55,7 +68,7 @@
 			}
 
 			if( sub === undefined ) {
-				cb( { status: 404, success: false } );
+				return { status: 404, success: false };
 			}
 
 			// grab params through regex, strip out the extra junk
@@ -80,14 +93,16 @@
 			// add the newly capture params to the route map :)
 			map.params = rpar;
 
+			responder = routes[sub].responder || responder;
+
 			// check if the context requested is accepted by the callback
 			if( typeof routes[sub].context === "undefined"
 			|| routes[sub].context.indexOf( map.context ) !== -1 ) {
-				routes[sub].callback.call( null, map, cb );
+				routes[sub].callback.call( null, map, responder );
 			}
 
 			else {
-				cb.call( null, { status: 405, success: false } );
+				return { status: 405, success: false };
 			}
 		},
 
@@ -113,9 +128,7 @@
 					});
 
 					req.on( "end", function() {
-						if( body.length > 0 )
-							body = qs.parse( body );
-						else body = undefined;
+						body = qs.parse( body );
 
 						var map = {
 							request: url.pathname,
@@ -126,7 +139,14 @@
 
 						// pass the response object right to the callback, let
 						// the user respond any way he pleases
-						self.exec( map, responder );
+						var ret = self.exec( map, res );
+
+						if( typeof ret !== "undefined" && ret.success === false ) {
+							res.writeHead( ret.status, {
+								"Content-Type": "application/json"
+							} );
+							res.end( JSON.stringify( ret ) );
+						}
 					} );
 				};
 			}
