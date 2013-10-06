@@ -134,7 +134,8 @@
 							request: url.pathname,
 							query: qs.parse( url.query ),
 							context: req.method,
-							data: body
+							data: body,
+							headers: req.headers
 						};
 
 						// pass the response object right to the callback, let
