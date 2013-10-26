@@ -8,21 +8,20 @@
     camino.route( route [, options], callback )
 
 ###### route
-type: string
-The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match.
+type | description
+string | The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match.
 /api/user/%id matches /api/user, /api/user/ and /api/user/23
 /api/user/@id matches /api/user/23, but not /api/user
 
 ###### options
-type: object
-context (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, who knows? Maybe we'll figure something out one day...
+type | description
+object | context (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, who knows? Maybe we'll figure something out one day...
 If you don't pass in a context, your code will always execute if a request matches a route.
-
 responder (function) is a custom responder to use in place of the default (if there is one) for a single route
 
 ###### callback
-type: function
-YOUR code that is run when a request is matched to a route.
+type | description
+function | YOUR code that is run when a request is matched to a route.
 See callback section below for usage.
 
 <!-- Lastly, the responder param is an object you want to use in your code to send a message to the browser/server/anything else. It can be whatever you want and do whatever you want. On the server, it defaults to the HTTP response object so you can set headers, write data, anything else. This can be overriden on a route by route basis, or globally through the listen() function. See examples below. -->
