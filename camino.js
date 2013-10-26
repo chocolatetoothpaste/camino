@@ -2,17 +2,24 @@
 	var routes = {},
 		route_str = "",
 		root = this,
+		options = {},
 		node = false;
 
 	function Camino() { };
 
 	Camino.prototype = {
-		route: function( map, cb, responder ) {
+		responder: null,
+
+		// route: function( map, cb, responder ) {
+		route: function( route, opt, cb ) {
 			var params = [],
 				matches,
 				rx = /[@|%](\w+)/g;
 
-			var route = ( typeof map === "object" ? map.route : map );
+			if( typeof opt === "function" ) {
+				cb = opt;
+				opt = {};
+			}
 
 			// extract var name(s) from route
 			while( ( matches = rx.exec( route ) ) !== null )
@@ -32,11 +39,11 @@
 				params: params
 			};
 
-			if( typeof responder !== "undefined" )
-				ret.responder = responder;
+			if( typeof opt.responder !== "undefined" )
+				ret.responder = opt.responder;
 
-			if( typeof map.context !== "undefined" )
-				ret.context = map.context;
+			if( typeof opt.context !== "undefined" )
+				ret.context = opt.context;
 
 			routes[route] = ret;
 		},
@@ -52,7 +59,7 @@
 		},
 
 		// execute the callback associated with a route
-		exec: function( map, responder ) {
+		exec: function( map ) {
 			// console.log(process);
 			// responder.end();
 			// placeholder for a sub-pattern match to the route
@@ -93,7 +100,7 @@
 			// add the newly capture params to the route map :)
 			map.params = rpar;
 
-			responder = routes[sub].responder || responder;
+			var responder = routes[sub].responder || options.responder;
 
 			// check if the context requested is accepted by the callback
 			if( typeof routes[sub].context === "undefined"
@@ -117,7 +124,7 @@
 			if( node ) {
 				var listener = emitter.addListener, event = "request";
 				var callback = function( req, res ) {
-					responder = responder || res;
+					options.responder = responder || res;
 
 					var qs = require( "qs" ), body = "",
 						url = require( "url" ).parse( req.url );
@@ -140,7 +147,7 @@
 
 						// pass the response object right to the callback, let
 						// the user respond any way he pleases
-						var ret = self.exec( map, res );
+						var ret = self.exec( map );
 
 						if( typeof ret !== "undefined" && ret.success === false ) {
 							res.writeHead( ret.status, {
@@ -153,6 +160,7 @@
 			}
 
 			else {
+				options.responder = responder;
 				// listener is resolving fine in the browser though... help!
 				var listener = emitter.addEventListener, event = "hashchange";
 				var callback = function() {
