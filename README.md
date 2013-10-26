@@ -48,10 +48,10 @@ Server
 
     var camino = require("camino"); // changed from require("camino")();
 
-    camino.route( { route: "/api/user/@id", context: ["POST"] }, user.init );
+    camino.route( "/api/user/@id", { context: ["POST"] }, user.init );
 
     // using the response object
-    camino.route( "/api/user/@user_id/message/%id"
+    camino.route( "/api/user/@user_id/message/%id",
         function( map, response ) {
         var data = {
             status: 200,
@@ -71,7 +71,7 @@ Server
     } );
 
     // first param as string (no context), with callback, and custom responder
-    camino.route( "/api/organization/@id", { responder: SomeCustomResponder }, org.init );
+    camino.route( "/api/organization/@id", { responder: SomeCustomResponder, context: ["GET", "POST"] }, org.init );
 
     var http = require('http');
     var server = http.createServer().listen(31415, '127.0.0.1');
