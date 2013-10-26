@@ -13,7 +13,7 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 /api/user/%id matches /api/user, /api/user/ and /api/user/23
 
-/api/user/@id matches /api/user/23, but not /api/user
+/api/user/@id matches /api/user/23, but not /api/user or /api/user/
 
 ###### options
 type: object
