@@ -1,5 +1,6 @@
 # Camino - One-stop routing for server- and client-side web applications
 ## Breaking API change for release 0.5.0, see examples below
+## As of 0.5.1, the "map" object passed to the user callback is now the native request object (node) or the window.location object (browser). These objects are augmented with the properties listed in the "Callback" section.  This shouldn't cause issues, however.
 ### Active development, please submit bugs and suggestions to GitHub repository!
 
 ### Camino only routes requests to a callback, it is not a full-fledged REST API server or any such sort. It's only job is to dispatch requests.
@@ -53,8 +54,7 @@ Server
     camino.route( "/api/user/@id", { context: ["POST"] }, user.init );
 
     // using the response object
-    camino.route( "/api/user/@user_id/message/%id",
-        function( map, response ) {
+    var myCb = function( map, response ) {
         var data = {
             status: 200,
             success: true,
@@ -70,10 +70,13 @@ Server
         } );
 
         response.end(data);
-    } );
+    };
 
-    // first param as string (no context), with callback, and custom responder
-    camino.route( "/api/organization/@id", { responder: SomeCustomResponder, context: ["GET", "POST"] }, org.init );
+    camino.route( "/api/user/@user_id/message/%id", myCb );
+
+    // supplying "options" to the route, with custom responder
+    var options = { responder: SomeCustomResponder, context: ["GET", "POST"] };
+    camino.route( "/api/organization/@id", options, org.init );
 
     var http = require('http');
     var server = http.createServer().listen(31415, '127.0.0.1');
@@ -88,9 +91,12 @@ Browser
     camino.route( "#!/profile", user.init );
     camino.route( "#!/team/@user_id", team.init );
 
-    // these 2 routes will override the default CustomResponderObject set below with different responders
-    camino.route( "#!/message/%id", { responder: SomeDataDisplayingObject }, message.init );
-    camino.route( "#!/video:%playlist_id", { responder: SomeMessageBoxObject }, playlist.init);
+    // this route will override the default CustomResponderObject set below with different responders
+    camino.route( "#!/video:%playlist_id", { responder: SomeDataDisplayingObject }, playlist.init);
+
+    // possible context...?  see "browser context" comment below
+    var options = { responder: SomeMessageBoxObject, context: ["read", "delete"] };
+    camino.route( "#!/message/%id", options, message.init );
 
     camino.listen(window);
     OR
@@ -98,5 +104,16 @@ Browser
 
     // fire a hashchange event for initial page loads
     window.dispatchEvent( new Event("hashchange") );
+
+    // browser context, maybe...?
+    // psuedo jQuery code
+    $('[data-context]').on( "click", function() {
+            // I don't remember if this is frowned upon... not sure if I care
+            window.location.context = $(this).data('context');
+    });
+
+    // sample html for browser context
+    <a href="/#!/message/23" data-context="read">View Message</a>
+    <a href="/#!/message/23" data-context="delete">Delete Message</a>
 
 Note: contexts could be anything in the browser, so if anyone has some good use-case arguments, I'd love to hear them.

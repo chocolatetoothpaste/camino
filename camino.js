@@ -1,6 +1,6 @@
 (function() {
 	var routes = {},
-		route_str = "",
+		// route_str = "",
 		root = this,
 		options = {},
 		node = false;
@@ -8,9 +8,6 @@
 	function Camino() { };
 
 	Camino.prototype = {
-		responder: null,
-
-		// route: function( map, cb, responder ) {
 		route: function( route, opt, cb ) {
 			var params = [],
 				matches,
@@ -60,21 +57,19 @@
 
 		// execute the callback associated with a route
 		exec: function( map ) {
-			// console.log(process);
-			// responder.end();
 			// placeholder for a sub-pattern match to the route
 			var sub;
 
 			// loop through and try to find a route that matches the request
 			for( var r in routes ) {
 				var rx = new RegExp( r, "g" );
-				if( rx.test(map.request) === true ) {
+				if( rx.test( map.request ) === true ) {
 					sub = r;
 					break;
 				}
 			}
 
-			if( sub === undefined ) {
+			if( typeof sub === "undefined" ) {
 				return { status: 404, success: false };
 			}
 
@@ -124,30 +119,28 @@
 			if( node ) {
 				var listener = emitter.addListener, event = "request";
 				var callback = function( req, res ) {
+					console.log(req);
 					options.responder = responder || res;
 
-					var qs = require( "qs" ), body = "",
+					var qs = require( "qs" ),
 						url = require( "url" ).parse( req.url );
 
 					// grab the request body, if applicable
+					req.body = "";
 					req.on( "data", function( chunk ) {
-						body += chunk;
+						req.body += chunk;
 					});
 
 					req.on( "end", function() {
-						body = qs.parse( body );
+						// augment the request object
+						req.body = qs.parse( req.body );
+						req.request = url.pathname;
+						req.context = req.method;
+						req.query = qs.parse( url.query );
 
-						var map = {
-							request: url.pathname,
-							query: qs.parse( url.query ),
-							context: req.method,
-							data: body,
-							headers: req.headers
-						};
+						// console.log(req);
 
-						// pass the response object right to the callback, let
-						// the user respond any way he pleases
-						var ret = self.exec( map );
+						var ret = self.exec( req );
 
 						if( typeof ret !== "undefined" && ret.success === false ) {
 							res.writeHead( ret.status, {
@@ -161,13 +154,14 @@
 
 			else {
 				options.responder = responder;
-				// listener is resolving fine in the browser though... help!
 				var listener = emitter.addEventListener, event = "hashchange";
 				var callback = function() {
-					self.exec( { request: emitter.location.hash }, responder );
+					emitter.location.request = emitter.location.hash;
+					self.exec( emitter.location );
 				};
 			}
 
+			// fire whichever event to whatever listener
 			listener.call( emitter, event, callback );
 		}
 	};
