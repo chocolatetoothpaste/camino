@@ -18,14 +18,18 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 ###### options
 type: object
+
 context (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, who knows? Maybe we'll figure something out one day...
+
 If you don't pass in a context, your code will always execute if a request matches a route.
 
 responder (function) is a custom responder to use in place of the default (if there is one) for a single route
 
 ###### callback
 type: function
+
 YOUR code that is run when a request is matched to a route.
+
 See callback section below for usage.
 
 <!-- Lastly, the responder param is an object you want to use in your code to send a message to the browser/server/anything else. It can be whatever you want and do whatever you want. On the server, it defaults to the HTTP response object so you can set headers, write data, anything else. This can be overriden on a route by route basis, or globally through the listen() function. See examples below. -->
@@ -34,15 +38,22 @@ See callback section below for usage.
 Your callback should accept 2 parameters: a map object, and a response object.
 
 The map object contains 4 properties: query, context, params, data.
+
 map.query: the query string received by the server
+
 map.context: a string, in the case of a server GET, POST, PUT, DELETE, etc... whatever you want really.
+
 map.params: an object, key-value pair of data extracted from the URLs.
+
 map.data: the request body, from a HTML for example, and should be ignored for get request since many servers will drop it in transmission.
 
 ##### Listening
 When you call the listen() function, you have the option of passing in a custom "response" object/function.
+
 In the browser, this could be a data parser, a message box, or something like that.
+
 On the server, it defaults to the HTTP response object, but feel free to be creative :) Define your own as a shortcut if you always respond with the same content type or something like that.
+
 The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
 
 #### Usage:
@@ -115,5 +126,3 @@ Browser
     // sample html for browser context
     <a href="/#!/message/23" data-context="read">View Message</a>
     <a href="/#!/message/23" data-context="delete">Delete Message</a>
-
-Note: contexts could be anything in the browser, so if anyone has some good use-case arguments, I'd love to hear them.
