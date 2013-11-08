@@ -119,7 +119,6 @@
 			if( node ) {
 				var listener = emitter.addListener, event = "request";
 				var callback = function( req, res ) {
-					console.log(req);
 					options.responder = responder || res;
 
 					var qs = require( "qs" ),
