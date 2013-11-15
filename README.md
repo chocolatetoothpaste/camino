@@ -1,6 +1,5 @@
 # Camino - One-stop routing for server- and client-side web applications
-## Breaking API change for release 0.5.0, see examples below
-## As of 0.5.1, the "map" object passed to the user callback is now the native request object (node) or the window.location object (browser). These objects are augmented with the properties listed in the "Callback" section.  This shouldn't cause issues, however.
+
 ### Active development, please submit bugs and suggestions to GitHub repository!
 
 ### Camino only routes requests to a callback, it is not a full-fledged REST API server or any such sort. It's only job is to dispatch requests.
@@ -8,24 +7,21 @@
 ##### Defining Routes
     camino.route( route [, options], callback )
 
-###### route
+**route**
 type: string
 The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match.
-
 /api/user/%id matches /api/user, /api/user/ and /api/user/23
-
 /api/user/@id matches /api/user/23, but not /api/user or /api/user/
 
-###### options
+**options**
 type: object
 
 context (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, who knows? Maybe we'll figure something out one day...
 
 If you don't pass in a context, your code will always execute if a request matches a route.
-
 responder (function) is a custom responder to use in place of the default (if there is one) for a single route
 
-###### callback
+**callback**
 type: function
 
 YOUR code that is run when a request is matched to a route.
@@ -37,7 +33,7 @@ See callback section below for usage.
 ##### Callback
 Your callback should accept 2 parameters: a map object, and a response object.
 
-The map object contains 4 properties: query, context, params, data.
+The map object is either the http.request object (node) or the window.location objet (browser), augmented with 4 additional properties: query, context, params, data.
 
 map.query: the query string received by the server
 

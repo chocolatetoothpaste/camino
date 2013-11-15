@@ -1,6 +1,5 @@
 (function() {
 	var routes = {},
-		// route_str = "",
 		root = this,
 		options = {},
 		node = false;
@@ -114,11 +113,11 @@
 		 */
 
 		listen: function( emitter, responder ) {
-			var self = this;
+			var self = this, callback, listener;
 
 			if( node ) {
-				var listener = emitter.addListener, event = "request";
-				var callback = function( req, res ) {
+				listener = emitter.addListener, event = "request";
+				callback = function( req, res ) {
 					options.responder = responder || res;
 
 					var qs = require( "qs" ),
@@ -153,8 +152,8 @@
 
 			else {
 				options.responder = responder;
-				var listener = emitter.addEventListener, event = "hashchange";
-				var callback = function() {
+				listener = emitter.addEventListener, event = "hashchange";
+				callback = function() {
 					emitter.location.request = emitter.location.hash;
 					self.exec( emitter.location );
 				};
