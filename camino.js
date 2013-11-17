@@ -128,7 +128,7 @@
 						req.context = req.method;
 						req.query = qs.parse( url.query );
 
-						// uncomment these lines to eliminate circular structre
+						// uncomment these lines to eliminate circular structure
 						// error when stringifying
 						// delete req.socket;
 						// delete req.client;
