@@ -4,7 +4,7 @@
 
 ### Camino only routes requests to a callback, it is not a full-fledged REST API server or any such sort. It's only job is to dispatch requests.
 
-##### Defining Routes
+#### Defining Routes
     camino.route( route [, options], callback )
 
 **route**
@@ -33,7 +33,7 @@ See callback section below for usage.
 
 <!-- Lastly, the responder param is an object you want to use in your code to send a message to the browser/server/anything else. It can be whatever you want and do whatever you want. On the server, it defaults to the HTTP response object so you can set headers, write data, anything else. This can be overriden on a route by route basis, or globally through the listen() function. See examples below. -->
 
-##### Callback
+#### Callback
 Your callback should accept 2 parameters: a map object, and a response object.
 
 The map object is either the http.request object (node) or the window.location objet (browser), augmented with 4 additional properties: query, context, params, data.
@@ -46,7 +46,7 @@ map.params: an object, key-value pair of data extracted from the URLs.
 
 map.data: the request body, from a HTML for example, and should be ignored for get request since many servers will drop it in transmission.
 
-##### Listening
+#### Listening
 When you call the listen() function, you have the option of passing in a custom "response" object/function.
 
 In the browser, this could be a data parser, a message box, or something like that.
