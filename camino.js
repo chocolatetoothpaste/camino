@@ -7,6 +7,12 @@
 	var Camino = function() { };
 
 	Camino.prototype = {
+
+
+		/**
+		 * Define a route to listen for requests
+		 */
+
 		route: function( route, opt, cb ) {
 			var params = [],
 				matches,
@@ -54,7 +60,11 @@
 			return r;
 		},
 
-		// execute the callback associated with a route
+
+		/**
+		 * Eexecute the user callback associated with a route
+		 */
+
 		exec: function( map ) {
 			// placeholder for a sub-pattern match to the route
 			var route, sub;
