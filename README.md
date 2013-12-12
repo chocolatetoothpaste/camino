@@ -1,4 +1,5 @@
 # Camino - One-stop routing for server- and client-side web applications
+### req.body is being renamed req.data, please update your code now. req.body will exist for a couple more version, but will go the way of the dodo. req.data is more ubiquitus with terms developers currently use.
 
 **Active development, please submit bugs and suggestions to GitHub repository!**
 
@@ -32,7 +33,6 @@ YOUR code that is run when a request is matched to a route.
 See callback section below for usage.
 
 <!-- Lastly, the responder param is an object you want to use in your code to send a message to the browser/server/anything else. It can be whatever you want and do whatever you want. On the server, it defaults to the HTTP response object so you can set headers, write data, anything else. This can be overriden on a route by route basis, or globally through the listen() function. See examples below. -->
-
 ### Callback
 Your callback should accept 2 parameters: a map object, and a response object.
 
@@ -55,11 +55,20 @@ On the server, it defaults to the HTTP response object, but feel free to be crea
 
 The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
 
+### Error Handling
+Very basic error handling was introduced for server instances only.
+
+This was done to handle 4XX errors so browser hanging can be avoided.
+
+Crappy error handling has been replaced with events now, so take full advantage of that.
+
+Additionally, Camino.error can be augmented with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
+
 ### Usage:
 
 Server
 
-    var camino = require("camino"); // changed from require("camino")();
+    var camino = require("camino");
 
     camino.route( "/api/user/@id", { context: ["POST"] }, user.init );
 

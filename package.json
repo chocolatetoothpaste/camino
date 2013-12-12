@@ -1,6 +1,6 @@
 {
 	"name": "camino",
-	"version": "0.5.6",
+	"version": "0.5.7",
 	"description": "One-stop routing for server- and client-side web applications",
 	"main": "./camino.js",
 	"author": {
@@ -10,6 +10,9 @@
 	"dependencies": {
 		"qs": "0.6.5"
 	},
+	"keywords": [
+		"router", "routing", "route", "REST", "API"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/chocolatetoothpaste/camino"
