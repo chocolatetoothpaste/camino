@@ -1,5 +1,4 @@
 (function() {
-
 	var routes = {},
 		route_str = [],
 		root = this,
@@ -19,31 +18,84 @@
 		// inherit methods from events.EventEmitter
 		util.inherits(Camino, events.EventEmitter);
 
+
+		/**
+		 * Attach the appropriate listener to the emitting object, and wait for
+		 * an event.
+		 */
+
+		Camino.prototype.listen = function( emitter, responder ) {
+			emitter.addListener( 'request', (function( req, res ) {
+				options.responder = responder || res;
+
+				var qs = require( "qs" ),
+					url = require( "url" ).parse( req.url );
+
+				// grab the request body, if applicable
+				req.data = "";
+				req.on( "data", function( chunk ) {
+					req.data += chunk;
+				});
+
+				req.on( "end", (function() {
+					// augment the request object
+					req.data = qs.parse( req.data );
+					req.body = req.data;
+					req.request = url.pathname;
+					req.context = req.method;
+					req.query = qs.parse( url.query );
+
+					// start event listener
+					this.error( res );
+
+					// fire off the router
+					this.exec( req );
+
+				}).bind( this ) );
+
+			}).bind( this ) );
+		};
+
 		module.exports = new Camino;
-
-		// not sure yet if this is the route to take
-		// module.exports = camino = new Camino;
-
-		// camino.on('error', function( data ) {
-		// 	this.response.writeHead.call( this.response, data.status, {
-		// 		"Content-Type": "application/json"
-		// 	} );
-		// 	this.response.end.call( this.response, JSON.stringify( data ) );
-		// });
-
 		node = true;
 	}
 
 	else {
+
+
+		/**
+		 * Shim for browsers
+		 */
+
 		Camino.prototype.emit = function(event) {
 			root.dispatchEvent( new Event(event) );
 		}
 
+		/**
+		 * Attach the appropriate listener to the emitting object, and wait for
+		 * an event.
+		 */
+
+		Camino.prototype.listen = function( emitter, responder ) {
+			// if( typeof emitter.history.pushStaten !== "undefined" ) {
+
+			// }
+
+			// else {
+			{
+				options.responder = responder;
+				emitter.addEventListener( "hashchange", function() {
+					// augment location object
+					emitter.location.request = emitter.location.hash;
+
+					this.exec( emitter.location );
+				}.bind(this) );
+			}
+		};
+
 		root.camino = new Camino;
 	}
 
-	// Camino.prototype.__proto__ = events.EventEmitter.prototype;
-	// util.inherits(Camino, events.EventEmitter);
 
 	/**
 	 * Define a route to listen for requests
@@ -87,8 +139,12 @@
 		routes[route] = ret;
 	};
 
-	// this function may have no practical use, but for testing/dev
-	// list all registered routes
+
+	/**
+	 * list all registered routes
+	 * this function may have no practical use, but for testing/dev
+	 */
+
 	Camino.prototype.list = function() {
 		var r = [], ii = 0;
 		for( i in routes )
@@ -109,14 +165,19 @@
 		// loop through and try to find a route that matches the request
 		// I wish there was a more efficient way to do this
 		for( sub in routes ) {
-			match = RegExp( sub, "g" ).exec( map.request );
+			match = RegExp( sub, 'g' ).exec( map.request );
 			if( match !== null )
 				break;
 		}
 
 		// if a matching route was found
 		if( ! match ) {
-			this.emit( 'error', { status: 404, success: false } );
+			this.emit( 'error', {
+				status: 404,
+				success: false,
+				message: 'Resource not found'
+			} );
+
 			return false;
 		}
 
@@ -125,7 +186,12 @@
 
 		// check if the context requested is accepted by the callback
 		if( route.context > 0 && route.context.indexOf( map.context ) === -1 ) {
-			this.emit( 'error', { status: 405, success: false } );
+			this.emit( 'error', {
+				status: 405,
+				success: false,
+				message: 'Method not allowed'
+			} );
+
 			return false;
 		}
 
@@ -141,7 +207,7 @@
 		for( var ii = 0, l = match.length; ii < l; ++ii )
 			// optional params are captured with an undefined value
 			// so check that param has a value (or improve the regex)
-			if( typeof match[ii] !== "undefined" )
+			if( typeof match[ii] !== 'undefined' )
 				map.params[route.params[ii]] = match[ii];
 
 		// assign the responder, either custom or global
@@ -157,7 +223,7 @@
 	 */
 
 	Camino.prototype.error = function( response ) {
-		this.on('error', function( data ) {
+		this.on( 'error', function( data ) {
 			response.writeHead( data.status, {
 				"Content-Type": "application/json"
 			} );
@@ -165,68 +231,4 @@
 		});
 	};
 
-
-	/**
-	 * Attach the appropriate listener to the emitting object, and wait for
-	 * an event.
-	 */
-
-	Camino.prototype.listen = function( emitter, responder ) {
-		var self = this, callback, listener;
-
-		if( node ) {
-			listener = emitter.addListener, event = "request";
-			callback = function( req, res ) {
-				options.responder = responder || res;
-
-				var qs = require( "qs" ),
-					url = require( "url" ).parse( req.url );
-
-				// grab the request body, if applicable
-				req.data = "";
-				req.on( "data", function( chunk ) {
-					req.data += chunk;
-				});
-
-				req.on( "end", function() {
-					// augment the request object
-					req.data = qs.parse( req.data );
-					req.body = req.data;
-					req.request = url.pathname;
-					req.context = req.method;
-					req.query = qs.parse( url.query );
-
-					// uncomment these lines to eliminate circular structure
-					// error when stringifying
-					// delete req.socket;
-					// delete req.client;
-					// delete req.connection;
-
-					// start event listener
-					self.error( res );
-
-					// fire off the router
-					self.exec( req );
-				} );
-			};
-		}
-
-		// do history api stuff, should probably provide a flag so user
-		// can bypass history api if they want
-		// else if( window.history && window.history.pushState ) {}
-
-		else {
-			options.responder = responder;
-			listener = emitter.addEventListener, event = "hashchange";
-			callback = function() {
-				// augment location object
-				emitter.location.request = emitter.location.hash;
-
-				self.exec( emitter.location );
-			};
-		}
-
-		// fire whichever event to whatever listener
-		listener.call( emitter, event, callback );
-	};
 })();
