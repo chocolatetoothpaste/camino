@@ -142,7 +142,7 @@ Browser (History API, condensed example)
 
     // include script and define routes
 
-    camino.listen( window, { history: !!( window.history.pushState) } );
+    camino.listen( window, { history: !!( window.history.pushState ) } ); // or just set it to true if you like
 
     // write your own vanilla JS, but here's the super-simple jQuery version
     $( function() {
