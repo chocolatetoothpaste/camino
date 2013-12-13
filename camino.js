@@ -7,7 +7,9 @@
 
 	function Camino() { };
 
+	// server stuff
 	if( typeof module !== "undefined" && module.exports ) {
+
 		// inheritance stuff goes in here so it doesn't gum up the browser
 		var util = require("util"),
 			events = require("events");
@@ -25,7 +27,7 @@
 		 */
 
 		Camino.prototype.listen = function( emitter, responder ) {
-			emitter.addListener( 'request', (function( req, res ) {
+			emitter.addListener( 'request', ( function( req, res ) {
 				options.responder = responder || res;
 
 				var qs = require( "qs" ),
@@ -37,7 +39,7 @@
 					req.data += chunk;
 				});
 
-				req.on( "end", (function() {
+				req.on( "end", ( function() {
 					// augment the request object
 					req.data = qs.parse( req.data );
 					req.body = req.data;
@@ -51,17 +53,17 @@
 					// fire off the router
 					this.exec( req );
 
-				}).bind( this ) );
+				} ).bind( this ) );
 
-			}).bind( this ) );
+			} ).bind( this ) );
 		};
 
 		module.exports = new Camino;
 		node = true;
 	}
 
+	// now the browser stuff
 	else {
-
 
 		/**
 		 * Shim for browsers
@@ -71,26 +73,50 @@
 			root.dispatchEvent( new Event(event) );
 		}
 
+		// ( function( history ) {
+		// 	var pushState = history.pushState;
+		// 	history.pushState = function(state) {
+		// 		if( typeof history.onpushstate == "function" ) {
+		// 			history.onpushstate( {state: state} );
+		// 		}
+
+		// 		var ps = pushState.apply( history, arguments );
+		// 		window.dispatchEvent( new Event( "pushstate" ) );
+
+		// 		return ps;
+		// 	}
+		// } )( window.history );
+
+		// Camino.prototype.go = window.history;
+
+		// console.log( Camino.prototype.go );
+
+
 		/**
 		 * Attach the appropriate listener to the emitting object, and wait for
 		 * an event.
 		 */
 
-		Camino.prototype.listen = function( emitter, responder ) {
-			// if( typeof emitter.history.pushStaten !== "undefined" ) {
-
-			// }
-
-			// else {
-			{
-				options.responder = responder;
-				emitter.addEventListener( "hashchange", function() {
-					// augment location object
-					emitter.location.request = emitter.location.hash;
-
-					this.exec( emitter.location );
-				}.bind(this) );
+		Camino.prototype.listen = function( emitter, opt, responder ) {
+			if( typeof opt === "function" || typeof opt === "undefined" ) {
+				responder = opt;
+				opt = {};
 			}
+
+			if( responder )
+				options.responder = responder;
+
+			var event = ( opt.history ? "popstate" : "hashchange" );
+
+			emitter.addEventListener( event, ( function(state) {
+				// augment location object
+				emitter.location.request = ( opt.history
+					? emitter.location.pathname
+					: emitter.location.hash );
+
+				this.exec( emitter.location );
+
+			} ).bind( this ) );
 		};
 
 		root.camino = new Camino;
@@ -130,11 +156,11 @@
 			params: params
 		};
 
-		// if( typeof opt.responder !== "undefined" )
-			ret.responder = opt.responder || null;
+		if( typeof opt.responder !== "undefined" )
+			ret.responder = opt.responder;
 
-		// if( typeof opt.context !== "undefined" )
-			ret.context = opt.context || [];
+		if( typeof opt.context !== "undefined" )
+			ret.context = opt.context;
 
 		routes[route] = ret;
 	};
@@ -185,7 +211,7 @@
 		var route = routes[sub];
 
 		// check if the context requested is accepted by the callback
-		if( route.context > 0 && route.context.indexOf( map.context ) === -1 ) {
+		if( typeof route.context !== "undefined" && route.context.indexOf( map.context ) === -1 ) {
 			this.emit( 'error', {
 				status: 405,
 				success: false,

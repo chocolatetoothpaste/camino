@@ -1,4 +1,5 @@
 # Camino - One-stop routing for server- and client-side web applications
+### History API support has been added, but currently does not "fallback" to hashes.  Support for this will come likely in the next version, unless there's a reason to not do this at all
 ### req.body is being renamed req.data, please update your code now. req.body will exist for a couple more version, but will go the way of the dodo. req.data is more ubiquitus with terms developers currently use.
 
 **Active development, please submit bugs and suggestions to GitHub repository!**
@@ -102,7 +103,7 @@ Server
 
     camino.listen(server);
 
-Browser
+Browser (Hashes)
 
     <script src="path/to/camino.js"></script>
     // var camino = camino() is no longer required
@@ -134,3 +135,22 @@ Browser
     // sample html for browser context
     <a href="/#!/message/23" data-context="read">View Message</a>
     <a href="/#!/message/23" data-context="delete">Delete Message</a>
+
+Using the History API requires a bit more boilerplate code, but works quite nicely
+Browser (History API, condensed example)
+
+    // include script and define routes
+
+    camino.listen( window, { history: !!( window.history.pushState) } );
+
+    // write your own vanilla JS, but here's the super-simple jQuery version
+    $( function() {
+        $('body').on( {
+            click: function(event) {
+                window.history.pushState( null, null, this.getAttribute('href') );
+                window.dispatchEvent( new Event("popstate") );
+
+                event.preventDefault();
+            }
+        }, "a" );
+    } );
