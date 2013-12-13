@@ -137,6 +137,7 @@ Browser (Hashes)
     <a href="/#!/message/23" data-context="delete">Delete Message</a>
 
 Using the History API requires a bit more boilerplate code, but works quite nicely
+
 Browser (History API, condensed example)
 
     // include script and define routes
