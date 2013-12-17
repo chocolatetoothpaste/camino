@@ -1,6 +1,6 @@
 (function() {
 	var routes = {},
-		route_str = [],
+		// route_str = [],
 		root = this,
 		options = {},
 		node = false;
@@ -103,12 +103,11 @@
 				opt = {};
 			}
 
-			if( responder )
-				options.responder = responder;
+			if( responder ) { options.responder = responder; }
 
 			var event = ( opt.history ? "popstate" : "hashchange" );
 
-			emitter.addEventListener( event, ( function(state) {
+			emitter.addEventListener( event, ( function() {
 				// augment location object
 				emitter.location.request = ( opt.history
 					? emitter.location.pathname
@@ -147,8 +146,8 @@
 			.replace( /\//g, "\\/" );
 
 		// complete and isolate the route
-		route = [ "^", route, "$" ].join("");
-		route_str.push(route);
+		route = "^" + route + "$";
+		// route_str.push(route);
 
 		// add the route and it's crap to the stack
 		var ret = {
@@ -159,8 +158,12 @@
 		if( typeof opt.responder !== "undefined" )
 			ret.responder = opt.responder;
 
-		if( typeof opt.context !== "undefined" )
-			ret.context = opt.context;
+
+		if( typeof opt.context !== "undefined" ) {
+			ret.context = opt.context.map( function(s) {
+				return s.toLowerCase()
+			});
+		}
 
 		routes[route] = ret;
 	};
@@ -211,14 +214,15 @@
 		var route = routes[sub];
 
 		// check if the context requested is accepted by the callback
-		if( typeof route.context !== "undefined" && route.context.indexOf( map.context ) === -1 ) {
-			this.emit( 'error', {
-				status: 405,
-				success: false,
-				message: 'Method not allowed'
-			} );
+		if( typeof route.context !== "undefined"
+			&& route.context.indexOf( map.context ) === -1 ) {
+				this.emit( 'error', {
+					status: 405,
+					success: false,
+					message: 'Method not allowed'
+				} );
 
-			return false;
+				return false;
 		}
 
 		// clean up the misc data from the regexp match

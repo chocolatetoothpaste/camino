@@ -37,7 +37,7 @@ See callback section below for usage.
 ### Callback
 Your callback should accept 2 parameters: a map object, and a response object.
 
-The map object is either the http.request object (node) or the window.location objet (browser), augmented with 4 additional properties: query, context, params, data.
+The map object is either the http.request object (node) or the window.location object (browser), augmented with 4 additional properties: query, context, params, data.
 
 map.query: the query string received by the server
 
