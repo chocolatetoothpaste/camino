@@ -155,3 +155,13 @@ Browser (History API, condensed example)
             }
         }, "a" );
     } );
+
+Then put his in .htaccess
+
+    <ifModule mod_rewrite.c>
+        RewriteEngine On
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_URI} !index
+        RewriteRule (.*) index.php [L]
+    </ifModule>

@@ -71,25 +71,12 @@
 
 		Camino.prototype.emit = function(event) {
 			root.dispatchEvent( new Event(event) );
-		}
+		};
 
-		// ( function( history ) {
-		// 	var pushState = history.pushState;
-		// 	history.pushState = function(state) {
-		// 		if( typeof history.onpushstate == "function" ) {
-		// 			history.onpushstate( {state: state} );
-		// 		}
 
-		// 		var ps = pushState.apply( history, arguments );
-		// 		window.dispatchEvent( new Event( "pushstate" ) );
+		Camino.prototype.shim = function() {
 
-		// 		return ps;
-		// 	}
-		// } )( window.history );
-
-		// Camino.prototype.go = window.history;
-
-		// console.log( Camino.prototype.go );
+		};
 
 
 		/**
@@ -98,6 +85,7 @@
 		 */
 
 		Camino.prototype.listen = function( emitter, opt, responder ) {
+			var listener = emitter.on || emitter.addEventListener;
 			if( typeof opt === "function" || typeof opt === "undefined" ) {
 				responder = opt;
 				opt = {};
@@ -107,7 +95,7 @@
 
 			var event = ( opt.history ? "popstate" : "hashchange" );
 
-			emitter.addEventListener( event, ( function() {
+			listener.call( emitter, event, ( function() {
 				// augment location object
 				emitter.location.request = ( opt.history
 					? emitter.location.pathname
