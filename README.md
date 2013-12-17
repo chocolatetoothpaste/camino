@@ -162,6 +162,5 @@ Then put his in .htaccess
         RewriteEngine On
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_URI} !index
-        RewriteRule (.*) index.php [L]
+        RewriteRule (.*) index.html [L]
     </ifModule>
