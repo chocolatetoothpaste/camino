@@ -1,20 +1,16 @@
 (function() {
 	var routes = {},
-		// route_str = [],
 		root = this,
-		options = {},
-		node = false;
+		options = {};
 
 	function Camino() { };
 
 	// server stuff
 	if( typeof module !== "undefined" && module.exports ) {
-
-		// inheritance stuff goes in here so it doesn't gum up the browser
 		var util = require("util"),
 			events = require("events");
 
-		// keeping the constructor clean for the browser
+		// execute constructor on camino object
 		events.EventEmitter.call( Camino );
 
 		// inherit methods from events.EventEmitter
@@ -47,9 +43,6 @@
 					req.context = req.method;
 					req.query = qs.parse( url.query );
 
-					// start event listener
-					this.error( res );
-
 					// fire off the router
 					this.exec( req );
 
@@ -59,7 +52,18 @@
 		};
 
 		module.exports = new Camino;
-		node = true;
+
+		// fire up some basic error reporting
+		module.exports.on('error', function( data, responder ) {
+			responder = responder || options.responder
+			// since the only errors currently get triggered before a route can
+			// even be determined, there's no point in trying to use a route-
+			// specific responder. hopefully this doesn't become a problem
+			responder.writeHead( data.status, {
+				"Content-Type": "application/json"
+			} );
+			responder.end( JSON.stringify( data ) );
+		})
 	}
 
 	// now the browser stuff
@@ -69,13 +73,8 @@
 		 * Shim for browsers
 		 */
 
-		Camino.prototype.emit = function(event) {
-			root.dispatchEvent( new Event(event) );
-		};
-
-
-		Camino.prototype.shim = function() {
-
+		Camino.prototype.emit = function( event ) {
+			root.dispatchEvent( new Event( "camino:" + event ) );
 		};
 
 
@@ -203,7 +202,7 @@
 
 		// check if the context requested is accepted by the callback
 		if( typeof route.context !== "undefined"
-			&& route.context.indexOf( map.context ) === -1 ) {
+			&& route.context.indexOf( map.context.toLowerCase() ) === -1 ) {
 				this.emit( 'error', {
 					status: 405,
 					success: false,
@@ -233,20 +232,6 @@
 
 		// execute the user callback, passing request data and responder
 		route.callback.call( null, map, responder );
-	};
-
-
-	/**
-	 * Add a basic error response handler, augmentation is encouraged
-	 */
-
-	Camino.prototype.error = function( response ) {
-		this.on( 'error', function( data ) {
-			response.writeHead( data.status, {
-				"Content-Type": "application/json"
-			} );
-			response.end( JSON.stringify( data ) );
-		});
 	};
 
 })();

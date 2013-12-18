@@ -156,7 +156,7 @@ Browser (History API, condensed example)
         }, "a" );
     } );
 
-Then put his in .htaccess
+Then put this in .htaccess
 
     <ifModule mod_rewrite.c>
         RewriteEngine On
