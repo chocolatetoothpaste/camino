@@ -47,34 +47,57 @@
 					this.exec( req );
 
 				} ).bind( this ) );
-
 			} ).bind( this ) );
 		};
 
-		module.exports = new Camino;
 
-		// fire up some basic error reporting
-		module.exports.on('error', function( data, responder ) {
+		Camino.prototype.event = { error: "error" };
+
+		/**
+		 * Basic error handling, had to move this here so event listener can use it
+		 */
+
+		Camino.prototype.error = function( data, responder ) {
 			responder = responder || options.responder
+
 			// since the only errors currently get triggered before a route can
 			// even be determined, there's no point in trying to use a route-
 			// specific responder. hopefully this doesn't become a problem
 			responder.writeHead( data.status, {
 				"Content-Type": "application/json"
 			} );
+
 			responder.end( JSON.stringify( data ) );
-		})
+		};
+
+		module.exports = new Camino;
+
+		// fire up some basic error reporting
+		module.exports.on( "error", module.exports.error );
 	}
 
 	// now the browser stuff
 	else {
 
+
 		/**
 		 * Shim for browsers
 		 */
 
-		Camino.prototype.emit = function( event ) {
-			root.dispatchEvent( new Event( "camino:" + event ) );
+		Camino.prototype.emit = function( event, data ) {
+			root.dispatchEvent( new CustomEvent( event, { detail: data } ) );
+		};
+
+
+
+		Camino.prototype.event = { error: "camino:error" };
+
+		/**
+		 * Please replace this
+		 */
+
+		Camino.prototype.error = function( event, data ) {
+			console.log(event.detail)
 		};
 
 
@@ -85,12 +108,12 @@
 
 		Camino.prototype.listen = function( emitter, opt, responder ) {
 			var listener = emitter.on || emitter.addEventListener;
+			options.responder = responder || console.log.bind(console);
+
 			if( typeof opt === "function" || typeof opt === "undefined" ) {
 				responder = opt;
 				opt = {};
 			}
-
-			if( responder ) { options.responder = responder; }
 
 			var event = ( opt.history ? "popstate" : "hashchange" );
 
@@ -106,6 +129,8 @@
 		};
 
 		root.camino = new Camino;
+
+		root.addEventListener( "camino:error", root.camino.error );
 	}
 
 
@@ -188,7 +213,7 @@
 
 		// if a matching route was found
 		if( ! match ) {
-			this.emit( 'error', {
+			this.emit( this.event.error, {
 				status: 404,
 				success: false,
 				message: 'Resource not found'
@@ -203,7 +228,7 @@
 		// check if the context requested is accepted by the callback
 		if( typeof route.context !== "undefined"
 			&& route.context.indexOf( map.context.toLowerCase() ) === -1 ) {
-				this.emit( 'error', {
+				this.emit( this.event.error, {
 					status: 405,
 					success: false,
 					message: 'Method not allowed'

@@ -11,7 +11,7 @@
 		"qs": "0.6.5"
 	},
 	"keywords": [
-		"router", "routing", "route", "REST", "API"
+		"router", "routing", "route", "REST", "API", "hash", "history"
 	],
 	"repository": {
 		"type": "git",
