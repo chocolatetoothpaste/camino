@@ -43,7 +43,7 @@
 					req.context = req.method;
 					req.query = qs.parse( url.query );
 
-					// fire off the router
+					// fire off the router ( this = camino )
 					this.exec( req );
 
 				} ).bind( this ) );
@@ -73,7 +73,7 @@
 		module.exports = new Camino;
 
 		// fire up some basic error reporting
-		module.exports.on( "error", module.exports.error );
+		module.exports.on( module.exports.event.error, module.exports.error );
 	}
 
 	// now the browser stuff
@@ -89,7 +89,7 @@
 		};
 
 
-
+		// put all the event strings in here so they can be changed
 		Camino.prototype.event = { error: "camino:error" };
 
 		/**
@@ -97,7 +97,7 @@
 		 */
 
 		Camino.prototype.error = function( event, data ) {
-			console.log(event.detail)
+			console.log( event.detail );
 		};
 
 
@@ -124,13 +124,12 @@
 					: emitter.location.hash );
 
 				this.exec( emitter.location );
-
 			} ).bind( this ) );
 		};
 
 		root.camino = new Camino;
 
-		root.addEventListener( "camino:error", root.camino.error );
+		root.addEventListener( root.camino.event.error, root.camino.error );
 	}
 
 
@@ -139,45 +138,37 @@
 	 */
 
 	Camino.prototype.route = function( route, opt, cb ) {
-		var params = [],
-			matches,
-			rx = /[@|%](\w+)/g;
+		var params = route.match(/[@|%](\w+)/g);
 
+		// shift params
 		if( typeof opt === "function" ) {
 			cb = opt;
 			opt = {};
 		}
 
-		// extract var name(s) from route
-		while( ( matches = rx.exec( route ) ) !== null )
-			params.push( matches[1] );
+		// until I can figure out how to make string.match capture the right
+		// group, this will have to do
+		if( params )
+			params = params.map( function( v ) { return v.substr(1) } );
 
 		// replace var names with regexes
 		route = route.replace( /@(\w+)/g, "(\\w+)" )
-			.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" )
-			.replace( /\//g, "\\/" );
+			// this one was hard to write. it checks for 0 or 1 "/",
+			// then 0 or 1 param if 1 "/"" was found
+			.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
 
-		// complete and isolate the route
+		// wrap the route with regexp string delimiters
 		route = "^" + route + "$";
-		// route_str.push(route);
 
-		// add the route and it's crap to the stack
-		var ret = {
+		// define the route. opt.responder and opt.context may be undefined at
+		// this point, but doesn't seem to cause any issues with camino.exec()
+		// undefined === undefined, no biggie
+		routes[route] = {
 			callback: cb,
-			params: params
+			params: params,
+			responder: opt.responder,
+			context: opt.context
 		};
-
-		if( typeof opt.responder !== "undefined" )
-			ret.responder = opt.responder;
-
-
-		if( typeof opt.context !== "undefined" ) {
-			ret.context = opt.context.map( function(s) {
-				return s.toLowerCase()
-			});
-		}
-
-		routes[route] = ret;
 	};
 
 
@@ -187,11 +178,7 @@
 	 */
 
 	Camino.prototype.list = function() {
-		var r = [], ii = 0;
-		for( i in routes )
-			r.push(i);
-
-		return r;
+		console.log(routes);
 	};
 
 
@@ -211,7 +198,7 @@
 				break;
 		}
 
-		// if a matching route was found
+		// if no route was found (no match), emit 404 status error
 		if( ! match ) {
 			this.emit( this.event.error, {
 				status: 404,
@@ -219,21 +206,24 @@
 				message: 'Resource not found'
 			} );
 
+			// this just stops the browser
 			return false;
 		}
 
 		// this gets referenced a lot, so might as well make it a bit prettier
 		var route = routes[sub];
 
-		// check if the context requested is accepted by the callback
+		// if request method is not allowed for this route, emit 405 status
+		// error
 		if( typeof route.context !== "undefined"
-			&& route.context.indexOf( map.context.toLowerCase() ) === -1 ) {
+			&& route.context.indexOf( map.context ) === -1 ) {
 				this.emit( this.event.error, {
 					status: 405,
 					success: false,
 					message: 'Method not allowed'
 				} );
 
+				// this just stops the browser
 				return false;
 		}
 
@@ -241,6 +231,8 @@
 		// wish there were some flags to make the output cleaner...
 		delete match.index;
 		delete match.input;
+
+		// the first key is just the string that was matched, so ditch it
 		match.shift();
 
 		map.params = {};
