@@ -1,4 +1,4 @@
-(function() {
+( function() {
 	var routes = {},
 		root = this,
 		options = {};
@@ -7,14 +7,14 @@
 
 	// server stuff
 	if( typeof module !== "undefined" && module.exports ) {
-		var util = require("util"),
-			events = require("events");
+		var util = require( "util" ),
+			events = require( "events" );
 
 		// execute constructor on camino object
 		events.EventEmitter.call( Camino );
 
 		// inherit methods from events.EventEmitter
-		util.inherits(Camino, events.EventEmitter);
+		util.inherits( Camino, events.EventEmitter );
 
 
 		/**
@@ -26,9 +26,6 @@
 			emitter.addListener( 'request', ( function( req, res ) {
 				options.responder = responder || res;
 
-				var qs = require( "qs" ),
-					url = require( "url" ).parse( req.url );
-
 				// grab the request body, if applicable
 				req.data = "";
 				req.on( "data", function( chunk ) {
@@ -36,6 +33,9 @@
 				});
 
 				req.on( "end", ( function() {
+					var qs = require( "qs" ),
+						url = require( "url" ).parse( req.url );
+
 					// augment the request object
 					req.data = qs.parse( req.data );
 					req.body = req.data;
@@ -53,26 +53,30 @@
 
 		Camino.prototype.event = { error: "error" };
 
+
 		/**
 		 * Basic error handling, had to move this here so event listener can use it
 		 */
 
 		Camino.prototype.error = function( data, responder ) {
 			responder = responder || options.responder
+			var status = data.status;
+			data = JSON.stringify( data );
 
 			// since the only errors currently get triggered before a route can
 			// even be determined, there's no point in trying to use a route-
 			// specific responder. hopefully this doesn't become a problem
-			responder.writeHead( data.status, {
-				"Content-Type": "application/json"
+			responder.writeHead( status, {
+				"Content-Type": "application/json",
+				"Content-Length": data.length
 			} );
 
-			responder.end( JSON.stringify( data ) );
+			responder.end( data );
 		};
 
 		module.exports = new Camino;
 
-		// fire up some basic error reporting
+		// fire up some basic error listening/reporting
 		module.exports.on( module.exports.event.error, module.exports.error );
 	}
 
@@ -92,6 +96,7 @@
 		// put all the event strings in here so they can be changed
 		Camino.prototype.event = { error: "camino:error" };
 
+
 		/**
 		 * Please replace this
 		 */
@@ -108,7 +113,7 @@
 
 		Camino.prototype.listen = function( emitter, opt, responder ) {
 			var listener = emitter.on || emitter.addEventListener;
-			options.responder = responder || console.log.bind(console);
+			options.responder = responder || console.log.bind( console );
 
 			if( typeof opt === "function" || typeof opt === "undefined" ) {
 				responder = opt;
@@ -135,16 +140,17 @@
 
 	/**
 	 * Define a route to listen for requests
+	 * r: route, opt: options, cb: callback
 	 */
 
-	Camino.prototype.route = function( route, opt, cb ) {
-		var params = route.match(/[@|%](\w+)/g);
-
+	Camino.prototype.route = function( r, opt, cb ) {
 		// shift params
 		if( typeof opt === "function" ) {
 			cb = opt;
 			opt = {};
 		}
+
+		var params = r.match(/[@|%](\w+)/g);
 
 		// until I can figure out how to make string.match capture the right
 		// group, this will have to do
@@ -152,13 +158,16 @@
 			params = params.map( function( v ) { return v.substr(1) } );
 
 		// replace var names with regexes
-		route = route.replace( /@(\w+)/g, "(\\w+)" )
+		r = r.replace( /@(\w+)/g, "(\\w+)" )
 			// this one was hard to write. it checks for 0 or 1 "/",
 			// then 0 or 1 param if 1 "/"" was found
 			.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
 
 		// wrap the route with regexp string delimiters
-		route = "^" + route + "$";
+		route = "^" + r + "$";
+
+		if( typeof routes[route] !== "undefined" )
+			throw new Error("Route is already defined: " + r);
 
 		// define the route. opt.responder and opt.context may be undefined at
 		// this point, but doesn't seem to cause any issues with camino.exec()
@@ -167,7 +176,7 @@
 			callback: cb,
 			params: params,
 			responder: opt.responder,
-			context: opt.context
+			context: opt.context || []
 		};
 	};
 
@@ -213,9 +222,8 @@
 		// this gets referenced a lot, so might as well make it a bit prettier
 		var route = routes[sub];
 
-		// if request method is not allowed for this route, emit 405 status
-		// error
-		if( typeof route.context !== "undefined"
+		// if request method is not allowed for this route, emit 405 error
+		if( route.context.length > 0
 			&& route.context.indexOf( map.context ) === -1 ) {
 				this.emit( this.event.error, {
 					status: 405,
@@ -251,4 +259,4 @@
 		route.callback.call( null, map, responder );
 	};
 
-})();
+} )();
