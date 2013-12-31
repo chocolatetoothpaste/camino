@@ -55,7 +55,8 @@
 
 
 		/**
-		 * Basic error handling, had to move this here so event listener can use it
+		 * Basic error handling
+		 * Don't move this code, it's placement is important
 		 */
 
 		Camino.prototype.error = function( data, responder ) {
@@ -135,7 +136,8 @@
 		root.camino = new Camino;
 
 		root.addEventListener( root.camino.event.error, root.camino.error );
-	}
+
+	} // end browser code
 
 
 	/**
@@ -150,7 +152,7 @@
 			opt = {};
 		}
 
-		var params = r.match(/[@|%](\w+)/g);
+		var params = r.match( /[@|%](\w+)/g );
 
 		// until I can figure out how to make string.match capture the right
 		// group, this will have to do
@@ -160,14 +162,14 @@
 		// replace var names with regexes
 		r = r.replace( /@(\w+)/g, "(\\w+)" )
 			// this one was hard to write. it checks for 0 or 1 "/",
-			// then 0 or 1 param if 1 "/"" was found
+			// or 0 or 1 param if 1 "/"" was found
 			.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
 
 		// wrap the route with regexp string delimiters
 		route = "^" + r + "$";
 
 		if( typeof routes[route] !== "undefined" )
-			throw new Error("Route is already defined: " + r);
+			throw new Error( "Route is already defined: " + r );
 
 		// define the route. opt.responder and opt.context may be undefined at
 		// this point, but doesn't seem to cause any issues with camino.exec()
@@ -197,12 +199,12 @@
 
 	Camino.prototype.exec = function( map ) {
 		// placeholder for a sub-pattern match to the route
-		var match, sub;
+		var match, route;
 
 		// loop through and try to find a route that matches the request
 		// I wish there was a more efficient way to do this
-		for( sub in routes ) {
-			match = RegExp( sub, 'g' ).exec( map.request );
+		for( route in routes ) {
+			match = RegExp( route, 'g' ).exec( map.request );
 			if( match !== null )
 				break;
 		}
@@ -219,8 +221,8 @@
 			return false;
 		}
 
-		// this gets referenced a lot, so might as well make it a bit prettier
-		var route = routes[sub];
+		// this gets referenced a lot, so re-assign and make it a bit prettier
+		route = routes[route];
 
 		// if request method is not allowed for this route, emit 405 error
 		if( route.context.length > 0
@@ -246,11 +248,13 @@
 		map.params = {};
 
 		// merge the param names and values
-		for( var ii = 0, l = match.length; ii < l; ++ii )
+		for( var ii = 0, l = match.length; ii < l; ++ii ) {
 			// optional params are captured with an undefined value
 			// so check that param has a value (or improve the regex)
-			if( typeof match[ii] !== 'undefined' )
+			if( typeof match[ii] !== 'undefined' ) {
 				map.params[route.params[ii]] = match[ii];
+			}
+		}
 
 		// assign the responder, either custom or global
 		var responder = route.responder || options.responder;
