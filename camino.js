@@ -1,7 +1,9 @@
 ( function() {
-	var routes = {},
-		root = this,
-		options = {};
+	var root = this,
+		global = {
+			routes: {},
+			options: {}
+		};
 
 	function Camino() { };
 
@@ -24,7 +26,7 @@
 
 		Camino.prototype.listen = function( emitter, responder ) {
 			emitter.addListener( 'request', ( function( req, res ) {
-				options.responder = responder || res;
+				global.options.responder = responder || res;
 
 				// grab the request body, if applicable
 				req.data = "";
@@ -60,7 +62,7 @@
 		 */
 
 		Camino.prototype.error = function( data, responder ) {
-			responder = responder || options.responder
+			responder = responder || global.options.responder
 			var status = data.status;
 			data = JSON.stringify( data );
 
@@ -114,7 +116,7 @@
 
 		Camino.prototype.listen = function( emitter, opt, responder ) {
 			var listener = emitter.on || emitter.addEventListener;
-			options.responder = responder || console.log.bind( console );
+			global.options.responder = responder || console.log.bind( console );
 
 			if( typeof opt === "function" || typeof opt === "undefined" ) {
 				responder = opt;
@@ -157,7 +159,7 @@
 		// until I can figure out how to make string.match capture the right
 		// group, this will have to do
 		if( params )
-			params = params.map( function( v ) { return v.substr(1) } );
+			params = params.map( function( v ) { return v.substr( 1 ) } );
 
 		// replace var names with regexes
 		r = r.replace( /@(\w+)/g, "(\\w+)" )
@@ -168,13 +170,13 @@
 		// wrap the route with regexp string delimiters
 		route = "^" + r + "$";
 
-		if( typeof routes[route] !== "undefined" )
+		if( typeof global.routes[route] !== "undefined" )
 			throw new Error( "Route is already defined: " + r );
 
 		// define the route. opt.responder and opt.context may be undefined at
 		// this point, but doesn't seem to cause any issues with camino.exec()
 		// undefined === undefined, no biggie
-		routes[route] = {
+		global.routes[route] = {
 			callback: cb,
 			params: params,
 			responder: opt.responder,
@@ -189,7 +191,7 @@
 	 */
 
 	Camino.prototype.list = function() {
-		console.log(routes);
+		console.log( global.routes );
 	};
 
 
@@ -203,7 +205,7 @@
 
 		// loop through and try to find a route that matches the request
 		// I wish there was a more efficient way to do this
-		for( route in routes ) {
+		for( route in global.routes ) {
 			match = RegExp( route, 'g' ).exec( map.request );
 			if( match !== null )
 				break;
@@ -222,7 +224,7 @@
 		}
 
 		// this gets referenced a lot, so re-assign and make it a bit prettier
-		route = routes[route];
+		route = global.routes[route];
 
 		// if request method is not allowed for this route, emit 405 error
 		if( route.context.length > 0
@@ -257,7 +259,7 @@
 		}
 
 		// assign the responder, either custom or global
-		var responder = route.responder || options.responder;
+		var responder = route.responder || global.options.responder;
 
 		// execute the user callback, passing request data and responder
 		route.callback.call( null, map, responder );
