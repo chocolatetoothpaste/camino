@@ -141,6 +141,7 @@ Using the History API requires a bit more boilerplate code, but works quite nice
 Browser (History API, condensed example)
 
     // include script and define routes
+    camino.route( "/profile", user.init );
 
     camino.listen( window, { history: !!( window.history.pushState ) } ); // or just set it to true if you like
 
