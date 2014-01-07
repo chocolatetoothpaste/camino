@@ -115,18 +115,19 @@
 		 */
 
 		Camino.prototype.listen = function( emitter, opt, responder ) {
-			var listener = emitter.on || emitter.addEventListener;
-			global.options.responder = responder || console.log.bind( console );
-
+			// musical vars
 			if( typeof opt === "function" || typeof opt === "undefined" ) {
 				responder = opt;
 				opt = {};
 			}
 
+			// set the event attachment function, event name, and responder
+			var listener = emitter.on || emitter.addEventListener;
 			var event = ( opt.history ? "popstate" : "hashchange" );
+			global.options.responder = responder || console.log.bind( console );
 
 			listener.call( emitter, event, ( function() {
-				// augment location object
+				// augment location object (for consistency across client/server)
 				emitter.location.request = ( opt.history
 					? emitter.location.pathname
 					: emitter.location.hash );
@@ -180,7 +181,7 @@
 			callback: cb,
 			params: params,
 			responder: opt.responder,
-			context: opt.context || []
+			context: opt.context
 		};
 	};
 
@@ -200,7 +201,7 @@
 	 */
 
 	Camino.prototype.exec = function( map ) {
-		// placeholder for a sub-pattern match to the route
+		// placeholders
 		var match, route;
 
 		// loop through and try to find a route that matches the request
@@ -227,7 +228,8 @@
 		route = global.routes[route];
 
 		// if request method is not allowed for this route, emit 405 error
-		if( route.context.length > 0
+
+		if( toString.call( route.context ) === "[object Array]"
 			&& route.context.indexOf( map.context ) === -1 ) {
 				this.emit( this.event.error, {
 					status: 405,
