@@ -1,6 +1,4 @@
 # Camino - One-stop routing for server- and client-side web applications
-### History API support has been added, but currently does not "fallback" to hashes.  Support for this will come likely in the next version, unless there's a reason to not do this at all
-### req.body is being renamed req.data, please update your code now. req.body will exist for a couple more version, but will go the way of the dodo. req.data is more ubiquitus with terms developers currently use.
 
 **Active development, please submit bugs and suggestions to GitHub repository!**
 
@@ -37,7 +35,7 @@ See callback section below for usage.
 ### Callback
 Your callback should accept 2 parameters: a map object, and a response object.
 
-The map object is either the http.request object (node) or the window.location object (browser), augmented with 4 additional properties: query, context, params, data.
+The map object is either the http.request object (node.js) or the window.location object (browser), augmented with 4 additional properties: query, context, params, data.
 
 map.query: the query string received by the server
 
@@ -45,7 +43,7 @@ map.context: a string, in the case of a server GET, POST, PUT, DELETE, etc... wh
 
 map.params: an object, key-value pair of data extracted from the URLs.
 
-map.data: the request body, from a HTML for example, and should be ignored for get request since many servers will drop it in transmission.
+map.data: the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
 
 ### Listening
 When you call the listen() function, you have the option of passing in a custom "response" object/function.

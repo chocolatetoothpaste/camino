@@ -40,7 +40,6 @@
 
 					// augment the request object
 					req.data = qs.parse( req.data );
-					req.body = req.data;
 					req.request = url.pathname;
 					req.context = req.method;
 					req.query = qs.parse( url.query );
@@ -228,8 +227,7 @@
 		route = global.routes[route];
 
 		// if request method is not allowed for this route, emit 405 error
-
-		if( toString.call( route.context ) === "[object Array]"
+		if( Array.isArray( route.context )
 			&& route.context.indexOf( map.context ) === -1 ) {
 				this.emit( this.event.error, {
 					status: 405,
