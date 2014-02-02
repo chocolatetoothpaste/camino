@@ -44,7 +44,7 @@
 					req.context = req.method;
 					req.query = qs.parse( url.query );
 
-					// fire off the router ( this = camino )
+					// fire off the router ( this = camino, after binding )
 					this.exec( req );
 
 				} ).bind( this ) );
@@ -100,10 +100,10 @@
 
 
 		/**
-		 * Please replace this
+		 * Please replace this, end user
 		 */
 
-		Camino.prototype.error = function( event, data ) {
+		Camino.prototype.error = function( event ) {
 			console.log( event.detail );
 		};
 
@@ -115,18 +115,17 @@
 
 		Camino.prototype.listen = function( emitter, opt, responder ) {
 			// musical vars
-			if( typeof opt === "function" || typeof opt === "undefined" ) {
+			if( typeof opt === "function" ) {
 				responder = opt;
 				opt = {};
 			}
 
-			// set the event attachment function, event name, and responder
-			var listener = emitter.on || emitter.addEventListener;
+			// set the event name, and responder
 			var event = ( opt.history ? "popstate" : "hashchange" );
 			global.options.responder = responder || console.log.bind( console );
 
-			listener.call( emitter, event, ( function() {
-				// augment location object (for consistency across client/server)
+			emitter.addEventListener.call( emitter, event, ( function() {
+				// augment location object (for consistency on client/server)
 				emitter.location.request = ( opt.history
 					? emitter.location.pathname
 					: emitter.location.hash );
@@ -163,8 +162,8 @@
 
 		// replace var names with regexes
 		r = r.replace( /@(\w+)/g, "(\\w+)" )
-			// this one was hard to write. it checks for 0 or 1 "/",
-			// or 0 or 1 param if 1 "/"" was found
+			// this one was hard to write. it checks for 0 or 1 occ. of "/",
+			// or, 0 or 1 param (string, not "/") if 1 occ. of "/"" was found
 			.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
 
 		// wrap the route with regexp string delimiters
