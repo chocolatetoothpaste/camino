@@ -1,10 +1,13 @@
 ( function() {
 	var root = this,
+
+		// containers
 		global = {
 			routes: {},
 			options: {}
 		};
 
+	// prototype
 	function Camino() { };
 
 	// server stuff
@@ -12,10 +15,8 @@
 		var util = require( "util" ),
 			events = require( "events" );
 
-		// execute constructor on camino object
+		// execute event constructor on camino object and inherit methods
 		events.EventEmitter.call( Camino );
-
-		// inherit methods from events.EventEmitter
 		util.inherits( Camino, events.EventEmitter );
 
 
@@ -51,6 +52,10 @@
 			} ).bind( this ) );
 		};
 
+
+		/**
+		 *	Shim for event names (too generic for browsers)
+		 */
 
 		Camino.prototype.event = { error: "error" };
 
@@ -95,7 +100,10 @@
 		};
 
 
-		// put all the event strings in here so they can be changed
+		/**
+		 *	Shim for event names (namespacing for browsers)
+		 */
+
 		Camino.prototype.event = { error: "camino:error" };
 
 
@@ -173,8 +181,8 @@
 			throw new Error( "Route is already defined: " + r );
 
 		// define the route. opt.responder and opt.context may be undefined at
-		// this point, but doesn't seem to cause any issues with camino.exec()
-		// undefined === undefined, no biggie
+		// this point, but doesn't cause any issues with camino.exec()
+		// undefined === undefined, nbd
 		global.routes[route] = {
 			callback: cb,
 			params: params,
@@ -186,7 +194,7 @@
 
 	/**
 	 * list all registered routes
-	 * this function may have no practical use, but for testing/dev
+	 * this function has no practical use, for testing/dev
 	 */
 
 	Camino.prototype.list = function() {
@@ -243,7 +251,7 @@
 		delete match.index;
 		delete match.input;
 
-		// the first key is just the string that was matched, so ditch it
+		// the first key is the string that was matched, so ditch it
 		match.shift();
 
 		map.params = {};
