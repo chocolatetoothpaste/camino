@@ -8,7 +8,7 @@
 		"email": "ross@pasket.me"
 	},
 	"dependencies": {
-		"qs": "0.6.5"
+		"qs": "0.6.6"
 	},
 	"keywords": [
 		"router", "routing", "route", "REST", "API", "hash", "history"

@@ -25,7 +25,8 @@
 		 * an event.
 		 */
 
-		Camino.prototype.listen = function( emitter, responder ) {
+		Camino.prototype.listen = function( emitter ) {
+			var self = this;
 			emitter.addListener( 'request', ( function( req, res ) {
 				global.options.responder = responder || res;
 
@@ -35,22 +36,32 @@
 					req.data += chunk;
 				});
 
-				req.on( "end", ( function() {
-					var qs = require( "qs" ),
-						url = require( "url" ).parse( req.url );
+				var qs = require( "qs" ),
+					url = require( "url" ).parse( req.url );
 
-					// augment the request object
+				// augment the request object
+				if( req.headers["content-type"] === "application/x-www-form-urlencoded" )
 					req.data = qs.parse( req.data );
-					req.request = url.pathname;
-					req.context = req.method;
-					req.query = qs.parse( url.query );
 
-					// fire off the router ( this = camino, after binding )
-					this.exec( req );
+				// else... implement multipart parsing to handle file uploads
+				// self.parse( req );
 
-				} ).bind( this ) );
-			} ).bind( this ) );
+				req.request = url.pathname;
+				req.context = req.method;
+				req.query = qs.parse( url.query );
+
+				// fire off the router ( this = camino, after binding )
+				self.exec( req );
+
+			} ) );
 		};
+
+
+		/**
+		 *	parse multipart form data
+		 */
+
+		// Camino.prototype.parse = function( req ) { };
 
 
 		/**
@@ -161,6 +172,12 @@
 			opt = {};
 		}
 
+		else {
+			// prevent errors when adding route to the stack at the bottom
+			opt.responder = opt.responder || undefined;
+			opt.context = opt.context || undefined;
+		}
+
 		var params = r.match( /[@|%](\w+)/g );
 
 		// until I can figure out how to make string.match capture the right
@@ -207,6 +224,7 @@
 	 */
 
 	Camino.prototype.exec = function( map ) {
+		console.log(this);
 		// placeholders
 		var match, route;
 
@@ -220,11 +238,11 @@
 
 		// if no route was found (no match), emit 404 status error
 		if( ! match ) {
-			this.emit( this.event.error, {
-				status: 404,
-				success: false,
-				message: 'Resource not found'
-			} );
+			// this.emit( this.event.error, {
+			// 	status: 404,
+			// 	success: false,
+			// 	message: 'Resource not found'
+			// } );
 
 			// this just stops the browser
 			return false;
@@ -236,11 +254,11 @@
 		// if request method is not allowed for this route, emit 405 error
 		if( Array.isArray( route.context )
 			&& route.context.indexOf( map.context ) === -1 ) {
-				this.emit( this.event.error, {
-					status: 405,
-					success: false,
-					message: 'Method not allowed'
-				} );
+				// this.emit( this.event.error, {
+				// 	status: 405,
+				// 	success: false,
+				// 	message: 'Method not allowed'
+				// } );
 
 				// this just stops the browser
 				return false;
