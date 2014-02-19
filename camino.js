@@ -25,7 +25,7 @@
 		 * an event.
 		 */
 
-		Camino.prototype.listen = function( emitter ) {
+		Camino.prototype.listen = function( emitter, responder ) {
 			var self = this;
 			emitter.addListener( 'request', ( function( req, res ) {
 				global.options.responder = responder || res;
