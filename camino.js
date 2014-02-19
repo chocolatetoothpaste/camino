@@ -224,7 +224,6 @@
 	 */
 
 	Camino.prototype.exec = function( map ) {
-		console.log(this);
 		// placeholders
 		var match, route;
 
@@ -238,11 +237,11 @@
 
 		// if no route was found (no match), emit 404 status error
 		if( ! match ) {
-			// this.emit( this.event.error, {
-			// 	status: 404,
-			// 	success: false,
-			// 	message: 'Resource not found'
-			// } );
+			this.emit( this.event.error, {
+				status: 404,
+				success: false,
+				message: 'Resource not found'
+			} );
 
 			// this just stops the browser
 			return false;
@@ -254,11 +253,11 @@
 		// if request method is not allowed for this route, emit 405 error
 		if( Array.isArray( route.context )
 			&& route.context.indexOf( map.context ) === -1 ) {
-				// this.emit( this.event.error, {
-				// 	status: 405,
-				// 	success: false,
-				// 	message: 'Method not allowed'
-				// } );
+				this.emit( this.event.error, {
+					status: 405,
+					success: false,
+					message: 'Method not allowed'
+				} );
 
 				// this just stops the browser
 				return false;
