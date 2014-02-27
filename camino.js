@@ -87,7 +87,7 @@
 					    });
 
 					    file.on( "end", function() {
-					    	req.file_stream[fieldname] = Buffer.concat(buf);
+					    	req.file[fieldname] = Buffer.concat(buf);
 					    });
 					});
 
