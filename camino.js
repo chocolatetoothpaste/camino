@@ -96,6 +96,10 @@
 					});
 
 					busboy.on('finish', function() {
+						// qs.parse the data sets to handle
+						// nested/multidemensional form fields
+						req.data = qs.parse(req.data);
+						req.file = qs.parse(req.file);
 						self.exec(req);
 					});
 
