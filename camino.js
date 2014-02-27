@@ -29,19 +29,8 @@
 			var self = this;
 			emitter.addListener( 'request', ( function( req, res ) {
 				global.options.responder = responder || res;
-
-				// grab the request body, if applicable
-				req.data = "";
-				req.on( "data", function( chunk ) {
-					req.data += chunk;
-				});
-
 				var qs = require( "qs" ),
 					url = require( "url" ).parse( req.url );
-
-				// augment the request object
-				if( req.headers["content-type"] === "application/x-www-form-urlencoded" )
-					req.data = qs.parse( req.data );
 
 				// else... implement multipart parsing to handle file uploads
 				// self.parse( req );
@@ -49,9 +38,52 @@
 				req.request = url.pathname;
 				req.context = req.method;
 				req.query = qs.parse( url.query );
+				req.qs = url.query;
 
-				// fire off the router ( this = camino, after binding )
-				self.exec( req );
+				// augment the request object
+				if( typeof req.headers["content-type"] === "undefined"
+					|| req.headers["content-type"].split(';')[0] === "application/x-www-form-urlencoded" ) {
+
+						req.data = "";
+
+						// grab the request body, if applicable
+						req.on( "data", function( chunk ) {
+							req.data += chunk;
+						});
+
+						req.on('end', function() {
+							req.data = qs.parse( req.data );
+
+							// fire off the router ( this = camino, after binding )
+							self.exec( req );
+						});
+
+				}
+
+				else {
+					req.file = {}
+					req.data = {};
+
+					var Busboy = require('busboy');
+					var busboy = new Busboy({ headers: req.headers });
+
+					busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+						var fs = require('fs');
+
+						file.pipe(fs.createWriteStream('bus.jpg'));
+						req.file[fieldname] = 'bus.jpg';
+					});
+
+					busboy.on('field', function(fieldname, val, valTruncated, keyTruncated) {
+						req.data[fieldname] = val;
+					});
+
+					busboy.on('finish', function() {
+						self.exec(req);
+					})
+
+					req.pipe(busboy);
+				}
 
 			} ) );
 		};
