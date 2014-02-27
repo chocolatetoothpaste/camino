@@ -27,7 +27,7 @@
 
 		Camino.prototype.listen = function( emitter, responder ) {
 			var self = this;
-			emitter.addListener( 'request', ( function( req, res ) {
+			emitter.addListener( 'request', function( req, res ) {
 				global.options.responder = responder || res;
 				var qs = require( "qs" ),
 					url = require( "url" ).parse( req.url );
@@ -40,9 +40,20 @@
 				req.query = qs.parse( url.query );
 				req.qs = url.query;
 
+				// req.mess = "";
+
+				// // grab the request body, if applicable
+				// req.on( "data", function( chunk ) {
+				// 	req.mess += chunk;
+				// }).on( "end", function () {
+				// 	var boundary = "--" + this.headers["content-type"]
+				// 		.match(/boundary\=(.*)/i)[1];
+				// 	self.parse( this.mess, boundary );
+				// });
+
 				// augment the request object
 				if( typeof req.headers["content-type"] === "undefined"
-					|| req.headers["content-type"].split(';')[0] === "application/x-www-form-urlencoded" ) {
+					|| req.headers["content-type"].indexOf( "application/x-www-form-urlencoded" ) !== -1 ) {
 
 						req.data = "";
 
@@ -61,17 +72,23 @@
 				}
 
 				else {
-					req.file = {}
+					req.file = {};
+					req.file_stream = {};
 					req.data = {};
 
 					var Busboy = require('busboy');
 					var busboy = new Busboy({ headers: req.headers });
 
 					busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-						var fs = require('fs');
+						var buf = [];
 
-						file.pipe(fs.createWriteStream('bus.jpg'));
-						req.file[fieldname] = 'bus.jpg';
+						file.on('data', function(data) {
+					        buf.push(data);
+					    });
+
+					    file.on( "end", function() {
+					    	req.file_stream[fieldname] = Buffer.concat(buf);
+					    });
 					});
 
 					busboy.on('field', function(fieldname, val, valTruncated, keyTruncated) {
@@ -80,12 +97,12 @@
 
 					busboy.on('finish', function() {
 						self.exec(req);
-					})
+					});
 
-					req.pipe(busboy);
+					req.pipe(busboy)
 				}
 
-			} ) );
+			});
 		};
 
 
@@ -93,7 +110,32 @@
 		 *	parse multipart form data
 		 */
 
-		// Camino.prototype.parse = function( req ) { };
+		Camino.prototype.parse = function( data, boundary ) {
+			console.log(boundary);
+			// console.log(data);
+			// var boundary = ;
+			// application/octet-stream
+
+			data = data.split(boundary);
+			data.shift();
+			data.pop();
+			data.forEach( function( v, k ) {
+				var field = v.match(/name\="(\w*)"/)[1];
+				if( v.indexOf( 'application/octet-stream' ) === -1 ) {
+
+				}
+				// console.log(util.inspect(v));
+
+				// delete field.index;
+				// delete field.input;
+				console.log(field);
+				// v = v.split("\r\n\r\n")
+				// if( k !== 1 )
+					// console.log(v)
+			} );
+
+			// console.log(data);
+		};
 
 
 		/**
