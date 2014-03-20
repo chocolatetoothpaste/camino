@@ -36,20 +36,8 @@
 				// self.parse( req );
 
 				req.request = url.pathname;
-				req.context = req.method;
 				req.query = qs.parse( url.query );
 				req.qs = url.query;
-
-				// req.mess = "";
-
-				// // grab the request body, if applicable
-				// req.on( "data", function( chunk ) {
-				// 	req.mess += chunk;
-				// }).on( "end", function () {
-				// 	var boundary = "--" + this.headers["content-type"]
-				// 		.match(/boundary\=(.*)/i)[1];
-				// 	self.parse( this.mess, boundary );
-				// });
 
 				// augment the request object
 				if( typeof req.headers["content-type"] === "undefined"
@@ -120,6 +108,9 @@
 			// var boundary = ;
 			// application/octet-stream
 
+				// 	var boundary = "--" + this.headers["content-type"]
+				// 		.match(/boundary\=(.*)/i)[1];
+
 			data = data.split(boundary);
 			data.shift();
 			data.pop();
@@ -154,20 +145,20 @@
 		 * Don't move this code, it's placement is important
 		 */
 
-		Camino.prototype.error = function( data, responder ) {
+		Camino.prototype.error = function( err, responder ) {
 			responder = responder || global.options.responder
-			var status = data.status;
-			data = JSON.stringify( data );
+			// var status = data.status;
+			// data = JSON.stringify( data );
 
 			// since the only errors currently get triggered before a route can
 			// even be determined, there's no point in trying to use a route-
 			// specific responder. hopefully this doesn't become a problem
-			responder.writeHead( status, {
-				"Content-Type": "application/json",
-				"Content-Length": data.length
-			} );
-
-			responder.end( data );
+			// responder.writeHead( status, {
+			// 	"Content-Type": "application/json",
+			// 	"Content-Length": data.length
+			// } );
+			responder.writeHead( err.status );
+			responder.end( err.message );
 		};
 
 		module.exports = new Camino;
@@ -253,7 +244,7 @@
 		else {
 			// prevent errors when adding route to the stack at the bottom
 			opt.responder = opt.responder || undefined;
-			opt.context = opt.context || undefined;
+			opt.methods = opt.methods || undefined;
 		}
 
 		var params = r.match( /[@|%](\w+)/g );
@@ -275,14 +266,14 @@
 		if( typeof global.routes[route] !== "undefined" )
 			throw new Error( "Route is already defined: " + r );
 
-		// define the route. opt.responder and opt.context may be undefined at
+		// define the route. opt.responder and opt.method may be undefined at
 		// this point, but doesn't cause any issues with camino.exec()
 		// undefined === undefined, nbd
 		global.routes[route] = {
 			callback: cb,
 			params: params,
 			responder: opt.responder,
-			context: opt.context
+			methods: opt.methods
 		};
 	};
 
@@ -315,11 +306,9 @@
 
 		// if no route was found (no match), emit 404 status error
 		if( ! match ) {
-			this.emit( this.event.error, {
-				status: 404,
-				success: false,
-				message: 'Resource not found'
-			} );
+			var err = new Error('Resource not found');
+			err.status = 404;
+			this.emit( this.event.error, err );
 
 			// this just stops the browser
 			return false;
@@ -329,13 +318,11 @@
 		route = global.routes[route];
 
 		// if request method is not allowed for this route, emit 405 error
-		if( Array.isArray( route.context )
-			&& route.context.indexOf( map.context ) === -1 ) {
-				this.emit( this.event.error, {
-					status: 405,
-					success: false,
-					message: 'Method not allowed'
-				} );
+		if( Array.isArray( route.methods )
+			&& route.methods.indexOf( map.method ) === -1 ) {
+				var err = new Error('Method not allowed');
+				err.status = 405;
+				this.emit( this.event.error, err );
 
 				// this just stops the browser
 				return false;

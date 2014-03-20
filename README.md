@@ -2,7 +2,9 @@
 
 **Active development, please submit bugs and suggestions to GitHub repository!**
 
-**Camino only routes requests to a callback, it is not a full-fledged REST API server or any such sort. It's only job is to dispatch requests.**
+**The "context" nomenclature is being dropped in favor of "method", which is ubiquitous with HTTP requests, and will work just fine on the client side**
+
+Camino is a request middle layer.
 
 ### Defining Routes
     camino.route( route [, options], callback )
@@ -163,3 +165,10 @@ Then put this in .htaccess
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteRule (.*) index.html [L]
     </ifModule>
+
+### Changelog
+**v0.6.0**
+* Added support for parsing multipart/form-data
+
+**v<=0.5.24**
+* Changes were not logged
