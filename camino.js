@@ -1,4 +1,4 @@
-( function() {
+(function() {
 	var root = this,
 
 		// containers
@@ -32,17 +32,27 @@
 				var qs = require( "qs" ),
 					url = require( "url" ).parse( req.url );
 
-				// else... implement multipart parsing to handle file uploads
-				// self.parse( req );
+				// still not sure about this one...
+				req.context = req.method;
 
+				// alias
 				req.request = url.pathname;
+
+				// since all methods accept a query string, the query string
+				// gets it's own reference
 				req.query = qs.parse( url.query );
+
+				// preserve the original string for verification later
 				req.qs = url.query;
 
-				// augment the request object
-				if( typeof req.headers["content-type"] === "undefined"
-					|| req.headers["content-type"].indexOf( "application/x-www-form-urlencoded" ) !== -1 ) {
+				// default content type
+				var def = "application/x-www-form-urlencoded";
 
+				// url encoded from data
+				if( typeof req.headers["content-type"] === "undefined"
+					|| req.headers["content-type"].indexOf( def ) !== -1 ) {
+
+						// initialize the container
 						req.data = "";
 
 						// grab the request body, if applicable
@@ -51,47 +61,52 @@
 						});
 
 						req.on('end', function() {
+							// parse the query string
 							req.data = qs.parse( req.data );
 
-							// fire off the router ( this = camino, after binding )
+							// fire off the callback
 							self.exec( req );
 						});
-
 				}
 
+				// multipart form data (uploads...)
 				else {
-					req.file = {};
-					req.file_stream = {};
-					req.data = {};
+					// init...
+					req.file = req.data = {};
 
-					var Busboy = require('busboy');
-					var busboy = new Busboy({ headers: req.headers });
+					// var Busboy = require('busboy');
+					// var busboy = new Busboy({ headers: req.headers });
+					var busboy = require( 'busboy' ).Busboy({
+						headers: req.headers
+					});
 
-					busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+					busboy.on( 'file', function( field, file, name, enc, mime ) {
 						var buf = [];
 
 						file.on('data', function(data) {
 					        buf.push(data);
 					    });
 
-					    file.on( "end", function() {
-					    	req.file[fieldname] = Buffer.concat(buf);
+					    file.on( 'end', function() {
+					    	req.file[field] = Buffer.concat(buf);
 					    });
 					});
 
-					busboy.on('field', function(fieldname, val, valTruncated, keyTruncated) {
-						req.data[fieldname] = val;
+					// busboy.on('field', function(field, val, valTruncated, keyTruncated) {
+					busboy.on( 'field', function( field, val ) {
+						req.data[field] = val;
 					});
 
-					busboy.on('finish', function() {
-						// qs.parse the data sets to handle
-						// nested/multidemensional form fields
-						req.data = qs.parse(req.data);
-						req.file = qs.parse(req.file);
-						self.exec(req);
+					busboy.on( 'finish', function() {
+						// parse for nested/multidemensional form fields
+						req.data = qs.parse( req.data );
+						req.file = qs.parse( req.file );
+
+						// fire off route callback
+						self.exec( req );
 					});
 
-					req.pipe(busboy)
+					req.pipe( busboy );
 				}
 
 			});
@@ -100,10 +115,10 @@
 
 		/**
 		 *	parse multipart form data
-		 */
+		 *
 
 		Camino.prototype.parse = function( data, boundary ) {
-			console.log(boundary);
+			// console.log(boundary);
 			// console.log(data);
 			// var boundary = ;
 			// application/octet-stream
@@ -131,6 +146,8 @@
 
 			// console.log(data);
 		};
+
+		//*/
 
 
 		/**
@@ -176,7 +193,7 @@
 		 */
 
 		Camino.prototype.emit = function( event, data ) {
-			root.dispatchEvent( new CustomEvent( event, { detail: data } ) );
+			root.dispatchEvent( new CustomEvent( event, { detail: data }) );
 		};
 
 
@@ -212,14 +229,14 @@
 			var event = ( opt.history ? "popstate" : "hashchange" );
 			global.options.responder = responder || console.log.bind( console );
 
-			emitter.addEventListener.call( emitter, event, ( function() {
+			emitter.addEventListener.call( emitter, event, (function() {
 				// augment location object (for consistency on client/server)
 				emitter.location.request = ( opt.history
 					? emitter.location.pathname
 					: emitter.location.hash );
 
 				this.exec( emitter.location );
-			} ).bind( this ) );
+			}).bind( this ));
 		};
 
 		root.camino = new Camino;
@@ -241,11 +258,9 @@
 			opt = {};
 		}
 
-		else {
-			// prevent errors when adding route to the stack at the bottom
-			opt.responder = opt.responder || undefined;
-			opt.methods = opt.methods || undefined;
-		}
+		// prevent errors when adding a route to the stack
+		opt.responder = opt.responder || undefined;
+		opt.methods = opt.methods || undefined;
 
 		var params = r.match( /[@|%](\w+)/g );
 
@@ -328,6 +343,9 @@
 				return false;
 		}
 
+		// pass thru supported methods (for CORS headers)
+		map.methods = route.methods || [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ];
+
 		// clean up the misc data from the regexp match
 		// wish there were some flags to make the output cleaner...
 		delete match.index;
@@ -354,4 +372,4 @@
 		route.callback.call( null, map, responder );
 	};
 
-} )();
+})();
