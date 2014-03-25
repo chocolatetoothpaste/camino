@@ -74,11 +74,8 @@
 					// init...
 					req.file = req.data = {};
 
-					// var Busboy = require('busboy');
-					// var busboy = new Busboy({ headers: req.headers });
-					var busboy = require( 'busboy' ).Busboy({
-						headers: req.headers
-					});
+					var Busboy = require('busboy');
+					var busboy = new Busboy({ headers: req.headers });
 
 					busboy.on( 'file', function( field, file, name, enc, mime ) {
 						var buf = [];
