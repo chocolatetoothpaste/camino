@@ -308,6 +308,11 @@
 		// placeholders
 		var match, route;
 
+		this.once('call', function() {
+			// execute the user callback, passing request data and responder
+			route.callback.call( null, map, responder );
+		});
+
 		// loop through and try to find a route that matches the request
 		// I wish there was a more efficient way to do this
 		for( route in global.routes ) {
@@ -354,19 +359,21 @@
 		map.params = {};
 
 		// merge the param names and values
-		for( var ii = 0, l = match.length; ii < l; ++ii ) {
-			// optional params are captured with an undefined value
-			// so check that param has a value (or improve the regex)
-			if( typeof match[ii] !== 'undefined' ) {
-				map.params[route.params[ii]] = match[ii];
+		match.forEach( function( v, k ) {
+			if( typeof match[k] !== 'undefined' ) {
+				map.params[route.params[k]] = v;
 			}
-		}
+		});
 
 		// assign the responder, either custom or global
 		var responder = route.responder || global.options.responder;
 
-		// execute the user callback, passing request data and responder
-		route.callback.call( null, map, responder );
+		this.once( 'call', function() {
+			// execute the user callback, passing request data and responder
+			route.callback.call( null, map, responder );
+		});
+
+		this.emit('call');
 	};
 
 })();
