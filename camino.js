@@ -332,8 +332,8 @@
 		route = global.routes[route];
 
 		// if request method is not allowed for this route, emit 405 error
-		if( Array.isArray( route.methods )
-			&& route.methods.indexOf( map.method ) === -1 ) {
+		if( Array.isArray( route.context )
+			&& route.context.indexOf( map.method ) === -1 ) {
 				var err = new Error('Method not allowed');
 				err.status = 405;
 				this.emit( this.event.error, err );
@@ -343,7 +343,7 @@
 		}
 
 		// pass thru supported methods (for CORS headers)
-		map.methods = route.methods || [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ];
+		map.methods = route.context || [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ];
 
 		// clean up the misc data from the regexp match
 		// wish there were some flags to make the output cleaner...
