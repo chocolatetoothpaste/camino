@@ -302,18 +302,10 @@
 	 */
 
 	Camino.prototype.exec = function( map ) {
-		// placeholders
-		var match, route;
-
-		this.once('call', function() {
-			// execute the user callback, passing request data and responder
-			route.callback.call( null, map, responder );
-		});
-
 		// loop through and try to find a route that matches the request
 		// I wish there was a more efficient way to do this
-		for( route in global.routes ) {
-			match = RegExp( route, 'g' ).exec( map.request );
+		for( var route in global.routes ) {
+			var match = RegExp( route, 'g' ).exec( map.request );
 			if( match !== null )
 				break;
 		}
