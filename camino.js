@@ -255,10 +255,6 @@
 			opt = {};
 		}
 
-		// prevent errors when adding a route to the stack
-		opt.responder = opt.responder || undefined;
-		opt.methods = opt.methods || undefined;
-
 		var params = r.match( /[@|%](\w+)/g );
 
 		// until I can figure out how to make string.match capture the right
@@ -285,6 +281,7 @@
 			callback: cb,
 			params: params,
 			responder: opt.responder,
+			context: opt.context,
 			methods: opt.methods
 		};
 	};
