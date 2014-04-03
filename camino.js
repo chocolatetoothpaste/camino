@@ -25,88 +25,84 @@
 		 * an event.
 		 */
 
-		Camino.prototype.listen = function( emitter, responder ) {
-			var self = this;
-			emitter.addListener( 'request', function( req, res ) {
-				global.options.responder = responder || res;
-				var qs = require( "qs" ),
-					url = require( "url" ).parse( req.url );
+		Camino.prototype.listen = function( req, res ) {
+			global.options.responder = res;
+			var qs = require( "qs" ),
+				url = require( "url" ).parse( req.url );
 
-				// still not sure about this one...
-				req.context = req.method;
+			// still not sure about this one...
+			req.context = req.method;
 
-				// alias
-				req.request = url.pathname;
+			// alias
+			req.request = url.pathname;
 
-				// since all methods accept a query string, the query string
-				// gets it's own reference
-				req.query = qs.parse( url.query );
+			// since all methods accept a query string, the query string
+			// gets it's own reference
+			req.query = qs.parse( url.query );
 
-				// preserve the original string for verification later
-				req.qs = url.query;
+			// preserve the original string for verification later
+			req.qs = url.query;
 
-				// default content type
-				var def = "application/x-www-form-urlencoded";
+			// default content type
+			var def = "application/x-www-form-urlencoded";
 
-				// url encoded from data
-				if( typeof req.headers["content-type"] === "undefined"
-					|| req.headers["content-type"].indexOf( def ) !== -1 ) {
+			// url encoded from data
+			if( typeof req.headers["content-type"] === "undefined"
+				|| req.headers["content-type"].indexOf( def ) !== -1 ) {
 
-						// initialize the container
-						req.data = "";
+					// initialize the container
+					req.data = "";
 
-						// grab the request body, if applicable
-						req.on( "data", function( chunk ) {
-							req.data += chunk;
-						});
-
-						req.on('end', function() {
-							// parse the query string
-							req.data = qs.parse( req.data );
-
-							// fire off the callback
-							self.exec( req );
-						});
-				}
-
-				// multipart form data (uploads...)
-				else {
-					// init...
-					req.file = req.data = {};
-
-					var Busboy = require('busboy');
-					var busboy = new Busboy({ headers: req.headers });
-
-					busboy.on( 'file', function( field, file, name, enc, mime ) {
-						var buf = [];
-
-						file.on('data', function(data) {
-					        buf.push(data);
-					    });
-
-					    file.on( 'end', function() {
-					    	req.file[field] = Buffer.concat(buf);
-					    });
+					// grab the request body, if applicable
+					req.on( "data", function( chunk ) {
+						req.data += chunk;
 					});
 
-					// busboy.on('field', function(field, val, valTruncated, keyTruncated) {
-					busboy.on( 'field', function( field, val ) {
-						req.data[field] = val;
-					});
-
-					busboy.on( 'finish', function() {
-						// parse for nested/multidemensional form fields
+					req.on('end', function() {
+						// parse the query string
 						req.data = qs.parse( req.data );
-						req.file = qs.parse( req.file );
 
-						// fire off route callback
+						// fire off the callback
 						self.exec( req );
 					});
+			}
 
-					req.pipe( busboy );
-				}
+			// multipart form data (uploads...)
+			else {
+				// init...
+				req.file = req.data = {};
 
-			});
+				var Busboy = require('busboy');
+				var busboy = new Busboy({ headers: req.headers });
+
+				busboy.on( 'file', function( field, file, name, enc, mime ) {
+					var buf = [];
+
+					file.on('data', function(data) {
+						buf.push(data);
+					});
+
+					file.on( 'end', function() {
+						req.file[field] = Buffer.concat(buf);
+					});
+				});
+
+				// busboy.on('field', function(field, val, valTruncated, keyTruncated) {
+				busboy.on( 'field', function( field, val ) {
+					req.data[field] = val;
+				});
+
+				busboy.on( 'finish', function() {
+					// parse for nested/multidemensional form fields
+					req.data = qs.parse( req.data );
+					req.file = qs.parse( req.file );
+
+					// fire off route callback
+					self.exec( req );
+				});
+
+				req.pipe( busboy );
+			}
 		};
 
 
