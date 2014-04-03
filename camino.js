@@ -26,6 +26,7 @@
 		 */
 
 		Camino.prototype.listen = function( req, res ) {
+			var self = this;
 			global.options.responder = res;
 			var qs = require( "qs" ),
 				url = require( "url" ).parse( req.url );
