@@ -2,8 +2,6 @@
 
 **Active development, please submit bugs and suggestions to GitHub repository!**
 
-**The "context" nomenclature is being dropped in favor of "method", which is ubiquitous with HTTP requests, and will work just fine on the client side**
-
 Camino is a request middle layer.
 
 ### Defining Routes
