@@ -335,7 +335,7 @@
 		}
 
 		// pass thru supported methods (for CORS headers)
-		map.context = route.context || [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ];
+		map.methods = route.context || [ 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS' ];
 
 		// clean up the misc data from the regexp match
 		// wish there were some flags to make the output cleaner...
