@@ -19,9 +19,9 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 **options**
 type: object
 
-context (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, who knows? Maybe we'll figure something out one day...
+method (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, whatever you want, really...
 
-If you don't pass in a context, your code will always execute if a request matches a route.
+If you don't pass in a method, your code will always execute if a request matches a route.
 responder (function) is a custom responder to use in place of the default (if there is one) for a single route
 
 **callback**
@@ -39,7 +39,7 @@ The map object is either the http.request object (node.js) or the window.locatio
 
 map.query: the query string received by the server
 
-map.context: a string, in the case of a server GET, POST, PUT, DELETE, etc... whatever you want really.
+map.method: a string, in the case of a server the request method
 
 map.params: an object, key-value pair of data extracted from the URLs.
 
