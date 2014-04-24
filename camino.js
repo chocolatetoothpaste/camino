@@ -8,7 +8,9 @@ var root = this,
 	};
 
 // prototype
-function Camino() { };
+function Camino() {
+
+};
 
 // server stuff
 if( typeof module !== "undefined" && module.exports ) {
@@ -36,9 +38,6 @@ if( typeof module !== "undefined" && module.exports ) {
 				url = require( 'url' ).parse( req.url );
 
 			req.request = url.pathname;
-
-			// since all methods accept a query string, the query string
-			// gets it's own reference
 			req.query = qs.parse( url.query );
 
 			// include the original query string
@@ -50,7 +49,7 @@ if( typeof module !== "undefined" && module.exports ) {
 			// process multipart form data (uploads...)
 			if( type.indexOf( 'multipart/form-data' ) !== -1 ) {
 				// don't combine these two, bad things will happen
-				req.file = {};
+				req.files = {};
 				req.data = {};
 
 				var Busboy = require( 'busboy' );
@@ -65,12 +64,12 @@ if( typeof module !== "undefined" && module.exports ) {
 
 					file.on( 'data', function(data) {
 						// push data bits into the contrainer
-						buf.push(data);
+						buf.push( data );
 					});
 
 					file.on( 'end', function() {
 						// put data in the buffer and assign it to a var
-						req.file[field] = Buffer.concat(buf);
+						req.files[field] = Buffer.concat(buf);
 						delete buf;
 					});
 				});
@@ -84,7 +83,7 @@ if( typeof module !== "undefined" && module.exports ) {
 					// parse for nested/multidemensional form fields
 					// getting rid of this parsing shit soon
 					req.data = qs.parse( req.data );
-					req.file = qs.parse( req.file );
+					req.files = qs.parse( req.files );
 
 					// fire off route callback
 					self.exec( req );
@@ -290,7 +289,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 		callback: cb,
 		params: params,
 		responder: opt.responder,
-		methods: opt.method
+		methods: opt.methods
 	};
 };
 
@@ -332,8 +331,8 @@ Camino.prototype.exec = function( req ) {
 	route = global.routes[route];
 
 	// if request method is not allowed for this route, emit 405 error
-	if( Array.isArray( route.method )
-		&& route.method.indexOf( req.method ) === -1 ) {
+	if( Array.isArray( route.methods )
+		&& route.methods.indexOf( req.method ) === -1 ) {
 			var err = new Error('Method not allowed');
 			err.status = 405;
 			this.emit( this.event.error, err );

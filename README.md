@@ -4,68 +4,11 @@
 
 Camino is a request middle layer.
 
-### Defining Routes
-    camino.route( route [, options], callback )
-
-**route**
-type: string
-
-The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match (404 error).
-
-/api/user/%id matches /api/user, /api/user/ and /api/user/23
-
-/api/user/@id matches /api/user/23, but not /api/user or /api/user/
-
-**options**
-type: object
-
-method (string) parameter is how you distinguish what type of request is being made. On the server, this is typically the request method. In the browser, whatever you want, really...
-
-If you don't pass in a method, your code will always execute if a request matches a route.
-responder (function) is a custom responder to use in place of the default (if there is one) for a single route
-
-**callback**
-type: function
-
-YOUR code that is run when a request is matched to a route.
-
-See callback section below for usage.
-
-<!-- Lastly, the responder param is an object you want to use in your code to send a message to the browser/server/anything else. It can be whatever you want and do whatever you want. On the server, it defaults to the HTTP response object so you can set headers, write data, anything else. This can be overriden on a route by route basis, or globally through the listen() function. See examples below. -->
-### Callback
-Your callback should accept 2 parameters: a map object, and a response object.
-
-The map object is either the http.request object (node.js) or the window.location object (browser), augmented with 4 additional properties: query, context, params, data.
-
-map.query: the query string received by the server
-
-map.method: a string, in the case of a server the request method
-
-map.params: an object, key-value pair of data extracted from the URLs.
-
-map.data: the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
-
-### Listening
-When you call the listen() function, you have the option of passing in a custom "response" object/function.
-
-In the browser, this could be a data parser, a message box, or something like that.
-
-On the server, it defaults to the HTTP response object, but feel free to be creative :) Define your own as a shortcut if you always respond with the same content type or something like that.
-
-The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
-
-### Error Handling
-Very basic error handling was introduced for server instances only.
-
-This was done to handle 4XX errors so browser hanging can be avoided.
-
-Crappy error handling has been replaced with events now, so take full advantage of that.
-
-Additionally, Camino.error can be augmented with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
+First things first, some juicy examples.
 
 ### Usage:
 
-Server
+**Server**
 
     var camino = require("camino");
 
@@ -101,7 +44,7 @@ Server
 
     camino.listen(server);
 
-Browser (Hashes)
+**Browser (Hashes)**
 
     <script src="path/to/camino.js"></script>
     // var camino = camino() is no longer required
@@ -136,7 +79,7 @@ Browser (Hashes)
 
 Using the History API requires a bit more boilerplate code, but works quite nicely
 
-Browser (History API, condensed example)
+**Browser (History API, condensed example)**
 
     // include script and define routes
     camino.route( "/profile", user.init );
@@ -164,9 +107,77 @@ Then put this in .htaccess
         RewriteRule (.*) index.html [L]
     </ifModule>
 
-### Changelog
-**v0.6.0**
-* Added support for parsing multipart/form-data
 
-**v<=0.5.24**
-* Changes were not logged
+### API
+    camino.route( route [, options], callback )
+
+**route**
+
+type: string
+
+The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match (404 error).
+
+/api/user/%id matches /api/user, /api/user/ and /api/user/23
+
+/api/user/@id matches /api/user/23, but not /api/user or /api/user/
+
+**options**
+
+type: object
+
+The only option current is "method" (string) -- an array of supported methods for the URL. On the server, this is typically the request method. In the browser, whatever you want, really...
+
+If you don't pass in a method, your code will always execute if a request matches a route.
+responder (function) is a custom responder to use in place of the default (if there is one) for a single route
+
+**callback**
+
+type: function
+
+YOUR code that is run when a request is matched to a route.
+
+Your callback should accept 2 parameters: a request object, and a response object.
+
+The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
+
+request.request: the request string that was used for matching
+
+request.query: the query string received by the server, parsed into a JSON object
+
+request.qs: the original query string
+
+request.method: a string, in the case of a server the request method
+
+request.params: an object, key-value pair of data extracted from the URLs.
+
+request.data: the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
+
+request.files: an array of files that were upload, captured into Buffers
+
+* * *
+
+    camino.listen( server [, responder] );
+
+OR
+
+    camino.listen( window [, options], responder );
+
+When you call the listen() function, you have the option of passing in a custom "response" object/function.
+
+In the browser, this could be a data parser, a message box, or something like that.
+
+On the server, it defaults to the HTTP response object, but feel free to be creative :) Define your own as a shortcut if you always respond with the same content type or something like that.
+
+The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
+
+### Error Handling
+Very basic error handling was introduced for server instances only.
+
+This was done to handle 4XX errors so browser hanging can be avoided.
+
+Crappy error handling has been replaced with events now, so take full advantage of that.
+
+Additionally, Camino.error can be augmented with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
+
+### Changelog
+I'm not that good, maybe someday...
