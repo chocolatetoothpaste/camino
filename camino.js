@@ -82,7 +82,16 @@ if( typeof module !== "undefined" && module.exports ) {
 				busboy.on( 'finish', function() {
 					// parse for nested/multidemensional form fields
 					// getting rid of this parsing shit soon
-					req.data = qs.parse( req.data );
+					
+					var type = /[^;?]*/.exec(req.headers['content-type'])[0];
+					
+					if(type == 'application/json') {
+						req.data = JSON.parse( req.data );
+					}
+					else {
+						req.data = qs.parse( req.data );
+					}
+					
 					req.files = qs.parse( req.files );
 
 					// fire off route callback
@@ -106,7 +115,14 @@ if( typeof module !== "undefined" && module.exports ) {
 
 				req.on( 'end', function() {
 					// parse the query string
-					req.data = qs.parse( req.data );
+					var type = /[^;?]*/.exec(req.headers['content-type'])[0];
+					
+					if(type == 'application/json') {
+						req.data = JSON.parse( req.data );
+					}
+					else {
+						req.data = qs.parse( req.data );
+					}
 
 					// fire off the callback
 					self.exec( req );
