@@ -45,9 +45,10 @@ if( typeof module !== "undefined" && module.exports ) {
 
 
 			var type = req.headers["content-type"] || '';
+			type = /[^;?]*/.exec(type.toLowerCase())[0];
 
 			// process multipart form data (uploads...)
-			if( type.indexOf( 'multipart/form-data' ) !== -1 ) {
+			if( type == 'multipart/form-data' ) {
 				// don't combine these two, bad things will happen
 				req.files = {};
 				req.data = {};
@@ -105,8 +106,13 @@ if( typeof module !== "undefined" && module.exports ) {
 				});
 
 				req.on( 'end', function() {
-					// parse the query string
-					req.data = qs.parse( req.data );
+					if(type == 'application/json') {
+						req.data = JSON.parse( req.data );
+					}
+					else {
+						// parse the query string
+						req.data = qs.parse( req.data );
+					}
 
 					// fire off the callback
 					self.exec( req );
