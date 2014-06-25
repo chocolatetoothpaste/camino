@@ -1,6 +1,6 @@
 {
 	"name": "camino",
-	"version": "0.7.5",
+	"version": "0.7.6",
 	"description": "One-stop routing for server- and client-side web applications",
 	"main": "./camino.js",
 	"author": {
@@ -9,7 +9,7 @@
 	},
 	"dependencies": {
 		"qs": "0.6.6",
-	    "busboy": "0.2.3"
+	    "busboy": "0.2.7"
 	},
 	"keywords": [
 		"router", "routing", "route", "REST", "API", "hash", "history"

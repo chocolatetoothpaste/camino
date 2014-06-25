@@ -1,6 +1,7 @@
 # Camino - One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository!**
+***Camino will no longer post-process data from multipart/form-data requests, so if you are expecting nested form fields, you have to post-process yourself***
 
 Camino is a request middle layer.
 
