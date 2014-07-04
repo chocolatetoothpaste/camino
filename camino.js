@@ -44,8 +44,8 @@ if( typeof module !== "undefined" && module.exports ) {
 			req.qs = url.query;
 
 
-			var type = req.headers["content-type"] || '';
-			type = /[^;?]*/.exec(type.toLowerCase())[0];
+			var type = ( req.headers["content-type"] || "" )
+				.split(';')[0].toLowerCase();
 
 			// process multipart form data (uploads...)
 			if( type == 'multipart/form-data' ) {
@@ -81,11 +81,6 @@ if( typeof module !== "undefined" && module.exports ) {
 				});
 
 				busboy.on( 'finish', function() {
-					// parse for nested/multidemensional form fields
-					// getting rid of this parsing shit soon
-					req.data = qs.parse( req.data );
-					req.files = qs.parse( req.files );
-
 					// fire off route callback
 					self.exec( req );
 				});
