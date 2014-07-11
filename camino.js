@@ -8,9 +8,7 @@ var root = this,
 	};
 
 // prototype
-function Camino() {
-
-};
+function Camino() { }
 
 // server stuff
 if( typeof module !== "undefined" && module.exports ) {
@@ -43,56 +41,69 @@ if( typeof module !== "undefined" && module.exports ) {
 			// include the original query string
 			req.qs = url.query;
 
+			// loop through and try to find a route that matches the request
+			// I wish there was a more efficient way to do this
+			for( var route in global.routes ) {
+				var match = RegExp( route, 'g' ).exec( req.request );
+				if( match !== null )
+					break;
+			}
+
+			// if no route was found (no match), emit 404 status error
+			if( ! match ) {
+				var err = new Error('Resource not found');
+				err.status = 404;
+				self.emit( self.event.error, err );
+
+				// this just stops the browser
+				return false;
+			}
+
+			// this gets referenced a lot, so re-assign and make it a bit prettier
+			route = global.routes[route];
+
+			// if request method is not allowed for this route, emit 405 error
+			if( route.methods.indexOf( req.method ) === -1 && req.method !== 'OPTIONS' ) {
+					var err = new Error('Method not allowed');
+					err.status = 405;
+					self.emit( self.event.error, err );
+
+					// this just stops the browser
+					return false;
+			}
+
+			// pass matched route info to req object
+			req.route = route;
+
+			// clean up the misc data from the regexp match
+			// wish there were some flags to make the output cleaner...
+			delete match.index;
+			delete match.input;
+
+			// the first key is the string that was matched, ditch it
+			match.shift();
+
+			// set empty params object for easier testing in user callback
+			req.params = {};
+
+			// merge the param names and values
+			match.forEach( function( v, k ) {
+				if( typeof match[k] !== 'undefined' ) {
+					req.params[route.params[k]] = v;
+				}
+			});
 
 			var type = ( req.headers["content-type"] || "" )
 				.split(';')[0].toLowerCase();
 
 			// process multipart form data (uploads...)
-			if( type == 'multipart/form-data' ) {
-				// don't combine these two, bad things will happen
-				req.files = {};
-				req.data = {};
-
-				var Busboy = require( 'busboy' );
-				var busboy = new Busboy({ headers: req.headers });
-
-				// grab uploaded files and stream them into buffers
-				// full args for future reference, removed to save memory...?
-				// busboy.on( 'file', function( field, file, name, enc, mime ) {
-				busboy.on( 'file', function( field, file ) {
-					// create a container
-					var buf = [];
-
-					file.on( 'data', function(data) {
-						// push data bits into the contrainer
-						buf.push( data );
-					});
-
-					file.on( 'end', function() {
-						// put data in the buffer and assign it to a var
-						req.files[field] = Buffer.concat(buf);
-						delete buf;
-					});
-				});
-
-				// valTruncated, keyTruncated are args 3 & 4, no use here yet
-				busboy.on( 'field', function( field, val ) {
-					req.data[field] = val;
-				});
-
-				busboy.on( 'finish', function() {
-					// fire off route callback
-					self.exec( req );
-				});
-
-				// believe in the cleansing power of the pipe! [ad s1e15]
-				req.pipe( busboy );
+			if( type === 'multipart/form-data' ) {
+				// pass off to delegate
+				self.formData( req );
 			}
 
 			// url encoded from data
 			else {
-
-				// initialize the container
 				req.data = '';
 
 				// grab the request body, if applicable
@@ -101,13 +112,9 @@ if( typeof module !== "undefined" && module.exports ) {
 				});
 
 				req.on( 'end', function() {
-					if(type == 'application/json') {
-						req.data = JSON.parse( req.data );
-					}
-					else {
-						// parse the query string
-						req.data = qs.parse( req.data );
-					}
+					req.data = ( type === 'application/json'
+						? JSON.parse( req.data )
+						: qs.parse( req.data ) );
 
 					// fire off the callback
 					self.exec( req );
@@ -115,6 +122,51 @@ if( typeof module !== "undefined" && module.exports ) {
 			}
 
 		});
+	};
+
+
+	/**
+	 * Temporary delegate for handling multi-part form data (uploads)
+	 */
+
+	Camino.prototype.formData = function( req ) {
+		req.files = {};
+		req.data = {};
+
+		var Busboy = require( 'busboy' );
+		var busboy = new Busboy({ headers: req.headers });
+
+		// grab uploaded files and stream them into buffers
+		// full args for future reference, removed to save memory...?
+		// busboy.on( 'file', function( field, file, name, enc, mime ) {
+		busboy.on( 'file', function( field, file ) {
+			// create a container
+			var buf = [];
+
+			file.on( 'data', function(data) {
+				// push data bits into the contrainer
+				buf.push( data );
+			});
+
+			file.on( 'end', function() {
+				// put data in the buffer and assign it to a var
+				req.files[field] = Buffer.concat(buf);
+				delete buf;
+			});
+		});
+
+		// valTruncated, keyTruncated are args 3 & 4, no use here yet
+		busboy.on( 'field', function( field, val ) {
+			req.data[field] = val;
+		});
+
+		busboy.on( 'finish', function() {
+			// fire off route callback
+			self.exec( req );
+		});
+
+		// believe in the cleansing power of the pipe! [ad s1e15]
+		req.pipe( busboy );
 	};
 
 
@@ -290,7 +342,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 		callback: cb,
 		params: params,
 		responder: opt.responder,
-		methods: opt.methods
+		methods: opt.methods || []
 	};
 };
 
@@ -310,61 +362,11 @@ Camino.prototype.list = function() {
  */
 
 Camino.prototype.exec = function( req ) {
-	// loop through and try to find a route that matches the request
-	// I wish there was a more efficient way to do this
-	for( var route in global.routes ) {
-		var match = RegExp( route, 'g' ).exec( req.request );
-		if( match !== null )
-			break;
-	}
-
-	// if no route was found (no match), emit 404 status error
-	if( ! match ) {
-		var err = new Error('Resource not found');
-		err.status = 404;
-		this.emit( this.event.error, err );
-
-		// this just stops the browser
-		return false;
-	}
-
-	// this gets referenced a lot, so re-assign and make it a bit prettier
-	route = global.routes[route];
-
-	// if request method is not allowed for this route, emit 405 error
-	if( Array.isArray( route.methods )
-		&& route.methods.indexOf( req.method ) === -1 ) {
-			var err = new Error('Method not allowed');
-			err.status = 405;
-			this.emit( this.event.error, err );
-
-			// this just stops the browser
-			return false;
-	}
-
-	req.route = route;
-
-	// clean up the misc data from the regexp match
-	// wish there were some flags to make the output cleaner...
-	delete match.index;
-	delete match.input;
-
-	// the first key is the string that was matched, ditch it
-	match.shift();
-
-	req.params = {};
-
-	// merge the param names and values
-	match.forEach( function( v, k ) {
-		if( typeof match[k] !== 'undefined' ) {
-			req.params[route.params[k]] = v;
-		}
-	});
 
 	// assign the responder, either custom or global
-	var responder = route.responder || global.options.responder;
+	var responder = req.route.responder || global.options.responder;
 
 	// execute the user callback, passing request data and responder
-	route.callback.call( null, req, responder );
+	req.route.callback.call( null, req, responder );
 };
 })();
