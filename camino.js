@@ -35,10 +35,13 @@ if( typeof module !== "undefined" && module.exports ) {
 			var qs = require( 'qs' ),
 				url = require( 'url' ).parse( req.url );
 
+			// req.url without the querystring
 			req.request = url.pathname;
+
+			// query string parsed into JSON object
 			req.query = qs.parse( url.query );
 
-			// include the original query string
+			// the original query string, without the '?'
 			req.qs = url.query;
 
 			// loop through and try to find a route that matches the request
@@ -63,7 +66,8 @@ if( typeof module !== "undefined" && module.exports ) {
 			route = global.routes[route];
 
 			// if request method is not allowed for this route, emit 405 error
-			if( route.methods.indexOf( req.method ) === -1
+			if( ( route.methods.length > 0
+				&& route.methods.indexOf( req.method ) === -1 )
 				&& req.method !== 'OPTIONS' ) {
 					var err = new Error('Method not allowed');
 					err.status = 405;
@@ -95,7 +99,6 @@ if( typeof module !== "undefined" && module.exports ) {
 			});
 
 			self.exec( req );
-
 		});
 	};
 
