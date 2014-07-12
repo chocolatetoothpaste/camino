@@ -55,20 +55,21 @@ if( typeof module !== "undefined" && module.exports ) {
 				err.status = 404;
 				self.emit( self.event.error, err );
 
-				// this just stops the browser
+				// stop the browser
 				return false;
 			}
 
-			// this gets referenced a lot, so re-assign and make it a bit prettier
+			// shorter reference
 			route = global.routes[route];
 
 			// if request method is not allowed for this route, emit 405 error
-			if( route.methods.indexOf( req.method ) === -1 && req.method !== 'OPTIONS' ) {
+			if( route.methods.indexOf( req.method ) === -1
+				&& req.method !== 'OPTIONS' ) {
 					var err = new Error('Method not allowed');
 					err.status = 405;
 					self.emit( self.event.error, err );
 
-					// this just stops the browser
+					// stop the browser
 					return false;
 			}
 
@@ -93,33 +94,7 @@ if( typeof module !== "undefined" && module.exports ) {
 				}
 			});
 
-			var type = ( req.headers["content-type"] || "" )
-				.split(';')[0].toLowerCase();
-
-			// process multipart form data (uploads...)
-			if( type === 'multipart/form-data' ) {
-				// pass off to delegate
-				self.formData( req );
-			}
-
-			// url encoded from data
-			else {
-				req.data = '';
-
-				// grab the request body, if applicable
-				req.on( 'data', function( chunk ) {
-					req.data += chunk;
-				});
-
-				req.on( 'end', function() {
-					req.data = ( type === 'application/json'
-						? JSON.parse( req.data )
-						: qs.parse( req.data ) );
-
-					// fire off the callback
-					self.exec( req );
-				});
-			}
+			self.exec( req );
 
 		});
 	};
@@ -129,7 +104,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Temporary delegate for handling multi-part form data (uploads)
 	 */
 
-	Camino.prototype.formData = function( req ) {
+	Camino.prototype.formData = function( req, responder ) {
 		req.files = {};
 		req.data = {};
 
@@ -162,7 +137,7 @@ if( typeof module !== "undefined" && module.exports ) {
 
 		busboy.on( 'finish', function() {
 			// fire off route callback
-			self.exec( req );
+			req.route.callback.call( null, req, responder );
 		});
 
 		// believe in the cleansing power of the pipe! [ad s1e15]
@@ -362,11 +337,37 @@ Camino.prototype.list = function() {
  */
 
 Camino.prototype.exec = function( req ) {
+	// grab the content type or set an empty string
+	var type = ( req.headers["content-type"] || "" )
+		.split(';')[0].toLowerCase();
 
 	// assign the responder, either custom or global
 	var responder = req.route.responder || global.options.responder;
 
-	// execute the user callback, passing request data and responder
-	req.route.callback.call( null, req, responder );
+	// process multipart form data (uploads...)
+	if( type === 'multipart/form-data' ) {
+		// pass off to delegate
+		this.formData( req, responder );
+	}
+
+	// url encoded from data
+	else {
+		req.data = '';
+
+		// grab the request body, if applicable
+		req.on( 'data', function( chunk ) {
+			req.data += chunk;
+		});
+
+		req.on( 'end', function() {
+			req.data = ( type === 'application/json'
+				? JSON.parse( req.data )
+				: require('qs').parse( req.data ) );
+
+			// execute the user callback, passing request data and responder
+			req.route.callback.call( null, req, responder );
+		});
+	}
+
 };
 })();
