@@ -1,21 +1,27 @@
 (function() {
+// not sure what purpose this serves, seems to be a common thing with node modules
 var root = this,
 
-	// containers
+	// containers for data that needs a broader scope
 	global = {
+
+		// this is the main container for routes that are defined
 		routes: {},
+
+		// this is for some one-off customizations, like a custom event
+		// listener, or whether the History API is being used in browser
 		options: {}
 	};
 
-// prototype
+// main object constructor
 function Camino() { }
 
-// server stuff
+// node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
 	var util = require( "util" ),
 		events = require( "events" );
 
-	// execute event constructor on camino object and inherit methods
+	// inherit event emitter prototype to allow camino to emit/listen to events
 	events.EventEmitter.call( Camino );
 	util.inherits( Camino, events.EventEmitter );
 
@@ -26,13 +32,11 @@ if( typeof module !== "undefined" && module.exports ) {
 	 */
 
 	Camino.prototype.listen = function( emitter, responder ) {
-		var self = this;
-
-		emitter.on( 'request', function( req, res ) {
+		var cb = (function( req, res ) {
 			// assign the global response object
 			global.options.responder = responder || res;
 
-			var qs = require( 'qs' ),
+			var qs = require( 'querystring' ),
 				url = require( 'url' ).parse( req.url );
 
 			// req.url without the querystring
@@ -48,30 +52,33 @@ if( typeof module !== "undefined" && module.exports ) {
 			// I wish there was a more efficient way to do this
 			for( var route in global.routes ) {
 				var match = RegExp( route, 'g' ).exec( req.request );
+				// if a match was found, break the loop
 				if( match !== null )
 					break;
 			}
 
-			// if no route was found (no match), emit 404 status error
+			// if no route was found (no match), emit 404 (not found) error
 			if( ! match ) {
 				var err = new Error('Resource not found');
 				err.status = 404;
-				self.emit( self.event.error, err );
+				this.emit( this.event.error, err );
 
 				// stop the browser
 				return false;
 			}
 
-			// shorter reference
+			// shorten reference
 			route = global.routes[route];
 
-			// if request method is not allowed for this route, emit 405 error
+			// if request method is not allowed for this route, emit 405
+			// (method not allowed) error
+			// all "OPTIONS" requests should be allowed
 			if( ( route.methods.length > 0
 				&& route.methods.indexOf( req.method ) === -1 )
 				&& req.method !== 'OPTIONS' ) {
 					var err = new Error('Method not allowed');
 					err.status = 405;
-					self.emit( self.event.error, err );
+					this.emit( this.event.error, err );
 
 					// stop the browser
 					return false;
@@ -98,8 +105,13 @@ if( typeof module !== "undefined" && module.exports ) {
 				}
 			});
 
-			self.exec( req );
-		});
+			// last steps before calling user callback!
+			this.exec( req );
+
+		// bind callback to Camino's scope to eliminte "var self = ..." bastard
+		}).bind(this);
+
+		emitter.on( 'request', cb);
 	};
 
 
@@ -129,7 +141,7 @@ if( typeof module !== "undefined" && module.exports ) {
 			file.on( 'end', function() {
 				// put data in the buffer and assign it to a var
 				req.files[field] = Buffer.concat(buf);
-				delete buf;
+				buf = undefined;
 			});
 		});
 
@@ -293,41 +305,52 @@ Camino.prototype.route = function( r, opt, cb ) {
 		opt = {};
 	}
 
-	var params = r.match( /[@|%](\w+)/g );
+	// extract param names from the route
+	var params = ( r.match( /[@|%]\w+/g ) || [] )
 
-	// until I can figure out how to make string.match capture the right
-	// group, this will have to do
-	if( params )
-		params = params.map( function( v ) { return v.substr( 1 ) } );
+		// r.match grabs param names including @/%, so trim the first char
+		.map( function( v ) { return v.substr( 1 ) } );
 
-	// replace var names with regexes
+	// replace param names with regexes
 	var route = r.replace( /@(\w+)/g, "(\\w+)" )
-		// this one was hard to write. it checks for 0 or 1 occ. of "/",
+		// this one was hard to write. it checks for 0 or 1 occ. of "/"
 		// or, 0 or 1 param (string, not "/") if 1 occ. of "/"" was found
 		.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
 
 	// wrap the route with regexp string delimiters
 	route = "^" + route + "$";
 
+	// throw an error if trying to redefine a route
 	if( typeof global.routes[route] !== "undefined" )
 		throw new Error( "Route is already defined: " + r );
 
-	// define the route. opt.responder and opt.method may be undefined at
-	// this point, but doesn't seem to cause any issues with camino.exec()
-	// undefined === undefined, nbd
+	// define the route data object
 	global.routes[route] = {
+
+		// the original route as defined by the user, before tokens are
+		// converted into regular expressions
 		route: r,
+
+		// user defined callback for this route
 		callback: cb,
+
+		// an array of param names that are defined within the route
+		// these param names are used later to create a key/value pair of params
+		// defined on incoming requests
 		params: params,
+
+		// opt.responder may be undefined at this point, but doesn't seem to
+		// cause any issues. undefined === undefined, nbd
 		responder: opt.responder,
+
+		// default to empty array for convenience and type consistency
 		methods: opt.methods || []
 	};
 };
 
 
 /**
- * list all registered routes
- * this function has no practical use, for testing/dev
+ * print to console all defined routes (for testing purposes)
  */
 
 Camino.prototype.list = function() {
@@ -342,6 +365,7 @@ Camino.prototype.list = function() {
 Camino.prototype.exec = function( req ) {
 	// grab the content type or set an empty string
 	var type = ( req.headers["content-type"] || "" )
+		// then grab grab the string before the first ";" (and lower case it)
 		.split(';')[0].toLowerCase();
 
 	// assign the responder, either custom or global
@@ -353,24 +377,24 @@ Camino.prototype.exec = function( req ) {
 		this.formData( req, responder );
 	}
 
-	// url encoded from data
 	else {
+		// create empty string for appending request body data
 		req.data = '';
 
-		// grab the request body, if applicable
+		// grab the request body data, if provided
 		req.on( 'data', function( chunk ) {
 			req.data += chunk;
 		});
 
+		// parse request data and execute route callback
 		req.on( 'end', function() {
 			req.data = ( type === 'application/json'
 				? JSON.parse( req.data )
-				: require('qs').parse( req.data ) );
+				: require('querystring').parse( req.data ) );
 
-			// execute the user callback, passing request data and responder
+			// execute the callback, pass through request and responder handlers
 			req.route.callback.call( null, req, responder );
 		});
 	}
-
 };
 })();
