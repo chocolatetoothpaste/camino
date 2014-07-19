@@ -5,10 +5,10 @@ var root = this,
 	// containers for data that needs a broader scope
 	global = {
 
-		// this is the main container for routes that are defined
+		// the main container for routes that are defined
 		routes: {},
 
-		// this is for some one-off customizations, like a custom event
+		// the main container for global options, like a custom event
 		// listener, or whether the History API is being used in browser
 		options: {}
 	};
@@ -111,7 +111,7 @@ if( typeof module !== "undefined" && module.exports ) {
 		// bind callback to Camino's scope to eliminte "var self = ..." bastard
 		}).bind(this);
 
-		emitter.on( 'request', cb);
+		emitter.on( 'request', cb );
 	};
 
 
@@ -211,18 +211,18 @@ if( typeof module !== "undefined" && module.exports ) {
 
 	Camino.prototype.error = function( err, responder ) {
 		responder = responder || global.options.responder
-		// var status = data.status;
-		// data = JSON.stringify( data );
+		var data = JSON.stringify({
+			success: false,
+			status: err.status,
+			error: err.message
+		});
 
-		// since the only errors currently get triggered before a route can
-		// even be determined, there's no point in trying to use a route-
-		// specific responder. hopefully this doesn't become a problem
-		// responder.writeHead( status, {
-		// 	"Content-Type": "application/json",
-		// 	"Content-Length": data.length
-		// } );
-		responder.writeHead( err.status );
-		responder.end( err.message );
+		responder.writeHead( err.status, {
+			"Content-Type": "application/json",
+			"Content-Length": data.length
+		} );
+
+		responder.end( data );
 	};
 
 	module.exports = new Camino;

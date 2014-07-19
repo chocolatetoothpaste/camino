@@ -13,7 +13,7 @@ First things first, some juicy examples.
 
     var camino = require("camino");
 
-    camino.route( "/api/user/@id", { context: ["POST"] }, user.init );
+    camino.route( "/api/user/@id", { methods: ["POST"] }, user.init );
 
     // using the response object
     var myCb = function( map, response ) {
@@ -37,7 +37,7 @@ First things first, some juicy examples.
     camino.route( "/api/user/@user_id/message/%id", myCb );
 
     // supplying "options" to the route, with custom responder
-    var options = { responder: SomeCustomResponder, context: ["GET", "POST"] };
+    var options = { responder: SomeCustomResponder, methods: ["GET", "POST"] };
     camino.route( "/api/organization/@id", options, org.init );
 
     var http = require('http');
@@ -56,8 +56,8 @@ First things first, some juicy examples.
     // this route will override the default CustomResponderObject set below with different responders
     camino.route( "#!/video:%playlist_id", { responder: SomeDataDisplayingObject }, playlist.init);
 
-    // possible context...?  see "browser context" comment below
-    var options = { responder: SomeMessageBoxObject, context: ["read", "delete"] };
+    // using "methods" in the browser
+    var options = { responder: SomeMessageBoxObject, methods: ["read", "delete"] };
     camino.route( "#!/message/%id", options, message.init );
 
     camino.listen(window);
@@ -67,16 +67,16 @@ First things first, some juicy examples.
     // fire a hashchange event for initial page loads
     window.dispatchEvent( new Event("hashchange") );
 
-    // browser context, maybe...?
+    // browser methods, maybe...?
     // psuedo jQuery code
-    $('[data-context]').on( "click", function() {
+    $('[data-method]').on( "click", function() {
             // I don't remember if this is frowned upon... not sure if I care
-            window.location.context = $(this).data('context');
+            window.location.method = $(this).data('method');
     });
 
-    // sample html for browser context
-    <a href="/#!/message/23" data-context="read">View Message</a>
-    <a href="/#!/message/23" data-context="delete">Delete Message</a>
+    // sample html for browser method
+    <a href="/#!/message/23" data-method="read">View Message</a>
+    <a href="/#!/message/23" data-method="delete">Delete Message</a>
 
 Using the History API requires a bit more boilerplate code, but works quite nicely
 
@@ -126,7 +126,7 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 type: object
 
-The only option current is "method" (string) -- an array of supported methods for the URL. On the server, this is typically the request method. In the browser, whatever you want, really...
+The only option currently is "methods" (string) -- an array of supported methods for the URL. On the server, this is typically the request method. In the browser, whatever you want, really...
 
 If you don't pass in a method, your code will always execute if a request matches a route.
 responder (function) is a custom responder to use in place of the default (if there is one) for a single route
