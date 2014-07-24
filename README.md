@@ -15,17 +15,16 @@ First things first, some juicy examples.
 
     var camino = require("camino");
 
+    // just pretend user.init is part of some controller framework or something
     camino.route( "/api/user/@id", { methods: ["POST"] }, user.init );
 
     // using the response object
     var myCb = function( map, response ) {
-        var data = {
+        var data = JSON.stringify({
             status: 200,
             success: true,
             data: map
-        };
-
-        data = JSON.stringify( data );
+        });
 
         // HTTP response object passed from node
         response.writeHead( 200, {
@@ -36,11 +35,12 @@ First things first, some juicy examples.
         response.end(data);
     };
 
+    // passing in a simple function as the callback for this route
     camino.route( "/api/user/@user_id/message/%id", myCb );
 
-    // supplying "options" to the route, with custom responder
-    var options = { responder: SomeCustomResponder, methods: ["GET", "POST"] };
-    camino.route( "/api/organization/@id", options, org.init );
+    // org.init would be part of the same pretend controller framework
+    // passing in some sample options
+    camino.route( "/api/organization/@id", { responder: SomeCustomResponderObject, methods: ["GET", "POST"] }, org.init );
 
     var http = require('http');
     var server = http.createServer().listen(31415, '127.0.0.1');

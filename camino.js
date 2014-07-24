@@ -31,7 +31,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	 */
 
 	Camino.prototype.listen = function( emitter, responder ) {
-		var cb = (function( req, res ) {
+		emitter.on( 'request', (function( req, res ) {
 			// assign the global response object
 			global.options.responder = responder || res;
 
@@ -47,70 +47,13 @@ if( typeof module !== "undefined" && module.exports ) {
 			// the original query string, without the '?'
 			req.qs = url.query;
 
-			// loop through and try to find a route that matches the request
-			// I wish there was a more efficient way to do this
-			for( var route in global.routes ) {
-				var match = RegExp( route, 'g' ).exec( req.request );
-				// if a match was found, break the loop
-				if( match !== null )
-					break;
-			}
-
-			// if no route was found (no match), emit 404 (not found) error
-			if( ! match ) {
-				var err = new Error('Resource not found');
-				err.status = 404;
-				this.emit( this.event.error, err );
-
-				// stop the browser
-				return false;
-			}
-
-			// shorten reference
-			route = global.routes[route];
-
-			// if request method is not allowed for this route, emit 405
-			// (method not allowed) error
-			// all "OPTIONS" requests should be allowed
-			if( ( route.methods.length > 0
-				&& route.methods.indexOf( req.method ) === -1 )
-				&& req.method !== 'OPTIONS' ) {
-					var err = new Error('Method not allowed');
-					err.status = 405;
-					this.emit( this.event.error, err );
-
-					// stop the browser
-					return false;
-			}
-
-			// pass matched route info to req object
-			req.route = route;
-
-			// clean up the misc data from the regexp match
-			// wish there were some flags to make the output cleaner...
-			delete match.index;
-			delete match.input;
-
-			// the first key is the string that was matched, ditch it
-			match.shift();
-
-			// set empty params object for easier testing in user callback
-			req.params = {};
-
-			// merge the param names and values
-			match.forEach( function( v, k ) {
-				if( typeof match[k] !== 'undefined' ) {
-					req.params[route.params[k]] = v;
-				}
-			});
+			this.match( req );
 
 			// last steps before calling user callback!
 			this.exec( req );
 
 		// bind callback to Camino's scope to eliminte "var self = ..." bastard
-		}).bind(this);
-
-		emitter.on( 'request', cb );
+		}).bind(this) );
 	};
 
 
@@ -228,8 +171,9 @@ if( typeof module !== "undefined" && module.exports ) {
 
 	// fire up some basic error listening/reporting
 	module.exports.on( module.exports.event.error, module.exports.error );
-}
 
+
+}
 // now the browser stuff
 else {
 
@@ -276,12 +220,20 @@ else {
 		global.options.responder = responder || console.log.bind( console );
 
 		emitter.addEventListener.call( emitter, event, (function() {
-			// augment location object (for consistency on client/server)
-			emitter.location.request = ( opt.history
-				? emitter.location.pathname
-				: emitter.location.hash );
+			// add a reference to clean up the code a bit/make it less confusing
+			var em = emitter.location;
 
-			this.exec( emitter.location );
+			// augment location object (for consistency on client/server)
+			em.request = ( opt.history
+				? em.pathname
+				: em.hash );
+
+			this.match( em );
+
+			// assign the responder, either custom or global
+			var responder = em.route.responder || global.options.responder;
+
+			em.route.callback.call( null, emitter, responder );
 		}).bind( this ));
 	};
 
@@ -290,6 +242,65 @@ else {
 	root.addEventListener( root.camino.event.error, root.camino.error );
 
 } // end browser code
+
+Camino.prototype.match = function( emitter ) {
+	// loop through and try to find a route that matches the request
+	// I wish there was a more efficient way to do this
+	for( var route in global.routes ) {
+		var match = RegExp( route, 'g' ).exec( emitter.request );
+		// if a match was found, break the loop
+		if( match !== null )
+			break;
+	}
+
+	// if no route was found (no match), emit 404 (not found) error
+	if( ! match ) {
+		var err = new Error('Resource not found');
+		err.status = 404;
+		this.emit( this.event.error, err );
+
+		// stop the browser
+		return false;
+	}
+
+	// shorten reference
+	route = global.routes[route];
+
+	// if request method is not allowed for this route, emit 405
+	// (method not allowed) error
+	// all "OPTIONS" requests should be allowed
+	if( ( route.methods.length > 0
+		&& route.methods.indexOf( emitter.method ) === -1 )
+		&& emitter.method !== 'OPTIONS' ) {
+			var err = new Error('Method not allowed');
+			err.status = 405;
+			this.emit( this.event.error, err );
+
+			// stop the browser
+			return false;
+	}
+
+	// pass matched route info to req object
+	emitter.route = route;
+
+	// clean up the misc data from the regexp match
+	// wish there were some flags to make the output cleaner...
+	delete match.index;
+	delete match.input;
+
+	// the first key is the string that was matched, ditch it
+	match.shift();
+
+	// set empty params object for easier testing in user callback
+	emitter.params = {};
+
+	// merge the param names and values
+	match.forEach( function( v, k ) {
+		if( typeof match[k] !== 'undefined' ) {
+			emitter.params[route.params[k]] = v;
+		}
+	});
+};
 
 
 /**
@@ -363,7 +374,7 @@ Camino.prototype.list = function() {
 
 Camino.prototype.exec = function( req ) {
 	// grab the content type or set an empty string
-	var type = ( req.headers["content-type"] || "" )
+	var type = ( req.headers && req.headers["content-type"] || "" )
 		// then grab grab the string before the first ";" (and lower case it)
 		.split(';')[0].toLowerCase();
 
