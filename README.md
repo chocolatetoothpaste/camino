@@ -55,16 +55,12 @@ First things first, some juicy examples.
     camino.route( "#!/profile", user.init );
     camino.route( "#!/team/@user_id", team.init );
 
-    // this route will override the default CustomResponderObject set below with different responders
-    camino.route( "#!/video:%playlist_id", { responder: SomeDataDisplayingObject }, playlist.init);
-
     // using "methods" in the browser
-    var options = { responder: SomeMessageBoxObject, methods: ["read", "delete"] };
-    camino.route( "#!/message/%id", options, message.init );
+    camino.route( "#!/message/%id", { responder: SomeMessageBoxObject, methods: ["read", "delete"] }, message.init );
 
     camino.listen(window);
     OR
-    camino.listen(window, CustomResponderObject);
+    camino.listen(window, jQueryUIMessageBoxObjectWrapper);
 
     // fire a hashchange event for initial page loads
     window.dispatchEvent( new Event("hashchange") );

@@ -13,7 +13,7 @@ var root = this,
 	};
 
 // main object constructor
-function Camino() { }
+function Camino() { var asdf = ''; }
 
 // node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
@@ -47,7 +47,7 @@ if( typeof module !== "undefined" && module.exports ) {
 			// the original query string, without the '?'
 			req.qs = url.query;
 
-			this.match( req );
+			match( req );
 
 			// last steps before calling user callback!
 			this.exec( req );
@@ -174,6 +174,7 @@ if( typeof module !== "undefined" && module.exports ) {
 
 
 }
+
 // now the browser stuff
 else {
 
@@ -228,12 +229,12 @@ else {
 				? em.pathname
 				: em.hash );
 
-			this.match( em );
+			match( em );
 
 			// assign the responder, either custom or global
 			var responder = em.route.responder || global.options.responder;
 
-			em.route.callback.call( null, emitter, responder );
+			em.route.callback.call( null, em, responder );
 		}).bind( this ));
 	};
 
@@ -243,7 +244,13 @@ else {
 
 } // end browser code
 
-Camino.prototype.match = function( emitter ) {
+
+/**
+ * Compare request to routes list and look for a match
+ */
+
+// Camino.prototype.match = function( emitter ) {
+var match = function( emitter ) {
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
@@ -300,7 +307,7 @@ Camino.prototype.match = function( emitter ) {
 			emitter.params[route.params[k]] = v;
 		}
 	});
-};
+}.bind(Camino);
 
 
 /**
