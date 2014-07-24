@@ -2,7 +2,8 @@
 One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
-**The documentation was wrong for a while, sorry for everyone who was probably super confused/pissed**
+
+**The documentation was wrong for a while, sorry to everyone who was probably super confused/pissed**
 
 Camino is a request middle layer.
 
@@ -114,9 +115,7 @@ Then put this in .htaccess
 ### API
     camino.route( route [, options], callback )
 
-**route**
-
-type: string
+**route** --- string
 
 The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the 2 is, if your URL contains a required param but one is not passed, it will result in a non-match (404 error).
 
@@ -137,6 +136,17 @@ If you don't pass in a list of allowed methods, your code will always execute if
 **callback** --- Function
 
 YOUR code that is run when a request is matched to a route. Your callback should accept 2 parameters: a request object, and a response object. The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
+
+request.route --- an object of route specific data (that your provided) for the matched route. example:
+
+    {
+		route: /api/user/@company/%id,		// the route as defined by user (since the regex version is probably of no use)
+		params: [							// the "params" accepted by the route
+			"company",
+			"id"
+		],
+		methods: [ ]						// the array of allowed methods, defaults to empty array for type consistency
+	}
 
 request.request --- the request string that was used for matching.
 request.query --- the query string received by the server, parsed into a JSON object.
@@ -174,7 +184,7 @@ This was done to handle 4XX errors so browser hanging can be avoided.
 
 Crappy error handling has been replaced with events now, so take full advantage of that.
 
-Additionally, Camino.error can be augmented with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
+Additionally, Camino.error can (read: should) be augmented/replaced with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
 
 ### Changelog
 I'm not that good, maybe someday...
