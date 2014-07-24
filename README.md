@@ -1,7 +1,8 @@
-# Camino - One-stop routing for server- and client-side web applications
+# Camino
+One-stop routing for server- and client-side web applications
 
-**Active development, please submit bugs and suggestions to GitHub repository!**
-***Camino will no longer post-process data from multipart/form-data requests, so if you are expecting nested form fields, you have to post-process yourself***
+**Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
+**The documentation was wrong for a while, sorry for everyone who was probably super confused/pissed**
 
 Camino is a request middle layer.
 
@@ -108,6 +109,7 @@ Then put this in .htaccess
         RewriteRule (.*) index.html [L]
     </ifModule>
 
+* * *
 
 ### API
     camino.route( route [, options], callback )
@@ -122,38 +124,29 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 /api/user/@id matches /api/user/23, but not /api/user or /api/user/
 
-**options**
+**options** -- Object
+Camino only uses 2 options **methods** (string) and **reponsder** (function)
+**methods** is an array of supported methods for the URL. On the server, this will most likely be request methods. In the browser, whatever you want, really...
+**responder** is a custom function/library/whatever that you pass in to handle responses from your callbacks.  If you provide a responder at the route level, it will be used instead of the global response object (if one even exists)
 
-type: object
+If you don't pass in a list of allowed methods, your code will always execute if a request matches a route.  Think of it like methods = "*"
 
-The only option currently is "methods" (string) -- an array of supported methods for the URL. On the server, this is typically the request method. In the browser, whatever you want, really...
+**callback** -- Function
 
-If you don't pass in a method, your code will always execute if a request matches a route.
-responder (function) is a custom responder to use in place of the default (if there is one) for a single route
+YOUR code that is run when a request is matched to a route. Your callback should accept 2 parameters: a request object, and a response object. The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
 
-**callback**
+request.request -- the request string that was used for matching
+request.query -- the query string received by the server, parsed into a JSON object
+request.qs -- the original query string
+request.method -- a string, in the case of a server the request method
+request.params -- an object, key-value pair of data extracted from the URLs.
+request.data -- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
 
-type: function
+Node.js only:
 
-YOUR code that is run when a request is matched to a route.
+request.files -- an array of files that were upload, captured into Buffers
 
-Your callback should accept 2 parameters: a request object, and a response object.
-
-The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
-
-request.request: the request string that was used for matching
-
-request.query: the query string received by the server, parsed into a JSON object
-
-request.qs: the original query string
-
-request.method: a string, in the case of a server the request method
-
-request.params: an object, key-value pair of data extracted from the URLs.
-
-request.data: the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
-
-request.files: an array of files that were upload, captured into Buffers
+I would strongly recommend passing file uploads as a base64 encoded string in your JSON payload. It works better and keeps your data payload more organized.
 
 * * *
 
@@ -161,7 +154,7 @@ request.files: an array of files that were upload, captured into Buffers
 
 OR
 
-    camino.listen( window [, options], responder );
+    camino.listen( window [, options] [, responder] );
 
 When you call the listen() function, you have the option of passing in a custom "response" object/function.
 

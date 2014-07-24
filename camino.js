@@ -8,8 +8,7 @@ var root = this,
 		// the main container for routes that are defined
 		routes: {},
 
-		// the main container for global options, like a custom event
-		// listener, or whether the History API is being used in browser
+		// the main container for global options
 		options: {}
 	};
 
