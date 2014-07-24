@@ -52,7 +52,8 @@ if( typeof module !== "undefined" && module.exports ) {
 			// the original query string, without the '?'
 			req.qs = url.query;
 
-			this.match( req );
+			if( ! this.match( req ) )
+				return;
 
 			// grab the content type or set an empty string
 			var type = ( req.headers["content-type"] || "" )
