@@ -358,6 +358,7 @@ Camino.prototype.match = function( emitter ) {
 		}
 	});
 
+	return true;
 };
 
 

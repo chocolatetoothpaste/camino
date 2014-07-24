@@ -1,6 +1,6 @@
 {
   "name": "camino",
-  "version": "0.7.16",
+  "version": "0.7.17",
   "main": "./camino.js",
   "homepage": "https://github.com/chocolatetoothpaste/camino",
   "authors": [
