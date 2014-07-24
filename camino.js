@@ -9,11 +9,15 @@ var root = this,
 		routes: {},
 
 		// the main container for global options
-		options: {}
+		options: {},
+
+		// container for "private" functions
+		fn: {}
 	};
 
 // main object constructor
-function Camino() { var asdf = ''; }
+function Camino() { }
+
 
 // node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
@@ -31,6 +35,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	 */
 
 	Camino.prototype.listen = function( emitter, responder ) {
+
 		emitter.on( 'request', (function( req, res ) {
 			// assign the global response object
 			global.options.responder = responder || res;
@@ -47,13 +52,44 @@ if( typeof module !== "undefined" && module.exports ) {
 			// the original query string, without the '?'
 			req.qs = url.query;
 
-			match( req );
+			this.match( req );
 
-			// last steps before calling user callback!
-			this.exec( req );
+			// grab the content type or set an empty string
+			var type = ( req.headers["content-type"] || "" )
+				// then grab grab the string before the first ";" (and lower case it)
+				.split(';')[0].toLowerCase();
+
+			// assign the responder, either custom or global
+			var responder = req.route.responder || global.options.responder;
+
+			// process multipart form data (uploads...)
+			if( type === 'multipart/form-data' ) {
+				// pass off to delegate
+				this.formData( req, responder );
+			}
+
+			else {
+				// create empty string for appending request body data
+				req.data = '';
+
+				// grab the request body data, if provided
+				req.on( 'data', function( chunk ) {
+					req.data += chunk;
+				});
+
+				// parse request data and execute route callback
+				req.on( 'end', function() {
+					req.data = ( type === 'application/json'
+						? JSON.parse( req.data )
+						: require('querystring').parse( req.data ) );
+
+					// execute the callback, pass through request and responder handlers
+					req.route.callback.call( null, req, responder );
+				});
+			}
 
 		// bind callback to Camino's scope to eliminte "var self = ..." bastard
-		}).bind(this) );
+		}).bind( this ) );
 	};
 
 
@@ -61,7 +97,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Temporary delegate for handling multi-part form data (uploads)
 	 */
 
-	Camino.prototype.formData = function( req, responder ) {
+	global.fn.formData = (function( req, responder ) {
 		req.files = {};
 		req.data = {};
 
@@ -99,7 +135,7 @@ if( typeof module !== "undefined" && module.exports ) {
 
 		// believe in the cleansing power of the pipe! [ad s1e15]
 		req.pipe( busboy );
-	};
+	}).bind( Camino );
 
 
 	/**
@@ -229,7 +265,20 @@ else {
 				? em.pathname
 				: em.hash );
 
-			match( em );
+			// the query string with "?"" trimmed
+			em.qs = em.search.substr( 1 );
+
+			// initialize empty object
+			em.query = {};
+
+			// split query string into pairs, decode the UI
+			// decodeURI(em.qs).split( "&" ).forEach(function( val ) {
+			em.qs.split( "&" ).forEach(function( val ) {
+				var v = val.split( '=' );
+				em.query[ v[0] ] = v[1];
+			});
+
+			this.match( em );
 
 			// assign the responder, either custom or global
 			var responder = em.route.responder || global.options.responder;
@@ -249,8 +298,7 @@ else {
  * Compare request to routes list and look for a match
  */
 
-// Camino.prototype.match = function( emitter ) {
-var match = function( emitter ) {
+Camino.prototype.match = function( emitter ) {
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
@@ -273,12 +321,13 @@ var match = function( emitter ) {
 	// shorten reference
 	route = global.routes[route];
 
-	// if request method is not allowed for this route, emit 405
-	// (method not allowed) error
-	// all "OPTIONS" requests should be allowed
+	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( ( route.methods.length > 0
 		&& route.methods.indexOf( emitter.method ) === -1 )
+
+		// all "OPTIONS" requests should be allowed
 		&& emitter.method !== 'OPTIONS' ) {
+
 			var err = new Error('Method not allowed');
 			err.status = 405;
 			this.emit( this.event.error, err );
@@ -307,7 +356,8 @@ var match = function( emitter ) {
 			emitter.params[route.params[k]] = v;
 		}
 	});
-}.bind(Camino);
+
+};
 
 
 /**
@@ -330,6 +380,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 
 	// replace param names with regexes
 	var route = r.replace( /@(\w+)/g, "(\\w+)" )
+
 		// this one was hard to write. it checks for 0 or 1 occ. of "/"
 		// or, 0 or 1 param (string, not "/") if 1 occ. of "/"" was found
 		.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
@@ -380,38 +431,6 @@ Camino.prototype.list = function() {
  */
 
 Camino.prototype.exec = function( req ) {
-	// grab the content type or set an empty string
-	var type = ( req.headers && req.headers["content-type"] || "" )
-		// then grab grab the string before the first ";" (and lower case it)
-		.split(';')[0].toLowerCase();
 
-	// assign the responder, either custom or global
-	var responder = req.route.responder || global.options.responder;
-
-	// process multipart form data (uploads...)
-	if( type === 'multipart/form-data' ) {
-		// pass off to delegate
-		this.formData( req, responder );
-	}
-
-	else {
-		// create empty string for appending request body data
-		req.data = '';
-
-		// grab the request body data, if provided
-		req.on( 'data', function( chunk ) {
-			req.data += chunk;
-		});
-
-		// parse request data and execute route callback
-		req.on( 'end', function() {
-			req.data = ( type === 'application/json'
-				? JSON.parse( req.data )
-				: require('querystring').parse( req.data ) );
-
-			// execute the callback, pass through request and responder handlers
-			req.route.callback.call( null, req, responder );
-		});
-	}
 };
 })();

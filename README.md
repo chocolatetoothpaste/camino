@@ -146,13 +146,13 @@ request.route --- an object of route specific data (that your provided) for the 
 
 request.request --- the request string that was used for matching.
 request.params --- an object, key-value pair of data extracted from the URLs.
+request.query --- the query string received by the server, parsed into a JSON object.
+request.qs --- the original query string. This property should also be added to window.location soon
 
 Node.js only:
 
-request.query --- the query string received by the server, parsed into a JSON object. This property should be added to window.location soon
-request.qs --- the original query string. This property should also be added to window.location soon
 request.method --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
-request.data --- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
+request.data --- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission. Again, this could be augmented with an "onclick" event if you want to pass around data
 request.files --- an array of files that were upload, captured into Buffers
 
 I would strongly recommend passing file uploads as a base64 encoded string in your JSON payload. It works better and keeps your data payload more organized.
