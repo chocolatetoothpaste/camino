@@ -98,7 +98,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Temporary delegate for handling multi-part form data (uploads)
 	 */
 
-	global.fn.formData = (function( req, responder ) {
+	Camino.prototype.formData = (function( req, responder ) {
 		req.files = {};
 		req.data = {};
 
