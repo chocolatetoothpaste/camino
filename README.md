@@ -125,6 +125,7 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 /api/user/@id matches /api/user/23, but not /api/user or /api/user/
 
 **options** -- Object
+
 Camino only uses 2 options **methods** (string) and **reponsder** (function)
 **methods** is an array of supported methods for the URL. On the server, this will most likely be request methods. In the browser, whatever you want, really...
 **responder** is a custom function/library/whatever that you pass in to handle responses from your callbacks.  If you provide a responder at the route level, it will be used instead of the global response object (if one even exists)
@@ -135,12 +136,12 @@ If you don't pass in a list of allowed methods, your code will always execute if
 
 YOUR code that is run when a request is matched to a route. Your callback should accept 2 parameters: a request object, and a response object. The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
 
-request.request -- the request string that was used for matching
-request.query -- the query string received by the server, parsed into a JSON object
-request.qs -- the original query string
-request.method -- a string, in the case of a server the request method
-request.params -- an object, key-value pair of data extracted from the URLs.
-request.data -- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
+ request.request -- the request string that was used for matching
+ request.query -- the query string received by the server, parsed into a JSON object
+ request.qs -- the original query string
+ request.method -- a string, in the case of a server the request method
+ request.params -- an object, key-value pair of data extracted from the URLs.
+ request.data -- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission.
 
 Node.js only:
 
