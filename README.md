@@ -10,7 +10,6 @@ Camino is a request middle layer.
 First things first, some juicy examples.
 
 ### Usage:
-
 **Server**
 
     var camino = require("camino");
@@ -173,14 +172,20 @@ On the server, it defaults to the HTTP response object, but feel free to be crea
 
 The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
 
+### Events
+For convenience, Camino.event container object exists with references to Camino's events. The following are Camino.event's properties:
+
+**request** --- fired when a request is received by Camino
+
+**match** --- fired when a route matching the request is found
+
+**exec** --- fired when the callback is executed
+
+**error** --- fired when an error is encountered
+
 ### Error Handling
 Very basic error handling was introduced for server instances only.
 
-This was done to handle 4XX errors so browser hanging can be avoided.
-
-Crappy error handling has been replaced with events now, so take full advantage of that.
+This was done to handle 404/405 errors to prevent hanging when testing.
 
 Additionally, Camino.error can (read: should) be augmented/replaced with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
-
-### Changelog
-I'm not that good, maybe someday...

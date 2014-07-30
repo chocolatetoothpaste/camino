@@ -9,10 +9,7 @@ var root = this,
 		routes: {},
 
 		// the main container for global options
-		options: {},
-
-		// container for "private" functions
-		fn: {}
+		options: {}
 	};
 
 // main object constructor
@@ -30,13 +27,27 @@ if( typeof module !== "undefined" && module.exports ) {
 
 
 	/**
+	 *	Shim for event names
+	 */
+
+	Camino.prototype.event = {
+		error: "error",
+		request: "request",
+		match: "match",
+		exec: "exec"
+	};
+
+
+	/**
 	 * Attach the appropriate listener to the emitting object, and wait for
 	 * an event.
 	 */
 
 	Camino.prototype.listen = function( emitter, responder ) {
-
 		emitter.on( 'request', (function( req, res ) {
+			// emit "request" event
+			this.emit( this.event.request );
+
 			// assign the global response object
 			global.options.responder = responder || res;
 
@@ -52,53 +63,70 @@ if( typeof module !== "undefined" && module.exports ) {
 			// the original query string, without the '?'
 			req.qs = url.query;
 
-			if( ! this.match( req ) )
-				return;
+			// try to match the request to a route
+			this.match( req );
 
-			// grab the content type or set an empty string
-			var type = ( req.headers["content-type"] || "" )
-				// then grab grab the string before the first ";" (and lower case it)
-				.split(';')[0].toLowerCase();
-
-			// assign the responder, either custom or global
-			var responder = req.route.responder || global.options.responder;
-
-			// process multipart form data (uploads...)
-			if( type === 'multipart/form-data' ) {
-				// pass off to delegate
-				this.formData( req, responder );
-			}
-
-			else {
-				// create empty string for appending request body data
-				req.data = '';
-
-				// grab the request body data, if provided
-				req.on( 'data', function( chunk ) {
-					req.data += chunk;
-				});
-
-				// parse request data and execute route callback
-				req.on( 'end', function() {
-					req.data = ( type === 'application/json'
-						? JSON.parse( req.data )
-						: require('querystring').parse( req.data ) );
-
-					// execute the callback, pass through request and responder handlers
-					req.route.callback.call( null, req, responder );
-				});
-			}
-
-		// bind callback to Camino's scope to eliminte "var self = ..." bastard
+		// bind callback to Camino's scope, eliminte "var self = ..." bastard
 		}).bind( this ) );
+
+		// listen for "match" event to fire and execute callback
+		this.on( this.event.match, function( req ) {
+			this._exec.call( this, req );
+		});
 	};
 
 
 	/**
-	 * Temporary delegate for handling multi-part form data (uploads)
+	 * Execute the user callback associated with a route
 	 */
 
-	Camino.prototype.formData = (function( req, responder ) {
+	Camino.prototype._exec = function( req ) {
+		// grab the content type or set an empty string
+		var type = ( req.headers["content-type"] || "" )
+			// then grab grab the string before the first ";" (and lower case it)
+			.split(';')[0].toLowerCase();
+
+		// assign the responder, either custom or global
+		var responder = req.route.responder || global.options.responder;
+
+		// process multipart form data (uploads...)
+		if( type === 'multipart/form-data' ) {
+			// pass off to delegate
+			this.formData( req, responder );
+		}
+
+		else {
+			// create empty string for appending request body data
+			req.data = '';
+
+			// grab the request body data, if provided
+			req.on( 'data', function( chunk ) {
+				req.data += chunk;
+			});
+
+			var self = this;
+
+			// parse request data and execute route callback
+			req.on( 'end', function() {
+				req.data = ( type === 'application/json'
+					? JSON.parse( req.data )
+					: require('querystring').parse( req.data ) );
+
+				self.emit( self.event.exec );
+
+				// execute the callback, pass through request and responder handlers
+				req.route.callback.call( null, req, responder );
+			});
+		}
+
+	};
+
+
+	/**
+	 * Delegate for handling multi-part form data (uploads)
+	 */
+
+	Camino.prototype.formData = function( req, responder ) {
 		req.files = {};
 		req.data = {};
 
@@ -124,63 +152,21 @@ if( typeof module !== "undefined" && module.exports ) {
 			});
 		});
 
-		// valTruncated, keyTruncated are args 3 & 4, no use here yet
 		busboy.on( 'field', function( field, val ) {
 			req.data[field] = val;
 		});
 
 		busboy.on( 'finish', function() {
+			this.emit( this.event.exec );
+
 			// fire off route callback
 			req.route.callback.call( null, req, responder );
-		});
+
+		}).bind(this);
 
 		// believe in the cleansing power of the pipe! [ad s1e15]
 		req.pipe( busboy );
-	}).bind( Camino );
-
-
-	/**
-	 *	parse multipart form data
-	 *
-
-	Camino.prototype.parse = function( data, boundary ) {
-		// console.log(boundary);
-		// console.log(data);
-		// var boundary = ;
-		// application/octet-stream
-
-			// 	var boundary = "--" + this.headers["content-type"]
-			// 		.match(/boundary\=(.*)/i)[1];
-
-		data = data.split(boundary);
-		data.shift();
-		data.pop();
-		data.forEach( function( v, k ) {
-			var field = v.match(/name\="(\w*)"/)[1];
-			if( v.indexOf( 'application/octet-stream' ) === -1 ) {
-
-			}
-			// console.log(util.inspect(v));
-
-			// delete field.index;
-			// delete field.input;
-			console.log(field);
-			// v = v.split("\r\n\r\n")
-			// if( k !== 1 )
-				// console.log(v)
-		} );
-
-		// console.log(data);
 	};
-
-	//*/
-
-
-	/**
-	 *	Shim for event names
-	 */
-
-	Camino.prototype.event = { error: "error" };
 
 
 	/**
@@ -188,8 +174,13 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Don't move this code, it's placement is important
 	 */
 
-	Camino.prototype.error = function( err, responder ) {
-		responder = responder || global.options.responder
+	// This should be replaced by the user to conform with their implementation
+	// but this basic implementation follows common practices and should be
+	// adequate for getting started
+
+	Camino.prototype.error = function( err ) {
+		var responder = global.options.responder;
+
 		var data = JSON.stringify({
 			success: false,
 			status: err.status,
@@ -204,11 +195,15 @@ if( typeof module !== "undefined" && module.exports ) {
 		responder.end( data );
 	};
 
-	module.exports = new Camino;
+	// create an instance to export and attach event listeners
+	var camino = new Camino;
 
 	// fire up some basic error listening/reporting
-	module.exports.on( module.exports.event.error, module.exports.error );
+	camino.on( camino.event.error, camino.error );
 
+	// exporting an instance instead of a reference for convenience and to
+	// discourage multiple instances (which may not even work)
+	module.exports = camino;
 
 }
 
@@ -217,27 +212,14 @@ else {
 
 
 	/**
-	 * Shim for browsers
-	 */
-
-	Camino.prototype.emit = function( event, data ) {
-		root.dispatchEvent( new CustomEvent( event, { detail: data }) );
-	};
-
-
-	/**
 	 *	Shim for event names (namespacing for browsers)
 	 */
 
-	Camino.prototype.event = { error: "camino:error" };
-
-
-	/**
-	 * Please replace this, end user
-	 */
-
-	Camino.prototype.error = function( event ) {
-		console.log( event.detail );
+	Camino.prototype.event = {
+		error: "camino:error",
+		request: "camino:request",
+		match: "camino:match",
+		exec: "camino:exec"
 	};
 
 
@@ -258,6 +240,8 @@ else {
 		global.options.responder = responder || console.log.bind( console );
 
 		emitter.addEventListener.call( emitter, event, (function() {
+			this.emit( this.event.request );
+
 			// add a reference to clean up the code a bit/make it less confusing
 			var em = emitter.location;
 
@@ -266,7 +250,7 @@ else {
 				? em.pathname
 				: em.hash );
 
-			// the query string with "?"" trimmed
+			// the query string with "?" trimmed
 			em.qs = em.search.substr( 1 );
 
 			// initialize empty object
@@ -281,15 +265,45 @@ else {
 
 			this.match( em );
 
+		}).bind( this ));
+
+		var self = this;
+
+		// add listener for "match" event and execute callback if matched
+		emitter.addEventListener.call( emitter, this.event.match, function() {
+			var em = emitter.location;
+
 			// assign the responder, either custom or global
 			var responder = em.route.responder || global.options.responder;
 
+			self.emit( self.event.exec );
+
 			em.route.callback.call( null, em, responder );
-		}).bind( this ));
+		});
 	};
 
+
+	/**
+	 * Shim for browsers
+	 */
+
+	Camino.prototype.emit = function( event, data ) {
+		root.dispatchEvent( new CustomEvent( event, { detail: data }) );
+	};
+
+
+	/**
+	 * Please replace this, end user
+	 */
+
+	Camino.prototype.error = function( event ) {
+		console.log( event.detail );
+	};
+
+	// create a new instance in the global scope
 	root.camino = new Camino;
 
+	// attach listeners for errors
 	root.addEventListener( root.camino.event.error, root.camino.error );
 
 } // end browser code
@@ -358,6 +372,7 @@ Camino.prototype.match = function( emitter ) {
 		}
 	});
 
+	this.emit( this.event.match, emitter );
 	return true;
 };
 
@@ -427,12 +442,4 @@ Camino.prototype.list = function() {
 	console.log( global.routes );
 };
 
-
-/**
- * Eexecute the user callback associated with a route
- */
-
-Camino.prototype.exec = function( req ) {
-
-};
 })();
