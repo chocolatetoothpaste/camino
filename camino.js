@@ -32,6 +32,7 @@ if( typeof module !== "undefined" && module.exports ) {
 
 	Camino.prototype.event = {
 		error: "error",
+		route: "route",
 		request: "request",
 		match: "match",
 		exec: "exec"
@@ -156,13 +157,15 @@ if( typeof module !== "undefined" && module.exports ) {
 			req.data[field] = val;
 		});
 
+		var self = this;
+
 		busboy.on( 'finish', function() {
-			this.emit( this.event.exec );
+			self.emit( self.event.exec );
 
 			// fire off route callback
 			req.route.callback.call( null, req, responder );
 
-		}).bind(this);
+		});
 
 		// believe in the cleansing power of the pipe! [ad s1e15]
 		req.pipe( busboy );
@@ -217,6 +220,7 @@ else {
 
 	Camino.prototype.event = {
 		error: "camino:error",
+		route: "camino:route",
 		request: "camino:request",
 		match: "camino:match",
 		exec: "camino:exec"
@@ -431,6 +435,8 @@ Camino.prototype.route = function( r, opt, cb ) {
 		// default to empty array for convenience and type consistency
 		methods: opt.methods || []
 	};
+
+	this.emit( this.event.route, global.routes[route] );
 };
 
 
