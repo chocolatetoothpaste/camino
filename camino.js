@@ -240,19 +240,17 @@ else {
 		}
 
 		// set the event name, and responder
-		var event = ( opt.history ? "popstate" : "hashchange" );
+		var event = ( opt && opt.history ? "popstate" : "hashchange" );
 		global.options.responder = responder || console.log.bind( console );
 
-		emitter.addEventListener.call( emitter, event, (function() {
-			this.emit( this.event.request );
+		emitter.addEventListener( event, (function() {
+			this.emit( this.event.request, emitter.location );
 
 			// add a reference to clean up the code a bit/make it less confusing
 			var em = emitter.location;
 
 			// augment location object (for consistency on client/server)
-			em.request = ( opt.history
-				? em.pathname
-				: em.hash );
+			em.request = ( opt && opt.history ? em.pathname : em.hash );
 
 			// the query string with "?" trimmed
 			em.qs = em.search.substr( 1 );
@@ -269,7 +267,7 @@ else {
 
 			this.match( em );
 
-		}).bind( this ));
+		}).bind( this ), false);
 
 		var self = this;
 
@@ -292,6 +290,32 @@ else {
 	 */
 
 	Camino.prototype.emit = function( event, data ) {
+		// thank you @https://github.com/jonathantneal/EventListener
+		// polyfill for ie
+		! window.CustomEvent && (function() {
+			window.CustomEvent = function CustomEvent( type, dict ) {
+				dict = dict || {
+					bubbles: false,
+					cancelable: false,
+					detail: undefined
+				};
+
+				try {
+					var ev = document.createEvent('CustomEvent');
+					ev.initCustomEvent( type, dict.bubbles, dict.cancelable,
+						dict.detail );
+				} catch( error ) {
+					// for browsers which don't support CustomEvent at all,
+					// we use a regular event instead
+					var ev = document.createEvent('Event');
+					ev.initEvent( type, dict.bubbles, dict.cancelable );
+					ev.detail = dict.detail;
+				}
+
+				return ev;
+			};
+		})();
+
 		root.dispatchEvent( new CustomEvent( event, { detail: data }) );
 	};
 
@@ -317,11 +341,11 @@ else {
  * Compare request to routes list and look for a match
  */
 
-Camino.prototype.match = function( emitter ) {
+Camino.prototype.match = function( req ) {
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
-		var match = RegExp( route, 'g' ).exec( emitter.request );
+		var match = RegExp( route, 'g' ).exec( req.request );
 		// if a match was found, break the loop
 		if( match !== null )
 			break;
@@ -329,7 +353,7 @@ Camino.prototype.match = function( emitter ) {
 
 	// if no route was found (no match), emit 404 (not found) error
 	if( ! match ) {
-		var err = new Error('Resource not found');
+		var err = new Error('Resource not found: ' + req.request);
 		err.status = 404;
 		this.emit( this.event.error, err );
 
@@ -342,10 +366,10 @@ Camino.prototype.match = function( emitter ) {
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( ( route.methods.length > 0
-		&& route.methods.indexOf( emitter.method ) === -1 )
+		&& route.methods.indexOf( req.method ) === -1 )
 
 		// all "OPTIONS" requests should be allowed
-		&& emitter.method !== 'OPTIONS' ) {
+		&& req.method !== 'OPTIONS' ) {
 
 			var err = new Error('Method not allowed');
 			err.status = 405;
@@ -356,7 +380,7 @@ Camino.prototype.match = function( emitter ) {
 	}
 
 	// pass matched route info to req object
-	emitter.route = route;
+	req.route = route;
 
 	// clean up the misc data from the regexp match
 	// wish there were some flags to make the output cleaner...
@@ -367,16 +391,16 @@ Camino.prototype.match = function( emitter ) {
 	match.shift();
 
 	// set empty params object for easier testing in user callback
-	emitter.params = {};
+	req.params = {};
 
 	// merge the param names and values
 	match.forEach( function( v, k ) {
 		if( typeof match[k] !== 'undefined' ) {
-			emitter.params[route.params[k]] = v;
+			req.params[route.params[k]] = v;
 		}
 	});
 
-	this.emit( this.event.match, emitter );
+	this.emit( this.event.match, req );
 	return true;
 };
 

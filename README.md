@@ -3,9 +3,7 @@ One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
-**The documentation was wrong for a while, sorry to everyone who was probably super confused/pissed**
-
-Camino is a request middle layer.
+Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just right some closures to run some code, Camino doesn't care!
 
 First things first, some juicy examples.
 
@@ -49,7 +47,6 @@ First things first, some juicy examples.
 **Browser (Hashes)**
 
     <script src="path/to/camino.js"></script>
-    // var camino = camino() is no longer required
 
     camino.route( "#!/profile", user.init );
     camino.route( "#!/team/@user_id", team.init );
@@ -60,6 +57,11 @@ First things first, some juicy examples.
     camino.listen(window);
     OR
     camino.listen(window, jQueryUIMessageBoxObjectWrapper);
+
+    // using the Camino.event object
+    window.addEventListener( camino.event.request, function() {
+        // replace page body with a spinner...?
+    });
 
     // fire a hashchange event for initial page loads
     window.dispatchEvent( new Event("hashchange") );
@@ -83,6 +85,12 @@ Using the History API requires a bit more boilerplate code, but works quite nice
     camino.route( "/profile", user.init );
 
     camino.listen( window, { history: !!( window.history.pushState ) } ); // or just set it to true if you like
+
+
+    // using the Camino.event object
+    window.addEventListener( camino.event.request, function() {
+        // replace page body with a spinner...?
+    });
 
     // write your own vanilla JS, but here's the super-simple jQuery version
     $( function() {
@@ -120,7 +128,7 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 **options** --- Object
 
-Camino only uses 2 options **methods** (string) and **reponsder** (function)
+Camino only uses 2 options **methods** (string) and **responder** (function)
 
 **methods** is an array of supported methods for the URL. On the server, this will most likely be request methods. In the browser, whatever you want, really...
 
@@ -135,23 +143,33 @@ YOUR code that is run when a request is matched to a route. Your callback should
 request.route --- an object of route specific data (that your provided) for the matched route. example:
 
     {
-		route: /api/user/@company/%id,		// the route as defined by user (since the regex version is probably of no use)
-		params: [							// the "params" accepted by the route
+    	// the route as defined by user (since the regex version is probably of no use)
+		route: /api/user/@company/%id,
+
+		// the "params" accepted by the route
+		params: [
 			"company",
 			"id"
 		],
-		methods: [ ]						// the array of allowed methods, defaults to empty array for type consistency
+
+		// the array of allowed methods, defaults to empty array for type consistency
+		methods: [ ]
 	}
 
 request.request --- the request string that was used for matching.
+
 request.params --- an object, key-value pair of data extracted from the URLs.
+
 request.query --- the query string received by the server, parsed into a JSON object.
+
 request.qs --- the original query string. This property should also be added to window.location soon
 
 Node.js only:
 
 request.method --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
+
 request.data --- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission. Again, this could be augmented with an "onclick" event if you want to pass around data
+
 request.files --- an array of files that were upload, captured into Buffers
 
 I would strongly recommend passing file uploads as a base64 encoded string in your JSON payload. It works better and keeps your data payload more organized.
