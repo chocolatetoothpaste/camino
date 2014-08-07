@@ -3,6 +3,11 @@ One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
+**Possible breaking changes:**
+1. Query strings will be automatically URI decoded in the browser.  To disable this, set "decode: false" in the options you pass to camino.listen()
+2. Hashes and history support were heavily modified.  Hashes can now work at the same time as History API stuff. Test your code to ensure it works as expected and report any issues.
+
+
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just right some closures to run some code, Camino doesn't care!
 
 First things first, some juicy examples.
@@ -84,8 +89,16 @@ Using the History API requires a bit more boilerplate code, but works quite nice
     // include script and define routes
     camino.route( "/profile", user.init );
 
-    camino.listen( window, { history: !!( window.history.pushState ) } ); // or just set it to true if you like
+    camino.route( "#delete", showDeleteConfirmation );
 
+    camino.listen( window, { history: true } );
+
+    // fire off route on initial page load
+    window.dispatchEvent( new Event('popstate') );
+
+    // hashes and history can live together!
+    if( window.location.hash !== '' )
+        window.dispatchEvent( new Event('hashchange') );
 
     // using the Camino.event object
     window.addEventListener( camino.event.request, function() {
@@ -112,6 +125,8 @@ Then put this in .htaccess
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteRule (.*) index.html [L]
     </ifModule>
+
+These browser examples are in no way exhaustive, nor "recommended practice". They abstractly illustrate usage. You can choose to support either or both.
 
 * * *
 

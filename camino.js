@@ -9,7 +9,10 @@ var root = this,
 		routes: {},
 
 		// the main container for global options
-		options: {}
+		options: {},
+
+		// this container is temporary until all "options" can be consolidated
+		opt: {}
 	};
 
 // main object constructor
@@ -233,55 +236,84 @@ else {
 	 */
 
 	Camino.prototype.listen = function( emitter, opt, responder ) {
+		var dict = { decode: true, history: false, hash: true };
+
 		// musical vars
 		if( typeof opt === "function" ) {
 			responder = opt;
-			opt = {};
+			opt = dict;
 		}
 
-		// set the event name, and responder
-		var event = ( opt && opt.history ? "popstate" : "hashchange" );
+		else {
+			for( var i in dict ) {
+				opt[i] = opt[i] || dict[i];
+			}
+		}
+
+		global.options = opt;
+
+		// set a default responder for testing/getting started
 		global.options.responder = responder || console.log.bind( console );
 
-		emitter.addEventListener( event, (function() {
-			this.emit( this.event.request, emitter.location );
+		// set event listener for history api of optioned
+		if( opt.history ) {
+			// adding a placeholder for the "current" location so popstates
+			// fired on hashchange events can be mitigated
+			var location = null;
 
-			// add a reference to clean up the code a bit/make it less confusing
-			var em = emitter.location;
+			emitter.addEventListener( "popstate", (function() {
+				if( emitter.location.pathname !== location ) {
+					location = emitter.location.request = emitter.location.pathname;
+					this._exec( emitter.location, emitter.location.pathname );
+				}
+			}).bind(this), false );
+		}
 
-			// augment location object (for consistency on client/server)
-			em.request = ( opt && opt.history ? em.pathname : em.hash );
-
-			// the query string with "?" trimmed
-			em.qs = em.search.substr( 1 );
-
-			// initialize empty object
-			em.query = {};
-
-			// split query string into pairs, decode the UI
-			// decodeURI(em.qs).split( "&" ).forEach(function( val ) {
-			em.qs.split( "&" ).forEach(function( val ) {
-				var v = val.split( '=' );
-				em.query[ v[0] ] = v[1];
-			});
-
-			this.match( em );
-
-		}).bind( this ), false);
-
-		var self = this;
+		// set a hash event
+		if( opt.hash ) {
+			emitter.addEventListener( "hashchange", (function() {
+				emitter.location.request = emitter.location.hash;
+				this._exec( emitter.location );
+			}).bind(this), false );
+		}
 
 		// add listener for "match" event and execute callback if matched
-		emitter.addEventListener.call( emitter, this.event.match, function() {
+		emitter.addEventListener( this.event.match, (function() {
 			var em = emitter.location;
 
 			// assign the responder, either custom or global
 			var responder = em.route.responder || global.options.responder;
 
-			self.emit( self.event.exec );
+			this.emit( this.event.exec );
 
 			em.route.callback.call( null, em, responder );
+		}).bind(this));
+	};
+
+
+	Camino.prototype._exec = function( em, req ) {
+		this.emit( this.event.request, em );
+
+		// augment location object (for consistency on client/server)
+		// em.request = req;
+
+		// the query string with "?" trimmed
+		em.qs = em.search.substr( 1 );
+
+		// initialize empty object
+		em.query = {};
+
+		if( global.options.decode )
+			em.qs = decodeURI(em.qs);
+
+		// split query string into pairs, decode the UI
+		// decodeURI(em.qs).split( "&" ).forEach(function( val ) {
+		em.qs.split( "&" ).forEach(function( val ) {
+			var v = val.split( '=' );
+			em.query[ v[0] ] = v[1];
 		});
+
+		this.match( em );
 	};
 
 
