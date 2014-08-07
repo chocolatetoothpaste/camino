@@ -8,7 +8,7 @@ One-stop routing for server- and client-side web applications
 2. Hashes and history support were heavily modified.  Hashes can now work at the same time as History API stuff. Test your code to ensure it works as expected and report any issues.
 
 
-Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just right some closures to run some code, Camino doesn't care!
+Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
 First things first, some juicy examples.
 
