@@ -115,7 +115,7 @@ Using the History API requires a bit more boilerplate code, but works quite nice
                 event.preventDefault();
             }
         }, "a:not([href^=\\#])" );
-    } );
+    });
 
 Then put this in .htaccess
 
