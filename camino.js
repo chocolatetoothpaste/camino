@@ -244,7 +244,7 @@ else {
 
 		else {
 			for( var i in dict ) {
-				opt[i] = opt[i] || dict[i];
+				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
 			}
 		}
 
