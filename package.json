@@ -28,6 +28,7 @@
     "gulp": "^3.8.7",
     "gulp-concat": "^2.4.1",
     "gulp-include": "^1.0.1",
+    "gulp-replace": "^0.4.0",
     "request": "^2.44.0"
   }
 }

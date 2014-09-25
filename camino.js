@@ -15,21 +15,20 @@ var root = this,
 // main object constructor
 function Camino() { }
 
-
 // node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
 	var util = require( "util" ),
 		events = require( "events" );
-
+	
 	// inherit event emitter prototype to allow camino to emit/listen to events
 	events.EventEmitter.call( Camino );
 	util.inherits( Camino, events.EventEmitter );
-
-
+	
+	
 	/**
 	 *	Shim for event names
 	 */
-
+	
 	Camino.prototype.event = {
 		error: "error",
 		route: "route",
@@ -37,176 +36,176 @@ if( typeof module !== "undefined" && module.exports ) {
 		match: "match",
 		exec: "exec"
 	};
-
-
+	
+	
 	/**
 	 * Attach the appropriate listener to the emitting object, and wait for
 	 * an event.
 	 */
-
+	
 	Camino.prototype.listen = function( emitter, responder ) {
 		emitter.on( 'request', (function( req, res ) {
 			// emit "request" event
 			this.emit( this.event.request );
-
+	
 			// assign the global response object
 			global.options.responder = responder || res;
-
+	
 			var qs = require( 'querystring' ),
 				url = require( 'url' ).parse( req.url );
-
+	
 			// req.url without the querystring
 			req.request = url.pathname;
-
+	
 			// query string parsed into JSON object
 			req.query = qs.parse( url.query );
-
+	
 			// the original query string, without the '?'
 			req.qs = url.query;
-
+	
 			// try to match the request to a route
 			this.match( req );
-
+	
 		// bind callback to Camino's scope, eliminte "var self = ..." bastard
 		}).bind( this ) );
-
+	
 		// listen for "match" event to fire and execute callback
 		this.on( this.event.match, function( req ) {
 			this._exec.call( this, req );
 		});
 	};
-
-
+	
+	
 	/**
 	 * Execute the user callback associated with a route
 	 */
-
+	
 	Camino.prototype._exec = function( req ) {
 		var self = this;
-
+	
 		// grab the content type or set an empty string
 		var type = ( req.headers["content-type"]
 			? req.headers["content-type"].split(';')[0].toLowerCase()
 			: "" );
-
+	
 		// assign the responder, either custom or global
 		var responder = req.route.responder || global.options.responder;
-
+	
 		// process multipart form data (uploads...)
 		if( type === 'multipart/form-data' ) {
 			// pass off to delegate
 			this._multipart( req, responder );
 		}
-
+	
 		else {
 			// create empty string for appending request body data
 			req.data = '';
-
+	
 			// grab the request body data, if provided
 			req.on( 'data', function( chunk ) {
 				req.data += chunk;
 			});
-
-
+	
+	
 			// parse request data and execute route callback
 			req.on( 'end', function() {
 				req.data = ( type === 'application/json'
 					? JSON.parse( req.data )
 					: require('querystring').parse( req.data ) );
-
+	
 				self.emit( self.event.exec );
-
+	
 				// execute the callback, pass through request and responder handlers
 				req.route.callback.call( null, req, responder );
 			});
 		}
-
+	
 	};
-
-
+	
+	
 	/**
 	 * Delegate for handling multi-part form data (uploads)
 	 */
-
+	
 	Camino.prototype._multipart = function( req, responder ) {
 		var self = this,
 			Busboy = require( 'busboy' ),
 			busboy = new Busboy({ headers: req.headers });
-
+	
 		req.files = {};
 		req.data = {};
-
+	
 		// grab uploaded files and stream them into buffers
 		// full args for future reference, removed to save memory...?
 		// busboy.on( 'file', function( field, file, name, enc, mime ) {
 		busboy.on( 'file', function( field, file ) {
 			// container for concatenating incoming data stream into a buffer
 			var buf = [];
-
+	
 			file.on( 'data', function(data) {
 				// push data chunks into contrainer
 				buf.push( data );
 			});
-
+	
 			file.on( 'end', function() {
 				// when finished capturing data, Buffer it
 				req.files[field] = Buffer.concat(buf);
-
+	
 				// blow chunks
 				buf = undefined;
 			});
 		});
-
+	
 		// capture incoming fields as they are parsed
 		busboy.on( 'field', function( field, val ) {
 			req.data[field] = val;
 		});
-
+	
 		busboy.on( 'finish', function() {
 			self.emit( self.event.exec );
-
+	
 			// fire off route callback
 			req.route.callback.call( null, req, responder );
-
+	
 		});
-
+	
 		// believe in the cleansing power of the pipe! [ad s1e15]
 		req.pipe( busboy );
 	};
-
-
+	
+	
 	/**
 	 * Basic error handling
 	 * Don't move this code, it's placement is important
 	 */
-
+	
 	// This should be replaced by the user to conform with their implementation
 	// but this basic implementation follows common practices and should be
 	// adequate for getting started
-
+	
 	Camino.prototype.error = function( err ) {
 		var responder = global.options.responder;
-
+	
 		var data = JSON.stringify({
 			success: false,
 			status: err.status,
 			error: err.message
 		});
-
+	
 		responder.writeHead( err.status, {
 			"Content-Type": "application/json",
 			"Content-Length": data.length
 		} );
-
+	
 		responder.end( data );
 	};
-
+	
 	// create an instance to export and attach event listeners
 	var camino = new Camino;
-
+	
 	// fire up some basic error listening/reporting
 	camino.on( camino.event.error, camino.error );
-
+	
 	// exporting an instance instead of a reference for convenience and to
 	// discourage multiple instances (which may not even work)
 	module.exports = camino;
@@ -215,10 +214,11 @@ if( typeof module !== "undefined" && module.exports ) {
 
 // now the browser stuff
 else {
+
 	/**
 	 *	Shim for event names (namespacing for browsers)
 	 */
-
+	
 	Camino.prototype.event = {
 		error: "camino.error",
 		route: "camino.route",
@@ -226,41 +226,41 @@ else {
 		match: "camino.match",
 		exec: "camino.exec"
 	};
-
-
+	
+	
 	/**
 	 * Attach the appropriate listener to the emitting object, and wait for
 	 * an event.
 	 */
-
+	
 	Camino.prototype.listen = function( emitter, opt, responder ) {
 		var dict = { decode: true, history: false, hash: true };
-
+	
 		// musical vars
 		if( typeof opt === "function" ) {
 			responder = opt;
 			opt = dict;
 		}
-
+	
 		else {
 			for( var i in dict ) {
 				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
 			}
 		}
-
+	
 		global.options = opt;
-
+	
 		// set a default responder for testing/getting started
 		global.options.responder = responder || console.log.bind( console );
-
+	
 		var req = emitter.location;
-
+	
 		// set event listener for history api if optioned
 		if( opt.history ) {
 			// adding a placeholder for the "current" location so popstates
 			// fired on hashchange events can be mitigated
 			var location = null;
-
+	
 			emitter.addEventListener( "popstate", (function() {
 				if( req.pathname !== location ) {
 					// augment the request object with "request" param
@@ -269,7 +269,7 @@ else {
 				}
 			}).bind(this), false );
 		}
-
+	
 		// defaults to true, but allow user the option to ignore hash events
 		if( opt.hash ) {
 			// set a hash event listener
@@ -279,66 +279,66 @@ else {
 				this._exec( req );
 			}).bind(this) );
 		}
-
+	
 		// add listener for "match" event and execute callback if matched
 		emitter.addEventListener( this.event.match, (function() {
 			// assign the responder, either custom or global
 			var responder = req.route.responder || global.options.responder;
-
+	
 			this.emit( this.event.exec );
-
+	
 			req.route.callback.call( null, req, responder );
 		}).bind(this));
 	};
-
-
+	
+	
 	Camino.prototype._exec = function( req ) {
 		this.emit( this.event.request, req );
-
+	
 		// the query string with "?" trimmed
 		req.qs = req.search.substr( 1 );
-
+	
 		// initialize empty object
 		req.query = {};
-
+	
 		if( global.options.decode )
 			req.qs = decodeURI(req.qs);
-
+	
 		// split query string into pairs, decode the UI
 		// decodeURI(req.qs).split( "&" ).forEach(function( val ) {
 		req.qs.split( "&" ).forEach(function( val ) {
 			var v = val.split( '=' );
 			req.query[ v[0] ] = v[1];
 		});
-
+	
 		this.match( req );
 	};
-
-
+	
+	
 	/**
 	 * Shim for browsers
 	 */
-
+	
 	Camino.prototype.emit = function( event, data ) {
 		window.dispatchEvent( new CustomEvent( event, { detail: data }) );
 	};
-
-
+	
+	
 	/**
 	 * Please replace this, end user
 	 */
-
+	
 	Camino.prototype.error = function( event ) {
 		console.log( event.detail );
 	};
-
+	
 	// create a new instance in the global scope
 	window.camino = new Camino;
-
+	
 	// attach listeners for errors
 	window.addEventListener( window.camino.event.error, window.camino.error );
 
-} // end browser code
+}
 
 
 /**
@@ -369,7 +369,7 @@ Camino.prototype.match = function( req ) {
 	route = global.routes[route];
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
-	if( route.methods.length > 0
+	if( ( route.methods.length > 0
 		&& route.methods.indexOf( req.method ) === -1 ) {
 
 			var err = new Error('Method not allowed');
