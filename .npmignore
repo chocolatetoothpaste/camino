@@ -1,6 +1,7 @@
-test.js
-server.js
-browser.js
-core.js
+dist/camino-all.js
+dist/camino-browser.js
+src/
+test/
+bower.json
 gulpfile.js
 README.html
