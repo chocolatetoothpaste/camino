@@ -21,6 +21,6 @@
     "src/",
     "test/",
     "gulpfile.js",
-    "package.json",
+    "package.json"
   ]
 }
