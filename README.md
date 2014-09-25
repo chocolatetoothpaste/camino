@@ -231,6 +231,7 @@ Additionally, Camino.error can (read: should) be augmented/replaced with your ow
 
 ### Polyfills
 **CustomEvent**
+
     // thank you @https://github.com/jonathantneal/EventListener
     // polyfill for using CustomEvent constructor in IE 9/10
     ! window.CustomEvent && (function() {
@@ -262,6 +263,7 @@ Additionally, Camino.error can (read: should) be augmented/replaced with your ow
     })();
 
 **Array.forEach**
+
     // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
     if (!Array.prototype.forEach) {
 
