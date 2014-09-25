@@ -24,6 +24,7 @@
     "url": "git://github.com/chocolatetoothpaste/camino"
   },
   "devDependencies": {
+    "async": "^0.9.0",
     "gulp": "^3.8.7",
     "gulp-concat": "^2.4.1",
     "gulp-include": "^1.0.1",
