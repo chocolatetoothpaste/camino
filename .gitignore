@@ -1,3 +1,2 @@
-camino.sublime-*
-app.js
+*.sublime-*
 node_modules
