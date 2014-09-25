@@ -1,6 +1,6 @@
 {
   "name": "camino",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "One-stop routing for server- and client-side web applications",
   "main": "./camino.js",
   "author": {
@@ -8,7 +8,7 @@
     "email": "ross@pasket.me"
   },
   "dependencies": {
-    "busboy": "0.2.8"
+    "busboy": "0.2.9"
   },
   "keywords": [
     "router",
@@ -24,6 +24,8 @@
     "url": "git://github.com/chocolatetoothpaste/camino"
   },
   "devDependencies": {
-    "gulp": "^3.8.7"
+    "gulp": "^3.8.7",
+    "gulp-concat": "^2.4.1",
+    "gulp-include": "^1.0.1"
   }
 }

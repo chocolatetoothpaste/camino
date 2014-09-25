@@ -1,7 +1,7 @@
 (function() {
-"use strict";
+// not sure what purpose this serves, seems to be a common thing with node modules
+var root = this,
 
-var
 	// containers for data that needs a broader scope
 	global = {
 
@@ -13,7 +13,8 @@ var
 	};
 
 // main object constructor
-var Camino = function Camino() { }
+function Camino() { }
+
 
 // node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
@@ -84,9 +85,9 @@ if( typeof module !== "undefined" && module.exports ) {
 		var self = this;
 
 		// grab the content type or set an empty string
-		var type = ( req.headers["content-type"] || "" )
-			// then grab the string before the first ";" (and lower case it)
-			.split(';')[0].toLowerCase();
+		var type = ( req.headers["content-type"]
+			? req.headers["content-type"].split(';')[0].toLowerCase()
+			: "" );
 
 		// assign the responder, either custom or global
 		var responder = req.route.responder || global.options.responder;
@@ -206,20 +207,21 @@ if( typeof module !== "undefined" && module.exports ) {
 	// exporting an instance instead of a reference for convenience and to
 	// discourage multiple instances (which may not even work)
 	module.exports = camino;
+
 }
 
 // now the browser stuff
 else {
-		/**
+	/**
 	 *	Shim for event names (namespacing for browsers)
 	 */
 
 	Camino.prototype.event = {
-		error: "camino:error",
-		route: "camino:route",
-		request: "camino:request",
-		match: "camino:match",
-		exec: "camino:exec"
+		error: "camino.error",
+		route: "camino.route",
+		request: "camino.request",
+		match: "camino.match",
+		exec: "camino.exec"
 	};
 
 
@@ -267,11 +269,11 @@ else {
 
 		// set a hash event
 		if( opt.hash ) {
-			emitter.addEventListener( "hashchange", (function() {
+			emitter.addEventListener( "hashchange", (function(e) {
 				// augment the request object with "request" param
 				req.request = req.hash;
 				this._exec( req );
-			}).bind(this), false );
+			}).bind(this) );
 		}
 
 		// add listener for "match" event and execute callback if matched
@@ -326,8 +328,12 @@ else {
 
 				try {
 					var ev = document.createEvent('CustomEvent');
-					ev.initCustomEvent( type, dict.bubbles, dict.cancelable,
-						dict.detail );
+					ev.initCustomEvent(
+						type,
+						dict.bubbles,
+						dict.cancelable,
+						dict.detail
+					);
 				} catch( error ) {
 					// for browsers which don't support CustomEvent at all,
 					// we use a regular event instead
@@ -357,6 +363,7 @@ else {
 
 	// attach listeners for errors
 	window.addEventListener( window.camino.event.error, window.camino.error );
+
 } // end browser code
 
 
@@ -389,10 +396,7 @@ Camino.prototype.match = function( req ) {
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( ( route.methods.length > 0
-		&& route.methods.indexOf( req.method ) === -1 )
-
-		// all "OPTIONS" requests should be allowed
-		&& req.method !== 'OPTIONS' ) {
+		&& route.methods.indexOf( req.method ) === -1 ) {
 
 			var err = new Error('Method not allowed');
 			err.status = 405;
