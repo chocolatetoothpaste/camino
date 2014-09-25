@@ -17,12 +17,16 @@
   "ignore": [
     "**/.*",
     "app.js",
+    "bower.js",
     "bower_components",
     "browser.js",
     "core.js",
+    "gulpfile.js",
+    "node.js",
     "node_modules",
+    "package.js",
     "test",
     "test.js",
-    "tests",
+    "tests"
   ]
 }
