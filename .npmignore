@@ -5,3 +5,4 @@ test/
 bower.json
 gulpfile.js
 README.html
+*.submlime-*
