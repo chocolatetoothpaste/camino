@@ -16,7 +16,8 @@
   ],
   "ignore": [
     "**/.*",
-    "dist/",
+    "dist/camino-all.js",
+    "dist/camino-server.js",
     "node_modules/",
     "src/",
     "test/",
