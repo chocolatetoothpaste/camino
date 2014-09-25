@@ -166,7 +166,7 @@ Camino.prototype.match = function( req ) {
 	route = global.routes[route];
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
-	if( ( route.methods.length > 0
+	if( route.methods.length > 0
 		&& route.methods.indexOf( req.method ) === -1 ) {
 
 			var err = new Error('Method not allowed');
