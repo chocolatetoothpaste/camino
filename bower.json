@@ -24,7 +24,7 @@
     "gulpfile.js",
     "node.js",
     "node_modules",
-    "package.js",
+    "package.json",
     "test",
     "test.js",
     "tests"
