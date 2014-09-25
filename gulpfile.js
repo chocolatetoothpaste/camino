@@ -5,10 +5,10 @@ var concat = require('gulp-concat');
 var fs = require('fs');
 
 gulp.task('js', function() {
-	var browser = fs.readFileSync('browser.js', {encoding: "utf8"});
-	var server = fs.readFileSync('server.js', {encoding: "utf8"});
+	var browser = fs.readFileSync('src/browser.js', {encoding: "utf8"});
+	var server = fs.readFileSync('src/server.js', {encoding: "utf8"});
 
-	gulp.src('core.js')
+	gulp.src('src/core.js')
 		.pipe(replace('//=include', "// node.js specific stuff\n"
 			+ "if( typeof module !== \"undefined\" && module.exports ) {\n\t"
 			+ server.replace(/\n/g, "\n\t")
@@ -17,19 +17,19 @@ gulp.task('js', function() {
 			+ "else {\n\n\t"
 			+ browser.replace(/\n/g, "\n\t")
 			+ "\n\n}\n"))
-		.pipe(concat('camino.js'))
-		.pipe(gulp.dest('./'));
+		.pipe(concat('camino-all.js'))
+		.pipe(gulp.dest('./dist'));
 
-	gulp.src('core.js')
+	gulp.src('src/core.js')
 		// .pipe( include() )
 		.pipe(replace('//=include', browser))
-		.pipe(concat('bower.js'))
-		.pipe(gulp.dest('./'));
+		.pipe(concat('camino-browser.js'))
+		.pipe(gulp.dest('./dist'));
 
-	gulp.src('core.js')
+	gulp.src('src/core.js')
 		.pipe(replace('//=include', server))
-		.pipe(concat('node.js'))
-		.pipe(gulp.dest('./'));
+		.pipe(concat('camino-server.js'))
+		.pipe(gulp.dest('./dist'));
 });
 
 // Watch Files For Changes

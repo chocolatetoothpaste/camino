@@ -1,7 +1,7 @@
 {
   "name": "camino",
   "version": "0.10.1",
-  "main": "./camino.js",
+  "main": "./dist/camino-browser.js",
   "homepage": "https://github.com/chocolatetoothpaste/camino",
   "authors": [
     "Ross Paskett <ross@paskett.me>"
@@ -9,25 +9,18 @@
   "description": "Server- and client-side routing for web applications. Hashes and History API support.",
   "keywords": [
     "history",
-    "hashes",
+    "hash",
     "routing",
     "router",
     "route"
   ],
   "ignore": [
     "**/.*",
-    "app.js",
-    "bower.js",
-    "bower_components",
-    "browser.js",
-    "core.js",
+    "dist/",
+    "node_modules/",
+    "src/",
+    "test/",
     "gulpfile.js",
-    "node.js",
-    "node_modules",
     "package.json",
-    "server.js",
-    "test",
-    "test.js",
-    "tests"
   ]
 }
