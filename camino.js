@@ -95,7 +95,7 @@ if( typeof module !== "undefined" && module.exports ) {
 		// process multipart form data (uploads...)
 		if( type === 'multipart/form-data' ) {
 			// pass off to delegate
-			this.formData( req, responder );
+			this._multipart( req, responder );
 		}
 
 		else {
@@ -128,10 +128,10 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Delegate for handling multi-part form data (uploads)
 	 */
 
-	Camino.prototype.formData = function( req, responder ) {
-		var self = this;
-		var Busboy = require( 'busboy' );
-		var busboy = new Busboy({ headers: req.headers });
+	Camino.prototype._multipart = function( req, responder ) {
+		var self = this,
+			Busboy = require( 'busboy' ),
+			busboy = new Busboy({ headers: req.headers });
 
 		req.files = {};
 		req.data = {};
@@ -140,21 +140,24 @@ if( typeof module !== "undefined" && module.exports ) {
 		// full args for future reference, removed to save memory...?
 		// busboy.on( 'file', function( field, file, name, enc, mime ) {
 		busboy.on( 'file', function( field, file ) {
-			// create a container
+			// container for concatenating incoming data stream into a buffer
 			var buf = [];
 
 			file.on( 'data', function(data) {
-				// push data bits into the contrainer
+				// push data chunks into contrainer
 				buf.push( data );
 			});
 
 			file.on( 'end', function() {
-				// put data in the buffer and assign it to a var
+				// when finished capturing data, Buffer it
 				req.files[field] = Buffer.concat(buf);
+
+				// blow chunks
 				buf = undefined;
 			});
 		});
 
+		// capture incoming fields as they are parsed
 		busboy.on( 'field', function( field, val ) {
 			req.data[field] = val;
 		});
@@ -252,7 +255,7 @@ else {
 
 		var req = emitter.location;
 
-		// set event listener for history api of optioned
+		// set event listener for history api if optioned
 		if( opt.history ) {
 			// adding a placeholder for the "current" location so popstates
 			// fired on hashchange events can be mitigated
@@ -267,8 +270,9 @@ else {
 			}).bind(this), false );
 		}
 
-		// set a hash event
+		// defaults to true, but allow user the option to ignore hash events
 		if( opt.hash ) {
+			// set a hash event listener
 			emitter.addEventListener( "hashchange", (function(e) {
 				// augment the request object with "request" param
 				req.request = req.hash;
@@ -316,36 +320,6 @@ else {
 	 */
 
 	Camino.prototype.emit = function( event, data ) {
-		// thank you @https://github.com/jonathantneal/EventListener
-		// polyfill for ie
-		! window.CustomEvent && (function() {
-			window.CustomEvent = function CustomEvent( type, dict ) {
-				dict = dict || {
-					bubbles: false,
-					cancelable: false,
-					detail: undefined
-				};
-
-				try {
-					var ev = document.createEvent('CustomEvent');
-					ev.initCustomEvent(
-						type,
-						dict.bubbles,
-						dict.cancelable,
-						dict.detail
-					);
-				} catch( error ) {
-					// for browsers which don't support CustomEvent at all,
-					// we use a regular event instead
-					var ev = document.createEvent('Event');
-					ev.initEvent( type, dict.bubbles, dict.cancelable );
-					ev.detail = dict.detail;
-				}
-
-				return ev;
-			};
-		})();
-
 		window.dispatchEvent( new CustomEvent( event, { detail: data }) );
 	};
 

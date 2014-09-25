@@ -3,10 +3,8 @@ One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
-**Possible breaking changes:**
-1. Query strings will be automatically URI decoded in the browser.  To disable this, set "decode: false" in the options you pass to camino.listen()
-2. Hashes and history support were heavily modified.  Hashes can now work at the same time as History API stuff. Test your code to ensure it works as expected and report any issues.
-
+**Possible breaking change:**
+Rather than assume most of your users are using an older browser, I have opted to remove any polyfills from the library. This will probably only affect IE users.  For convenience, I have added a Polyfills section to the end of this document.
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
@@ -166,18 +164,18 @@ YOUR code that is run when a request is matched to a route. Your callback should
 request.route --- an object of route specific data (that your provided) for the matched route. example:
 
     {
-    	// the route as defined by user (since the regex version is probably of no use)
-		route: /api/user/@company/%id,
+        // the route as defined by user (since the regex version is probably of no use)
+        route: /api/user/@company/%id,
 
-		// the "params" accepted by the route
-		params: [
-			"company",
-			"id"
-		],
+        // the "params" accepted by the route
+        params: [
+            "company",
+            "id"
+        ],
 
-		// the array of allowed methods, defaults to empty array for type consistency
-		methods: [ ]
-	}
+        // the array of allowed methods, defaults to empty array for type consistency
+        methods: [ ]
+    }
 
 request.request --- the request string that was used for matching.
 
@@ -230,3 +228,95 @@ Very basic error handling was introduced for server instances only.
 This was done to handle 404/405 errors to prevent hanging when testing.
 
 Additionally, Camino.error can (read: should) be augmented/replaced with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
+
+### Polyfills
+**CustomEvent**
+    // thank you @https://github.com/jonathantneal/EventListener
+    // polyfill for using CustomEvent constructor in IE 9/10
+    ! window.CustomEvent && (function() {
+        window.CustomEvent = function CustomEvent( type, dict ) {
+            dict = dict || {
+                bubbles: false,
+                cancelable: false,
+                detail: undefined
+            };
+
+            try {
+                var ev = document.createEvent('CustomEvent');
+                ev.initCustomEvent(
+                    type,
+                    dict.bubbles,
+                    dict.cancelable,
+                    dict.detail
+                );
+            } catch( error ) {
+                // for browsers which don't support CustomEvent at all,
+                // we use a regular event instead
+                var ev = document.createEvent('Event');
+                ev.initEvent( type, dict.bubbles, dict.cancelable );
+                ev.detail = dict.detail;
+            }
+
+            return ev;
+        };
+    })();
+
+**Array.forEach**
+    // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
+    if (!Array.prototype.forEach) {
+
+        Array.prototype.forEach = function(callback, thisArg) {
+
+            var T, k;
+
+            if (this == null) {
+                throw new TypeError(' this is null or not defined');
+            }
+
+            // 1. Let O be the result of calling ToObject passing the |this| value as the argument.
+            var O = Object(this);
+
+            // 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".
+            // 3. Let len be ToUint32(lenValue).
+            var len = O.length >>> 0;
+
+            // 4. If IsCallable(callback) is false, throw a TypeError exception.
+            // See: http://es5.github.com/#x9.11
+            if (typeof callback !== "function") {
+                throw new TypeError(callback + ' is not a function');
+            }
+
+            // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+            if (arguments.length > 1) {
+                T = thisArg;
+            }
+
+            // 6. Let k be 0
+            k = 0;
+
+            // 7. Repeat, while k < len
+            while (k < len) {
+
+                var kValue;
+
+                // a. Let Pk be ToString(k).
+                //   This is implicit for LHS operands of the in operator
+                // b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.
+                //   This step can be combined with c
+                // c. If kPresent is true, then
+                if (k in O) {
+
+                    // i. Let kValue be the result of calling the Get internal method of O with argument Pk.
+                    kValue = O[k];
+
+                    // ii. Call the Call internal method of callback with T as the this value and
+                    // argument list containing kValue, k, and O.
+                    callback.call(T, kValue, k, O);
+                }
+
+                // d. Increase k by 1.
+                k++;
+            }
+            // 8. return undefined
+        };
+    }
