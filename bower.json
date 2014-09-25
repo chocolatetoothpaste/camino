@@ -25,6 +25,7 @@
     "node.js",
     "node_modules",
     "package.json",
+    "server.js",
     "test",
     "test.js",
     "tests"
