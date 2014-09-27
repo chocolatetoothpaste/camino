@@ -29,10 +29,8 @@ Camino.prototype.listen = function( emitter, responder ) {
 		// emit "request" event
 		this.emit( this.event.request );
 
-		if( typeof global.options.responder === "undefined" ) {
-			// assign the global response object
-			global.options.responder = responder || res;
-		}
+		// assign the global response object
+		global.options.responder = responder || res;
 
 		var qs = require( 'querystring' ),
 			url = require( 'url' ).parse( req.url );

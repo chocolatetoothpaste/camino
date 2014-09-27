@@ -26,8 +26,13 @@ camino.route('/api/ross/@company/%name', function(req, res) {
 });
 
 camino.route('/api/sawyer/brown', {methods: ['GET', 'PUT']}, function(req, res) {
-	console.log('Files:', req.files);
+	res.writeHead(200, { 'Content-Type': 'application/json'})
 	res.end(JSON.stringify({ "success": true, "data": ["Soybean"] }));
+});
+
+camino.route('/api/upload', {methods: ['POST']}, function(req, res) {
+	res.writeHead(200, { 'Content-Type': 'image/png'})
+	res.end(req.files.image);
 });
 
 var http = require('http');
