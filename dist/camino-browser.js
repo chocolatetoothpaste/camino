@@ -34,6 +34,7 @@ Camino.prototype.event = {
  */
 
 Camino.prototype.listen = function( emitter, opt, responder ) {
+	// available options and their defaults
 	var dict = { decode: true, history: false, hash: true };
 
 	// musical vars
@@ -42,6 +43,7 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		opt = dict;
 	}
 
+	// merge user and default options
 	else {
 		for( var i in dict ) {
 			opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
@@ -92,6 +94,10 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 };
 
 
+/**
+ * Prep the request and pass it off to be matched
+ */
+
 Camino.prototype._exec = function( req ) {
 	this.emit( this.event.request, req );
 
@@ -116,7 +122,7 @@ Camino.prototype._exec = function( req ) {
 
 
 /**
- * Shim for browsers
+ * Shim emit method for browsers
  */
 
 Camino.prototype.emit = function( event, data ) {
@@ -147,6 +153,7 @@ Camino.prototype.match = function( req ) {
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
 		var match = RegExp( route, 'g' ).exec( req.request );
+
 		// if a match was found, break the loop
 		if( match !== null )
 			break;
@@ -168,7 +175,6 @@ Camino.prototype.match = function( req ) {
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
 		&& route.methods.indexOf( req.method ) === -1 ) {
-
 			var err = new Error('Method not allowed');
 			err.status = 405;
 			this.emit( this.event.error, err );

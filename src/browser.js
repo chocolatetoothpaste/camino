@@ -17,6 +17,7 @@ Camino.prototype.event = {
  */
 
 Camino.prototype.listen = function( emitter, opt, responder ) {
+	// available options and their defaults
 	var dict = { decode: true, history: false, hash: true };
 
 	// musical vars
@@ -25,6 +26,7 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		opt = dict;
 	}
 
+	// merge user and default options
 	else {
 		for( var i in dict ) {
 			opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
@@ -75,6 +77,10 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 };
 
 
+/**
+ * Prep the request and pass it off to be matched
+ */
+
 Camino.prototype._exec = function( req ) {
 	this.emit( this.event.request, req );
 
@@ -99,7 +105,7 @@ Camino.prototype._exec = function( req ) {
 
 
 /**
- * Shim for browsers
+ * Shim emit method for browsers
  */
 
 Camino.prototype.emit = function( event, data ) {

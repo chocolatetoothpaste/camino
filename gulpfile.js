@@ -34,7 +34,7 @@ gulp.task('js', function() {
 
 // Watch Files For Changes
 gulp.task('watch', function() {
-		gulp.watch(['./core.js', './server.js', './browser.js'], ['js']);
+		gulp.watch(['./src/*.js'], ['js']);
 });
 
 gulp.task('default', ['js', 'watch']);

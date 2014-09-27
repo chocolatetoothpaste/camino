@@ -26,6 +26,7 @@ Camino.prototype.match = function( req ) {
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
 		var match = RegExp( route, 'g' ).exec( req.request );
+
 		// if a match was found, break the loop
 		if( match !== null )
 			break;
@@ -47,7 +48,6 @@ Camino.prototype.match = function( req ) {
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
 		&& route.methods.indexOf( req.method ) === -1 ) {
-
 			var err = new Error('Method not allowed');
 			err.status = 405;
 			this.emit( this.event.error, err );

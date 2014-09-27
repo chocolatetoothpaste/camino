@@ -19,7 +19,7 @@ First things first, some juicy examples.
     camino.route( "/api/user/@id", { methods: ["POST"] }, user.init );
 
     // using the response object
-    var myCb = function( map, response ) {
+    var callback = function( map, response ) {
         var data = JSON.stringify({
             status: 200,
             success: true,
@@ -36,7 +36,7 @@ First things first, some juicy examples.
     };
 
     // passing in a simple function as the callback for this route
-    camino.route( "/api/user/@user_id/message/%id", myCb );
+    camino.route( "/api/user/@user_id/message/%id", callback );
 
     // org.init would be part of the same pretend controller framework
     // passing in some sample options
@@ -131,7 +131,7 @@ These browser examples are in no way exhaustive, nor "recommended practice". The
 ### API
     camino.route( route [, options], callback )
 
-**route** --- string
+**route** --- String
 
 The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the two types is, if your URL has a required param but one is not provided, it will result in a (404 error).
 
@@ -201,7 +201,7 @@ I would strongly recommend passing file uploads as a base64 encoded string in yo
 
 OR
 
-    camino.listen( window [, options] [, responder] );
+    camino.listen( window [, options] [, responder] ); // Browser only
 
 When you call the listen() function, you have the option of passing in a custom "response" object/function.
 
@@ -210,6 +210,24 @@ In the browser, this could be a data parser, a message box, or something like th
 On the server, it defaults to the HTTP response object, but feel free to be creative :) Define your own as a shortcut if you always respond with the same content type or something like that.
 
 The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
+
+Valid options for camino.listen "options" argument are:
+
+**decode** --- decode query string data using decodeURI, defaults to true
+
+**history** --- use history API for routing requests, defaults to false
+
+**hash** --- listen to hashchange event and handle requests using URL hash, defaults to true
+
+* * *
+
+    camino.handle( type, callback );
+
+Registers a content type and it's corresponding handler.  There are three content types defined by default: multipart/form-data, application/json, and application/x-www-form-urlencoded.  These can easily be overridden with the handle function, as well as additional content types registered depending on your applications needs.
+
+**type** --- String
+
+**callback** --- Function
 
 ### Events
 For convenience, Camino.event container object exists with references to Camino's events. The following are Camino.event's properties:

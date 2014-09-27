@@ -29,8 +29,10 @@ Camino.prototype.listen = function( emitter, responder ) {
 		// emit "request" event
 		this.emit( this.event.request );
 
-		// assign the global response object
-		global.options.responder = responder || res;
+		if( typeof global.options.responder === "undefined" ) {
+			// assign the global response object
+			global.options.responder = responder || res;
+		}
 
 		var qs = require( 'querystring' ),
 			url = require( 'url' ).parse( req.url );
@@ -47,7 +49,7 @@ Camino.prototype.listen = function( emitter, responder ) {
 		// try to match the request to a route
 		this.match( req );
 
-	// bind callback to Camino's scope, eliminte "var self = ..." bastard
+	// bind callback to Camino's scope
 	}).bind( this ) );
 
 	// listen for "match" event to fire and execute callback
@@ -72,97 +74,123 @@ Camino.prototype._exec = function( req ) {
 	// assign the responder, either custom or global
 	var responder = req.route.responder || global.options.responder;
 
-	// process multipart form data (uploads...)
-	if( type === 'multipart/form-data' ) {
-		// pass off to delegate
-		this._multipart( req, responder );
+	if( typeof this._handlers[type] === "function" ) {
+		this._handlers[type].call( this, req, responder );
 	}
 
 	else {
-		// create empty string for appending request body data
-		req.data = '';
-
-		// grab the request body data, if provided
-		req.on( 'data', function( chunk ) {
-			req.data += chunk;
-		});
-
-
-		// parse request data and execute route callback
-		req.on( 'end', function() {
-			req.data = ( type === 'application/json'
-				? JSON.parse( req.data )
-				: require('querystring').parse( req.data ) );
-
-			self.emit( self.event.exec );
-
-			// execute the callback, pass through request and responder handlers
-			req.route.callback.call( null, req, responder );
-		});
+		var err = new Error('Unsupported content type: ' + type);
+		err.status = 415;
+		this.emit( this.event.error, err );
 	}
-
 };
 
 
 /**
- * Delegate for handling multi-part form data (uploads)
+ * The majority of content types will just grab the incoming data stream and
+ * parse it, this is a convenience method for grabbing that data
  */
 
-Camino.prototype._multipart = function( req, responder ) {
-	var self = this,
-		Busboy = require( 'busboy' ),
-		busboy = new Busboy({ headers: req.headers });
+Camino.prototype._data = function( req, res ) {
+	var self = this;
 
-	req.files = {};
-	req.data = {};
+	// create empty string for appending request body data
+	req.data = '';
 
-	// grab uploaded files and stream them into buffers
-	// full args for future reference, removed to save memory...?
-	// busboy.on( 'file', function( field, file, name, enc, mime ) {
-	busboy.on( 'file', function( field, file ) {
-		// container for concatenating incoming data stream into a buffer
-		var buf = [];
-
-		file.on( 'data', function(data) {
-			// push data chunks into contrainer
-			buf.push( data );
-		});
-
-		file.on( 'end', function() {
-			// when finished capturing data, Buffer it
-			req.files[field] = Buffer.concat(buf);
-
-			// blow chunks
-			buf = undefined;
-		});
+	// grab the request body data, if provided
+	req.on( 'data', function( chunk ) {
+		req.data += chunk;
 	});
 
-	// capture incoming fields as they are parsed
-	busboy.on( 'field', function( field, val ) {
-		req.data[field] = val;
-	});
 
-	busboy.on( 'finish', function() {
+	// parse request data and execute route callback
+	req.on( 'end', function() {
+		req.data = require('querystring').parse( req.data );
+
 		self.emit( self.event.exec );
 
-		// fire off route callback
-		req.route.callback.call( null, req, responder );
-
+		// execute the callback, pass through request and responder handlers
+		req.route.callback.call( null, req, res );
 	});
+};
 
-	// believe in the cleansing power of the pipe! [ad s1e15]
-	req.pipe( busboy );
+
+/**
+ * Register a handler for a content type
+ * (fancy-talk for add a property to an object)
+ */
+
+Camino.prototype.handle = function( type, cb ) {
+	this._handlers[type] = cb;
+};
+
+
+/**
+ * Container object for content type handlers, and some default handlers
+ */
+
+Camino.prototype._handlers = {
+	'multipart/form-data': function( req, res ) {
+		var self = this;
+		var Busboy = require( 'busboy' );
+		var busboy = new Busboy({ headers: req.headers });
+
+		req.files = {};
+		req.data = {};
+
+		// grab uploaded files and stream them into buffers
+		busboy.on( 'file', function( field, file ) {
+			var buf = [];
+
+			file.on( 'data', function(data) {
+				// push data chunks into contrainer
+				buf.push( data );
+			});
+
+			file.on( 'end', function() {
+				// when finished capturing data, Buffer it
+				req.files[field] = Buffer.concat(buf);
+
+				// blow chunks
+				buf = undefined;
+			});
+		});
+
+		// capture incoming fields as they are parsed
+		busboy.on( 'field', function( field, val ) {
+			req.data[field] = val;
+		});
+
+		busboy.on( 'finish', function() {
+			self.emit( self.event.exec );
+
+			// fire off route callback
+			req.route.callback.call( null, req, res );
+
+		});
+
+		// believe in the cleansing power of the pipe! [ad s1e15]
+		req.pipe( busboy );
+	},
+
+	'application/json': function( req, res ) {
+		this._data.call( this, req, res );
+	},
+
+	'application/x-www-form-urlencoded': function( req, res ) {
+		this._data.call( this, req, res );
+	}
 };
 
 
 /**
  * Basic error handling
- * Don't move this code, it's placement is important
+ *
+ * This should be replaced by the user to conform with their implementation
+ * but this basic implementation follows common practices and should be
+ * adequate for getting started
  */
 
-// This should be replaced by the user to conform with their implementation
-// but this basic implementation follows common practices and should be
-// adequate for getting started
 
 Camino.prototype.error = function( err ) {
 	var responder = global.options.responder;
