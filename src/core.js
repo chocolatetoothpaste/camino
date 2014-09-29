@@ -45,8 +45,6 @@ Camino.prototype.match = function( req ) {
 	// shorten reference
 	route = global.routes[route];
 
-	console.log(req.method);
-
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
 		&& route.methods.indexOf( req.method ) === -1 ) {

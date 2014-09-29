@@ -91,15 +91,25 @@ if( typeof module !== "undefined" && module.exports ) {
 		// assign the responder, either custom or global
 		var responder = req.route.responder || global.options.responder;
 	
-		if( typeof this._handlers[type] === "function" ) {
-			this._handlers[type].call( this, req, responder );
+		if( typeof self._handlers[type] === "function" ) {
+			self._handlers[type].call( self, req, responder );
 		}
 	
 		else {
-			var err = new Error('Unsupported content type: ' + type);
-			err.status = 415;
-			this.emit( this.event.error, err );
+			// parse request data and execute route callback
+			req.on( 'end', function() {
+				// set an empty object for type consistency
+				req.data = {};
+	
+				self.emit( self.event.exec );
+	
+				// execute the callback, pass through request and responder handlers
+				req.route.callback.call( null, req, responder );
+			});
+	
+			req.resume();
 		}
+	
 	};
 	
 	
@@ -118,7 +128,6 @@ if( typeof module !== "undefined" && module.exports ) {
 		req.on( 'data', function( chunk ) {
 			req.data += chunk;
 		});
-	
 	
 		// parse request data and execute route callback
 		req.on( 'end', function() {
@@ -195,6 +204,10 @@ if( typeof module !== "undefined" && module.exports ) {
 		},
 	
 		'application/x-www-form-urlencoded': function( req, res ) {
+			this._data.call( this, req, res );
+		},
+	
+		'asdf': function( req, res ) {
 			this._data.call( this, req, res );
 		}
 	};
@@ -400,8 +413,6 @@ Camino.prototype.match = function( req ) {
 
 	// shorten reference
 	route = global.routes[route];
-
-	console.log(req.method);
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0

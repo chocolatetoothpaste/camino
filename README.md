@@ -149,7 +149,7 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 **options** --- Object
 
-Camino only uses 2 options **methods** (string) and **responder** (function)
+Camino.route accepts 2 options:
 
 **methods** is an array of supported methods for the URL. On the server, this will most likely be request methods. In the browser, whatever you want, really...
 
@@ -164,7 +164,7 @@ YOUR code that is run when a request is matched to a route. Your callback should
 request.route --- an object of route specific data (that your provided) for the matched route. example:
 
     {
-        // the route as defined by user (since the regex version is probably of no use)
+        // the route
         route: /api/user/@company/%id,
 
         // the "params" accepted by the route
