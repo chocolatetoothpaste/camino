@@ -202,16 +202,16 @@ Camino.prototype._handlers = {
 		var self = this;
 
 		// create empty string for appending request body data
-		req.data = '';
+		req.raw = '';
 
 		// grab the request body data, if provided
 		req.on( 'data', function( chunk ) {
-			req.data += chunk;
+			req.raw += chunk;
 		});
 
 		// parse request data and execute route callback
 		req.on( 'end', function() {
-			req.data = JSON.parse( req.data );
+			req.data = JSON.parse( req.raw );
 
 			self.emit( self.event.exec );
 
@@ -225,16 +225,16 @@ Camino.prototype._handlers = {
 		var self = this;
 
 		// create empty string for appending request body data
-		req.data = '';
+		req.raw = '';
 
 		// grab the request body data, if provided
 		req.on( 'data', function( chunk ) {
-			req.data += chunk;
+			req.raw += chunk;
 		});
 
 		// parse request data and execute route callback
 		req.on( 'end', function() {
-			req.data = require('querystring').parse( req.data );
+			req.data = require('querystring').parse( req.raw );
 
 			self.emit( self.event.exec );
 
