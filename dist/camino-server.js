@@ -198,15 +198,49 @@ Camino.prototype._handlers = {
 	},
 
 	'application/json': function( req, res ) {
-		this._data.call( this, req, res );
+		// this._data.call( this, req, res );
+		var self = this;
+
+		// create empty string for appending request body data
+		req.data = '';
+
+		// grab the request body data, if provided
+		req.on( 'data', function( chunk ) {
+			req.data += chunk;
+		});
+
+		// parse request data and execute route callback
+		req.on( 'end', function() {
+			req.data = JSON.parse( req.data );
+
+			self.emit( self.event.exec );
+
+			// execute the callback, pass through request and responder handlers
+			req.route.callback.call( null, req, res );
+		});
 	},
 
 	'application/x-www-form-urlencoded': function( req, res ) {
-		this._data.call( this, req, res );
-	},
+		// this._data.call( this, req, res );
+		var self = this;
 
-	'asdf': function( req, res ) {
-		this._data.call( this, req, res );
+		// create empty string for appending request body data
+		req.data = '';
+
+		// grab the request body data, if provided
+		req.on( 'data', function( chunk ) {
+			req.data += chunk;
+		});
+
+		// parse request data and execute route callback
+		req.on( 'end', function() {
+			req.data = require('querystring').parse( req.data );
+
+			self.emit( self.event.exec );
+
+			// execute the callback, pass through request and responder handlers
+			req.route.callback.call( null, req, res );
+		});
 	}
 };
 

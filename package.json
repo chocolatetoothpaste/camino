@@ -1,6 +1,6 @@
 {
   "name": "camino",
-  "version": "0.10.8",
+  "version": "0.10.9",
   "description": "One-stop routing for server- and client-side web applications",
   "main": "./dist/camino-server.js",
   "author": {
