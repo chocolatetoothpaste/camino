@@ -118,20 +118,20 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * parse it, this is a convenience method for grabbing that data
 	 */
 	
-	Camino.prototype._data = function( req, res ) {
+	Camino.prototype._data = function( req, res, cb ) {
 		var self = this;
 	
 		// create empty string for appending request body data
-		req.data = '';
+		req.raw = '';
 	
 		// grab the request body data, if provided
 		req.on( 'data', function( chunk ) {
-			req.data += chunk;
+			req.raw += chunk;
 		});
 	
 		// parse request data and execute route callback
 		req.on( 'end', function() {
-			req.data = require('querystring').parse( req.data );
+			req.data = cb.call( null, req.raw );
 	
 			self.emit( self.event.exec );
 	
@@ -200,49 +200,11 @@ if( typeof module !== "undefined" && module.exports ) {
 		},
 	
 		'application/json': function( req, res ) {
-			// this._data.call( this, req, res );
-			var self = this;
-	
-			// create empty string for appending request body data
-			req.raw = '';
-	
-			// grab the request body data, if provided
-			req.on( 'data', function( chunk ) {
-				req.raw += chunk;
-			});
-	
-			// parse request data and execute route callback
-			req.on( 'end', function() {
-				req.data = JSON.parse( req.raw );
-	
-				self.emit( self.event.exec );
-	
-				// execute the callback, pass through request and responder handlers
-				req.route.callback.call( null, req, res );
-			});
+			this._data( req, res, JSON.parse );
 		},
 	
 		'application/x-www-form-urlencoded': function( req, res ) {
-			// this._data.call( this, req, res );
-			var self = this;
-	
-			// create empty string for appending request body data
-			req.raw = '';
-	
-			// grab the request body data, if provided
-			req.on( 'data', function( chunk ) {
-				req.raw += chunk;
-			});
-	
-			// parse request data and execute route callback
-			req.on( 'end', function() {
-				req.data = require('querystring').parse( req.raw );
-	
-				self.emit( self.event.exec );
-	
-				// execute the callback, pass through request and responder handlers
-				req.route.callback.call( null, req, res );
-			});
+			this._data( req, res, require('querystring').parse );
 		}
 	};
 	
@@ -425,10 +387,12 @@ else {
  */
 
 Camino.prototype.match = function( req ) {
+	var match = null;
+
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
-		var match = RegExp( route, 'g' ).exec( req.request );
+		match = RegExp( route, 'g' ).exec( req.request );
 
 		// if a match was found, break the loop
 		if( match !== null )

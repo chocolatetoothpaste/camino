@@ -149,10 +149,12 @@ window.addEventListener( window.camino.event.error, window.camino.error );
  */
 
 Camino.prototype.match = function( req ) {
+	var match = null;
+
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
 	for( var route in global.routes ) {
-		var match = RegExp( route, 'g' ).exec( req.request );
+		match = RegExp( route, 'g' ).exec( req.request );
 
 		// if a match was found, break the loop
 		if( match !== null )
