@@ -18,6 +18,10 @@ First things first, some juicy examples.
     // just pretend user.init is part of some controller framework or something
     camino.route( "/api/user/@id", { methods: ["POST"] }, user.init );
 
+    // org.init would be part of the same pretend controller framework
+    // passing in some sample options
+    camino.route( "/api/organization/@id", { responder: SomeCustomResponderObject, methods: ["GET", "POST"] }, org.init );
+
     // using the response object
     var callback = function( map, response ) {
         var data = JSON.stringify({
@@ -37,10 +41,6 @@ First things first, some juicy examples.
 
     // passing in a simple function as the callback for this route
     camino.route( "/api/user/@user_id/message/%id", callback );
-
-    // org.init would be part of the same pretend controller framework
-    // passing in some sample options
-    camino.route( "/api/organization/@id", { responder: SomeCustomResponderObject, methods: ["GET", "POST"] }, org.init );
 
     var http = require('http');
     var server = http.createServer().listen(31415, '127.0.0.1');

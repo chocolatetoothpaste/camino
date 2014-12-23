@@ -26,6 +26,10 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		opt = dict;
 	}
 
+	else if( typeof opt === "undefined" ) {
+		opt = dict;
+	}
+
 	// merge user and default options
 	else {
 		for( var i in dict ) {

@@ -43,6 +43,10 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		opt = dict;
 	}
 
+	else if( typeof opt === "undefined" ) {
+		opt = dict;
+	}
+
 	// merge user and default options
 	else {
 		for( var i in dict ) {
@@ -269,6 +273,19 @@ Camino.prototype.route = function( r, opt, cb ) {
 	this.emit( this.event.route, global.routes[route] );
 };
 
+
+/**
+ * Create event listener for each of camino's events (for debugging purposes)
+ */
+
+Camino.prototype.logEvents = function() {
+	var c = this;
+	Object.keys(c.event).forEach(function(k) {
+		window.addEventListener(c.event[k], function(data) {
+			console.log(c.event[k], ": ", data);
+		})
+	});
+};
 
 /**
  * print to console all defined routes (for testing purposes)
