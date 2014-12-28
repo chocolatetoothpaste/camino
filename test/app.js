@@ -20,6 +20,11 @@ camino.on('route', function() {
 	console.log('Event: route')
 });
 
+camino.route('/api/ross/almon/%param', function(req, res) {
+	res.write(JSON.stringify({ req: req.request, params: req.params }));
+	res.end();
+});
+
 camino.route('/api/ross/@company/%name', function(req, res) {
 	res.write(JSON.stringify({ req: req.request, params: req.params }));
 	res.end();

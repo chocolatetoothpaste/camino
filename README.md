@@ -275,7 +275,7 @@ This was done to handle 404/405 errors to prevent hanging when testing.
 
 Additionally, Camino.error can (should) be augmented/replaced with your own handling of response back to the server.  Look at the default implementation of Camino.error for an idea how to accomplish this.
 
-For browsers there is no error handling.
+For browsers the error is logged to the console, so it REALLY should be replaced.
 
 ### Polyfills
 **CustomEvent**

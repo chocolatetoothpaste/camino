@@ -5,6 +5,9 @@ var global = {
 	// the main container for defined routes
 	routes: {},
 
+	// array container for just route regexes (for sorting and looped matching)
+	rarr: [],
+
 	// the main container for global options
 	options: {}
 };
@@ -239,6 +242,20 @@ camino.on( camino.event.error, camino.error );
 // exporting an instance instead of a reference for convenience and to
 // discourage multiple instances (which may not even work)
 module.exports = camino;
+
+
+/**
+ * Grab route "keys", sort them by length smallest to largest. This array will
+ * be used to loop and match in the future to attempt to match the most
+ * complete path first. Might screw things up quite badly, too.
+ */
+
+Camino.prototype.init = function() {
+	global.rarr = Object.keys(global.routes).sort(function(a, b){
+		return a.length < b.length;
+	});
+};
+
 
 /**
  * Compare request to routes list and look for a match
