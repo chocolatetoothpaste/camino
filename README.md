@@ -1,9 +1,15 @@
 # Camino
 One-stop routing for server- and client-side web applications
 
+[![NPM](https://nodei.co/npm/camino.png?downloads=true)](https://nodei.co/npm/camino/)
+
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
-**Possible breaking change:**
+**Upcoming breaking change**
+Starting in version 0.12.0, the "request" object will have a new structure with new properties.  Instead of polluting the native object, a new object will be used with the most useful properties and the native object will be wrapped with this new object.  The properties will be renamed to be more consistent with current standards/practices.
+See documentation when 0.12.0 is released in early 2015.
+
+**Possible breaking change**
 Rather than assume most of your users are using an older browser, I have opted to remove any polyfills from the library. This will probably only affect IE users.  For convenience, I have added a Polyfills section to the end of this document.
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
@@ -189,19 +195,21 @@ Node.js only:
 
 request.method --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
 
-request.data --- the request body, from a HTML form for example, and should be ignored for get request since many servers will drop it in transmission. Again, this could be augmented with an "onclick" event if you want to pass around data
+request.raw -- the raw request body
 
-request.files --- an array of files that were upload, captured into Buffers
+request.data --- the request body after it has been parsed (if using built in content-type handlers).
 
-I would strongly recommend passing file uploads as a base64 encoded string in your JSON payload. It works better and keeps your data payload more organized.
+request.files --- an array of files that were uploaded, captured into Buffers (if applicable)
+
+In the browser it is possible to augment the location object with additional properties/data you want to pass around.
 
 * * *
 
-    camino.listen( server [, responder] );
+    camino.listen( server [, responder] ); // Node.js (server)
 
 OR
 
-    camino.listen( window [, options] [, responder] ); // Browser only
+    camino.listen( window [, options] [, responder] ); // Browser
 
 When you call the listen() function, you have the option of passing in a custom "response" object/function.
 
@@ -245,7 +253,9 @@ Very basic error handling was introduced for server instances only.
 
 This was done to handle 404/405 errors to prevent hanging when testing.
 
-Additionally, Camino.error can (read: should) be augmented/replaced with your own handling of response back to the server.  Take a peak at the code for an idea how to accomplish this, and maybe add your own browser error handler while you're at it.
+Additionally, Camino.error can (should) be augmented/replaced with your own handling of response back to the server.  Look at the default implementation of Camino.error for an idea how to accomplish this.
+
+For browsers there is no error handling.
 
 ### Polyfills
 **CustomEvent**

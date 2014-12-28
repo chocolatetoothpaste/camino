@@ -1,16 +1,13 @@
 (function() {
-// not sure what purpose this serves, seems to be a common thing with node modules
-var root = this,
+// containers for data that needs a broader scope
+var global = {
 
-	// containers for data that needs a broader scope
-	global = {
+	// the main container for defined routes
+	routes: {},
 
-		// the main container for routes that are defined
-		routes: {},
-
-		// the main container for global options
-		options: {}
-	};
+	// the main container for global options
+	options: {}
+};
 
 // main object constructor
 function Camino() { }
@@ -68,8 +65,9 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		var location = null;
 
 		emitter.addEventListener( "popstate", (function() {
+			// if request is the same as current location, don't execute again
 			if( req.pathname !== location ) {
-				// augment the request object with "request" param
+				// set the new "current" location
 				location = req.request = req.pathname;
 				this._exec( req );
 			}
@@ -78,9 +76,9 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 
 	// defaults to true, but allow user the option to ignore hash events
 	if( opt.hash ) {
-		// set a hash event listener
 		emitter.addEventListener( "hashchange", (function(e) {
-			// augment the request object with "request" param
+			// no need to check for request vs current hash,
+			// browser obeserves hash CHANGE
 			req.request = req.hash;
 			this._exec( req );
 		}).bind(this) );
@@ -114,8 +112,7 @@ Camino.prototype._exec = function( req ) {
 	if( global.options.decode )
 		req.qs = decodeURI(req.qs);
 
-	// split query string into pairs, decode the UI
-	// decodeURI(req.qs).split( "&" ).forEach(function( val ) {
+	// split query string into pairs
 	req.qs.split( "&" ).forEach(function( val ) {
 		var v = val.split( '=' );
 		req.query[ v[0] ] = v[1];
@@ -230,7 +227,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 	// extract param names from the route
 	var params = ( r.match( /[@|%]\w+/g ) || [] )
 
-		// r.match grabs param names including @/%, so trim the first char
+		// trim @/% from param name
 		.map( function( v ) { return v.substr( 1 ) } );
 
 	// replace param names with regexes
@@ -283,9 +280,10 @@ Camino.prototype.logEvents = function() {
 	Object.keys(c.event).forEach(function(k) {
 		window.addEventListener(c.event[k], function(data) {
 			console.log(c.event[k], ": ", data);
-		})
+		});
 	});
 };
+
 
 /**
  * print to console all defined routes (for testing purposes)

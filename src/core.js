@@ -1,16 +1,13 @@
 (function() {
-// not sure what purpose this serves, seems to be a common thing with node modules
-var root = this,
+// containers for data that needs a broader scope
+var global = {
 
-	// containers for data that needs a broader scope
-	global = {
+	// the main container for defined routes
+	routes: {},
 
-		// the main container for routes that are defined
-		routes: {},
-
-		// the main container for global options
-		options: {}
-	};
+	// the main container for global options
+	options: {}
+};
 
 // main object constructor
 function Camino() { }
@@ -99,7 +96,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 	// extract param names from the route
 	var params = ( r.match( /[@|%]\w+/g ) || [] )
 
-		// r.match grabs param names including @/%, so trim the first char
+		// trim @/% from param name
 		.map( function( v ) { return v.substr( 1 ) } );
 
 	// replace param names with regexes
@@ -152,9 +149,10 @@ Camino.prototype.logEvents = function() {
 	Object.keys(c.event).forEach(function(k) {
 		window.addEventListener(c.event[k], function(data) {
 			console.log(c.event[k], ": ", data);
-		})
+		});
 	});
 };
+
 
 /**
  * print to console all defined routes (for testing purposes)

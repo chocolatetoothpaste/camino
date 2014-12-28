@@ -1,5 +1,6 @@
 var util = require( "util" ),
-	events = require( "events" );
+	events = require( "events" ),
+	querystring = require( 'querystring' );
 
 // inherit event emitter prototype to allow camino to emit/listen to events
 events.EventEmitter.call( Camino );
@@ -32,16 +33,15 @@ Camino.prototype.listen = function( emitter, responder ) {
 		// assign the global response object
 		global.options.responder = responder || res;
 
-		var qs = require( 'querystring' ),
-			url = require( 'url' ).parse( req.url );
+		var url = require( 'url' ).parse( req.url );
 
 		// req.url without the querystring
 		req.request = url.pathname;
 
-		// query string parsed into JSON object
-		req.query = qs.parse( url.query );
+		// query string parsed into object
+		req.query = querystring.parse( url.query );
 
-		// the original query string, without the '?'
+		// the original query string, without '?'
 		req.qs = url.query;
 
 		// try to match the request to a route
@@ -69,7 +69,7 @@ Camino.prototype._exec = function( req ) {
 		? req.headers["content-type"].split(';')[0].toLowerCase()
 		: "" );
 
-	// assign the responder, either custom or global
+	// reference the responder, either custom or global
 	var responder = req.route.responder || global.options.responder;
 
 	if( typeof self._handlers[type] === "function" ) {
@@ -185,7 +185,7 @@ Camino.prototype._handlers = {
 	},
 
 	'application/x-www-form-urlencoded': function( req, res ) {
-		this._data( req, res, require('querystring').parse );
+		this._data( req, res, querystring.parse );
 	}
 };
 

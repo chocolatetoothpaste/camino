@@ -1,22 +1,20 @@
 (function() {
-// not sure what purpose this serves, seems to be a common thing with node modules
-var root = this,
+// containers for data that needs a broader scope
+var global = {
 
-	// containers for data that needs a broader scope
-	global = {
+	// the main container for defined routes
+	routes: {},
 
-		// the main container for routes that are defined
-		routes: {},
-
-		// the main container for global options
-		options: {}
-	};
+	// the main container for global options
+	options: {}
+};
 
 // main object constructor
 function Camino() { }
 
 var util = require( "util" ),
-	events = require( "events" );
+	events = require( "events" ),
+	querystring = require( 'querystring' );
 
 // inherit event emitter prototype to allow camino to emit/listen to events
 events.EventEmitter.call( Camino );
@@ -49,16 +47,15 @@ Camino.prototype.listen = function( emitter, responder ) {
 		// assign the global response object
 		global.options.responder = responder || res;
 
-		var qs = require( 'querystring' ),
-			url = require( 'url' ).parse( req.url );
+		var url = require( 'url' ).parse( req.url );
 
 		// req.url without the querystring
 		req.request = url.pathname;
 
-		// query string parsed into JSON object
-		req.query = qs.parse( url.query );
+		// query string parsed into object
+		req.query = querystring.parse( url.query );
 
-		// the original query string, without the '?'
+		// the original query string, without '?'
 		req.qs = url.query;
 
 		// try to match the request to a route
@@ -86,7 +83,7 @@ Camino.prototype._exec = function( req ) {
 		? req.headers["content-type"].split(';')[0].toLowerCase()
 		: "" );
 
-	// assign the responder, either custom or global
+	// reference the responder, either custom or global
 	var responder = req.route.responder || global.options.responder;
 
 	if( typeof self._handlers[type] === "function" ) {
@@ -202,7 +199,7 @@ Camino.prototype._handlers = {
 	},
 
 	'application/x-www-form-urlencoded': function( req, res ) {
-		this._data( req, res, require('querystring').parse );
+		this._data( req, res, querystring.parse );
 	}
 };
 
@@ -325,7 +322,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 	// extract param names from the route
 	var params = ( r.match( /[@|%]\w+/g ) || [] )
 
-		// r.match grabs param names including @/%, so trim the first char
+		// trim @/% from param name
 		.map( function( v ) { return v.substr( 1 ) } );
 
 	// replace param names with regexes
@@ -378,9 +375,10 @@ Camino.prototype.logEvents = function() {
 	Object.keys(c.event).forEach(function(k) {
 		window.addEventListener(c.event[k], function(data) {
 			console.log(c.event[k], ": ", data);
-		})
+		});
 	});
 };
+
 
 /**
  * print to console all defined routes (for testing purposes)

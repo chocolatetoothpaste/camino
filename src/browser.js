@@ -51,8 +51,9 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		var location = null;
 
 		emitter.addEventListener( "popstate", (function() {
+			// if request is the same as current location, don't execute again
 			if( req.pathname !== location ) {
-				// augment the request object with "request" param
+				// set the new "current" location
 				location = req.request = req.pathname;
 				this._exec( req );
 			}
@@ -61,9 +62,9 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 
 	// defaults to true, but allow user the option to ignore hash events
 	if( opt.hash ) {
-		// set a hash event listener
 		emitter.addEventListener( "hashchange", (function(e) {
-			// augment the request object with "request" param
+			// no need to check for request vs current hash,
+			// browser obeserves hash CHANGE
 			req.request = req.hash;
 			this._exec( req );
 		}).bind(this) );
@@ -97,8 +98,7 @@ Camino.prototype._exec = function( req ) {
 	if( global.options.decode )
 		req.qs = decodeURI(req.qs);
 
-	// split query string into pairs, decode the UI
-	// decodeURI(req.qs).split( "&" ).forEach(function( val ) {
+	// split query string into pairs
 	req.qs.split( "&" ).forEach(function( val ) {
 		var v = val.split( '=' );
 		req.query[ v[0] ] = v[1];

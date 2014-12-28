@@ -40,3 +40,5 @@ var http = require('http');
 var server = http.createServer().listen(24601, '127.0.0.1');
 
 camino.listen(server);
+
+// console.log(server.listeners('request'));
