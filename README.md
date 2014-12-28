@@ -10,6 +10,7 @@ Starting in version 0.12.0, the "request" object will have a new structure with 
 See documentation when 0.12.0 is released in early 2015.
 
 **Possible breaking change**
+Starting in v0.11.0, Camino will fire initial events for the browser ("popstate" and "hashchange").  See examples below.  This can be overridden with the "init" option.
 Rather than assume most of your users are using an older browser, I have opted to remove any polyfills from the library. This will probably only affect IE users.  For convenience, I have added a Polyfills section to the end of this document.
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
@@ -72,8 +73,13 @@ First things first, some juicy examples.
         // replace page body with a spinner...?
     });
 
+    /**
+     * This is no longer required, see History API example below for explanation
+
     // fire a hashchange event for initial page loads
     window.dispatchEvent( new Event("hashchange") );
+
+     */
 
     // browser methods, maybe...?
     // psuedo jQuery code
@@ -100,6 +106,12 @@ Using the History API requires a bit more boilerplate code, but works quite nice
     // fire off route on initial page load
     window.dispatchEvent( new Event('popstate') );
 
+
+    /**
+     * These two event firings are no longer required if the "init" option is
+     * set to true (default). They are left here in the examples so you can see
+     * what happens under the hood or so you can override them if desired.
+
     // hashes and history can live together!
     if( window.location.hash !== '' )
         window.dispatchEvent( new Event('hashchange') );
@@ -108,6 +120,8 @@ Using the History API requires a bit more boilerplate code, but works quite nice
     window.addEventListener( camino.event.request, function() {
         // replace page body with a spinner...?
     });
+
+     */
 
     // write your own vanilla JS, but here's the super-simple jQuery version
     $( function() {
@@ -219,13 +233,15 @@ On the server, it defaults to the HTTP response object, but feel free to be crea
 
 The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
 
-Valid options for camino.listen "options" argument are:
+Valid options for camino.listen "options" (again, browser only) argument are:
 
 **decode** --- decode query string data using decodeURI, defaults to true
 
 **history** --- use history API for routing requests, defaults to false
 
 **hash** --- listen to hashchange event and handle requests using URL hash, defaults to true
+
+**init** --- boolean value, if true will fire initial events on page load; "popstate" for History API and "hashchange" for hashes.  Leverages the "history" option to determine which ones to fire.
 
 * * *
 

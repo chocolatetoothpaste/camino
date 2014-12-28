@@ -18,7 +18,7 @@ Camino.prototype.event = {
 
 Camino.prototype.listen = function( emitter, opt, responder ) {
 	// available options and their defaults
-	var dict = { decode: true, history: false, hash: true };
+	var dict = { decode: true, history: false, hash: true, init: true };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -44,6 +44,16 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 
 	var req = emitter.location;
 
+	// add listener for "match" event and execute callback if matched
+	emitter.addEventListener( this.event.match, (function() {
+		// assign the responder, either custom or global
+		var responder = req.route.responder || global.options.responder;
+
+		this.emit( this.event.exec );
+
+		req.route.callback.call( null, req, responder );
+	}).bind(this));
+
 	// set event listener for history api if optioned
 	if( opt.history ) {
 		// adding a placeholder for the "current" location so popstates
@@ -58,9 +68,14 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 				this._exec( req );
 			}
 		}).bind(this), false );
+
+		// fire initial "popstate" event to route on page load
+		if( opt.init ) {
+			emitter.dispatchEvent( new Event('popstate') );
+		}
 	}
 
-	// defaults to true, but allow user the option to ignore hash events
+	// set up all hash event code
 	if( opt.hash ) {
 		emitter.addEventListener( "hashchange", (function(e) {
 			// no need to check for request vs current hash,
@@ -68,17 +83,12 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 			req.request = req.hash;
 			this._exec( req );
 		}).bind(this) );
+
+		// fire initial "hashchange" event on page load
+		if( req.hash !== '' && opt.init ) {
+			window.dispatchEvent( new Event('hashchange') );
+		}
 	}
-
-	// add listener for "match" event and execute callback if matched
-	emitter.addEventListener( this.event.match, (function() {
-		// assign the responder, either custom or global
-		var responder = req.route.responder || global.options.responder;
-
-		this.emit( this.event.exec );
-
-		req.route.callback.call( null, req, responder );
-	}).bind(this));
 };
 
 
