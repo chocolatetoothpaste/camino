@@ -6,12 +6,16 @@ One-stop routing for server- and client-side web applications
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
 **Upcoming breaking change**
-Starting in version 0.12.0, the "request" object will have a new structure with new properties.  Instead of polluting the native object, a new object will be used with the most useful properties and the native object will be wrapped with this new object.  The properties will be renamed to be more consistent with current standards/practices.
-See documentation when 0.12.0 is released in early 2015.
 
-**Possible breaking change**
-Starting in v0.11.0, Camino will fire initial events for the browser ("popstate" and "hashchange").  See examples below.  This can be overridden with the "init" option.
-Rather than assume most of your users are using an older browser, I have opted to remove any polyfills from the library. This will probably only affect IE users.  For convenience, I have added a Polyfills section to the end of this document.
+* Starting in version 0.12.0, the "request" object will have a new structure with new properties.  Instead of polluting the native object, a new object will be used with the most useful properties and the native object will be wrapped with this new object.  The properties will be renamed to be more consistent with current standards/practices. See documentation when 0.12.0 is released in early 2015.
+
+* Also starting in 0.12.0, the "history" option will default to true.  This can be set to false using the options object.
+
+**Possible breaking changes**
+
+* Starting in v0.11.0, Camino will fire initial events for the browser ("popstate" and/or "hashchange", depending on which ones you option to enable).  See examples below.  This can be overridden with the "init" option.
+
+* Rather than assume most of your users are using an older browser, I have opted to remove any polyfills from the library. This will probably only affect IE users.  For convenience, I have added a Polyfills section to the end of this document.
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
@@ -101,27 +105,27 @@ Using the History API requires a bit more boilerplate code, but works quite nice
 
     camino.route( "#delete", showDeleteConfirmation );
 
-    camino.listen( window, { history: true } );
-
-    // fire off route on initial page load
-    window.dispatchEvent( new Event('popstate') );
-
+    // how you can conditionally use the History API if available
+    camino.listen( window, { history: !!( window.history.pushState ) } );
 
     /**
      * These two event firings are no longer required if the "init" option is
      * set to true (default). They are left here in the examples so you can see
      * what happens under the hood or so you can override them if desired.
 
+    // fire off route on initial page load
+    window.dispatchEvent( new Event('popstate') );
+
     // hashes and history can live together!
     if( window.location.hash !== '' )
         window.dispatchEvent( new Event('hashchange') );
+
+     */
 
     // using the Camino.event object
     window.addEventListener( camino.event.request, function() {
         // replace page body with a spinner...?
     });
-
-     */
 
     // write your own vanilla JS, but here's the super-simple jQuery version
     $( function() {
