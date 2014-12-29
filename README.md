@@ -160,16 +160,19 @@ These browser examples are in no way exhaustive, nor "recommended practice". The
 The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the two types is, if your URL has a required param but one is not provided, it will result in a (404 error).
 
 **/api/user/%id** matches:
-/api/user
-/api/user/
-/api/user/23
+
+* /api/user
+* /api/user/
+* /api/user/23
 
 **/api/user/@id** matches:
-/api/user/23
+
+* /api/user/23
 
 *but not:*
-/api/user
-/api/user/
+
+* /api/user
+* /api/user/
 
 **options** --- Object
 

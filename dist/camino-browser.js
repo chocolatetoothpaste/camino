@@ -79,9 +79,10 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 
 		emitter.addEventListener( "popstate", (function() {
 			// if request is the same as current location, don't execute again
-			if( req.pathname !== location ) {
+			if( req.pathname + req.search !== location ) {
 				// set the new "current" location
-				location = req.request = req.pathname;
+				req.request = req.pathname
+				location = req.pathname + req.search;
 				this._exec( req );
 			}
 		}).bind(this), false );
