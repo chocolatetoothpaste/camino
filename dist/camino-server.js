@@ -1,6 +1,7 @@
 (function() {
+"use strict";
 // containers for data that needs a broader scope
-var global = {
+var g = {
 
 	// the main container for defined routes
 	routes: {},
@@ -48,7 +49,8 @@ Camino.prototype.listen = function( emitter, responder ) {
 		this.emit( this.event.request );
 
 		// assign the global response object
-		global.options.responder = responder || res;
+		responder = responder || res;
+		g.options.responder = responder;
 
 		var url = require( 'url' ).parse( req.url );
 
@@ -62,14 +64,14 @@ Camino.prototype.listen = function( emitter, responder ) {
 		req.qs = url.query;
 
 		// try to match the request to a route
-		this.match( req );
+		this.match( req, responder );
 
 	// bind callback to Camino's scope
 	}).bind( this ) );
 
 	// listen for "match" event to fire and execute callback
-	this.on( this.event.match, function( req ) {
-		this._exec.call( this, req );
+	this.on( this.event.match, function( req, res ) {
+		this._exec.call( this, req, res );
 	});
 };
 
@@ -78,7 +80,7 @@ Camino.prototype.listen = function( emitter, responder ) {
  * Execute the user callback associated with a route
  */
 
-Camino.prototype._exec = function( req ) {
+Camino.prototype._exec = function( req, res ) {
 	var self = this;
 
 	// grab the content type or set an empty string
@@ -87,7 +89,7 @@ Camino.prototype._exec = function( req ) {
 		: "" );
 
 	// reference the responder, either custom or global
-	var responder = req.route.responder || global.options.responder;
+	var responder = req.route.responder || g.options.responder;
 
 	if( typeof self._handlers[type] === "function" ) {
 		self._handlers[type].call( self, req, responder );
@@ -95,15 +97,7 @@ Camino.prototype._exec = function( req ) {
 
 	else {
 		// parse request data and execute route callback
-		req.on( 'end', function() {
-			// set an empty object for type consistency
-			req.data = {};
-
-			self.emit( self.event.exec );
-
-			// execute the callback, pass through request and responder handlers
-			req.route.callback.call( null, req, responder );
-		});
+		this._data( req, res );
 
 		req.resume();
 	}
@@ -129,7 +123,9 @@ Camino.prototype._data = function( req, res, cb ) {
 
 	// parse request data and execute route callback
 	req.on( 'end', function() {
-		req.data = cb.call( null, req.raw );
+		req.data = ( req.raw.length > 0 && typeof cb === "function"
+			? cb.call( null, req.raw )
+			: {} );
 
 		self.emit( self.event.exec );
 
@@ -154,7 +150,7 @@ Camino.prototype.handle = function( type, cb ) {
  */
 
 Camino.prototype._handlers = {
-	'multipart/form-data': function( req, res ) {
+	"multipart/form-data": function( req, res ) {
 		var self = this;
 		var Busboy = require( 'busboy' );
 		var busboy = new Busboy({ headers: req.headers });
@@ -197,11 +193,11 @@ Camino.prototype._handlers = {
 		req.pipe( busboy );
 	},
 
-	'application/json': function( req, res ) {
+	"application/json": function( req, res ) {
 		this._data( req, res, JSON.parse );
 	},
 
-	'application/x-www-form-urlencoded': function( req, res ) {
+	"application/x-www-form-urlencoded": function( req, res ) {
 		this._data( req, res, querystring.parse );
 	}
 };
@@ -217,7 +213,7 @@ Camino.prototype._handlers = {
 
 
 Camino.prototype.error = function( err ) {
-	var responder = global.options.responder;
+	var responder = g.options.responder;
 
 	var data = JSON.stringify({
 		success: false,
@@ -250,11 +246,11 @@ module.exports = camino;
  * complete path first. Might screw things up quite badly, too.
  */
 
-Camino.prototype.init = function() {
-	global.rarr = Object.keys(global.routes).sort(function(a, b){
-		return a.length < b.length;
-	});
-};
+// Camino.prototype.init = function() {
+// 	g.rarr = Object.keys(g.routes).sort(function(a, b){
+// 		return a.length < b.length;
+// 	});
+// };
 
 
 /**
@@ -266,7 +262,7 @@ Camino.prototype.match = function( req ) {
 
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
-	for( var route in global.routes ) {
+	for( var route in g.routes ) {
 		match = RegExp( route, 'g' ).exec( req.request );
 
 		// if a match was found, break the loop
@@ -285,7 +281,7 @@ Camino.prototype.match = function( req ) {
 	}
 
 	// shorten reference
-	route = global.routes[route];
+	route = g.routes[route];
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
@@ -353,11 +349,11 @@ Camino.prototype.route = function( r, opt, cb ) {
 	route = "^" + route + "$";
 
 	// throw an error if trying to redefine a route
-	if( typeof global.routes[route] !== "undefined" )
+	if( typeof g.routes[route] !== "undefined" )
 		throw new Error( "Route is already defined: " + r );
 
 	// define the route data object
-	global.routes[route] = {
+	g.routes[route] = {
 
 		// the original route as defined by the user, before tokens are
 		// converted into regular expressions
@@ -379,7 +375,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 		methods: opt.methods || []
 	};
 
-	this.emit( this.event.route, global.routes[route] );
+	this.emit( this.event.route, g.routes[route] );
 };
 
 
@@ -402,7 +398,7 @@ Camino.prototype.logEvents = function() {
  */
 
 Camino.prototype.list = function() {
-	console.log( global.routes );
+	console.log( g.routes );
 };
 
 })();

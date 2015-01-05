@@ -37,17 +37,17 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		}
 	}
 
-	global.options = opt;
+	g.options = opt;
 
 	// set a default responder for testing/getting started
-	global.options.responder = responder || console.log.bind( console );
+	g.options.responder = responder || console.log.bind( console );
 
 	var req = emitter.location;
 
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (function() {
 		// assign the responder, either custom or global
-		var responder = req.route.responder || global.options.responder;
+		var responder = req.route.responder || g.options.responder;
 
 		this.emit( this.event.exec );
 
@@ -72,7 +72,7 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 
 		// fire initial "popstate" event to route on page load
 		if( opt.init ) {
-			emitter.dispatchEvent( new Event('popstate') );
+			window.dispatchEvent( new Event('popstate') );
 		}
 	}
 
@@ -86,7 +86,7 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 		}).bind(this) );
 
 		// fire initial "hashchange" event on page load
-		if( req.hash !== '' && opt.init ) {
+		if( opt.init && req.hash !== '' ) {
 			window.dispatchEvent( new Event('hashchange') );
 		}
 	}
@@ -106,7 +106,7 @@ Camino.prototype._exec = function( req ) {
 	// initialize empty object
 	req.query = {};
 
-	if( global.options.decode )
+	if( g.options.decode )
 		req.qs = decodeURI(req.qs);
 
 	// split query string into pairs

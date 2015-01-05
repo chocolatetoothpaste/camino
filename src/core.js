@@ -1,6 +1,7 @@
 (function() {
+"use strict";
 // containers for data that needs a broader scope
-var global = {
+var g = {
 
 	// the main container for defined routes
 	routes: {},
@@ -24,11 +25,11 @@ function Camino() { }
  * complete path first. Might screw things up quite badly, too.
  */
 
-Camino.prototype.init = function() {
-	global.rarr = Object.keys(global.routes).sort(function(a, b){
-		return a.length < b.length;
-	});
-};
+// Camino.prototype.init = function() {
+// 	g.rarr = Object.keys(g.routes).sort(function(a, b){
+// 		return a.length < b.length;
+// 	});
+// };
 
 
 /**
@@ -40,7 +41,7 @@ Camino.prototype.match = function( req ) {
 
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
-	for( var route in global.routes ) {
+	for( var route in g.routes ) {
 		match = RegExp( route, 'g' ).exec( req.request );
 
 		// if a match was found, break the loop
@@ -59,7 +60,7 @@ Camino.prototype.match = function( req ) {
 	}
 
 	// shorten reference
-	route = global.routes[route];
+	route = g.routes[route];
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
@@ -127,11 +128,11 @@ Camino.prototype.route = function( r, opt, cb ) {
 	route = "^" + route + "$";
 
 	// throw an error if trying to redefine a route
-	if( typeof global.routes[route] !== "undefined" )
+	if( typeof g.routes[route] !== "undefined" )
 		throw new Error( "Route is already defined: " + r );
 
 	// define the route data object
-	global.routes[route] = {
+	g.routes[route] = {
 
 		// the original route as defined by the user, before tokens are
 		// converted into regular expressions
@@ -153,7 +154,7 @@ Camino.prototype.route = function( r, opt, cb ) {
 		methods: opt.methods || []
 	};
 
-	this.emit( this.event.route, global.routes[route] );
+	this.emit( this.event.route, g.routes[route] );
 };
 
 
@@ -176,7 +177,7 @@ Camino.prototype.logEvents = function() {
  */
 
 Camino.prototype.list = function() {
-	console.log( global.routes );
+	console.log( g.routes );
 };
 
 })();

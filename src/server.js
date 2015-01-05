@@ -31,7 +31,8 @@ Camino.prototype.listen = function( emitter, responder ) {
 		this.emit( this.event.request );
 
 		// assign the global response object
-		global.options.responder = responder || res;
+		responder = responder || res;
+		g.options.responder = responder;
 
 		var url = require( 'url' ).parse( req.url );
 
@@ -45,14 +46,14 @@ Camino.prototype.listen = function( emitter, responder ) {
 		req.qs = url.query;
 
 		// try to match the request to a route
-		this.match( req );
+		this.match( req, responder );
 
 	// bind callback to Camino's scope
 	}).bind( this ) );
 
 	// listen for "match" event to fire and execute callback
-	this.on( this.event.match, function( req ) {
-		this._exec.call( this, req );
+	this.on( this.event.match, function( req, res ) {
+		this._exec.call( this, req, res );
 	});
 };
 
@@ -61,7 +62,7 @@ Camino.prototype.listen = function( emitter, responder ) {
  * Execute the user callback associated with a route
  */
 
-Camino.prototype._exec = function( req ) {
+Camino.prototype._exec = function( req, res ) {
 	var self = this;
 
 	// grab the content type or set an empty string
@@ -70,7 +71,7 @@ Camino.prototype._exec = function( req ) {
 		: "" );
 
 	// reference the responder, either custom or global
-	var responder = req.route.responder || global.options.responder;
+	var responder = req.route.responder || g.options.responder;
 
 	if( typeof self._handlers[type] === "function" ) {
 		self._handlers[type].call( self, req, responder );
@@ -78,15 +79,7 @@ Camino.prototype._exec = function( req ) {
 
 	else {
 		// parse request data and execute route callback
-		req.on( 'end', function() {
-			// set an empty object for type consistency
-			req.data = {};
-
-			self.emit( self.event.exec );
-
-			// execute the callback, pass through request and responder handlers
-			req.route.callback.call( null, req, responder );
-		});
+		this._data( req, res );
 
 		req.resume();
 	}
@@ -112,7 +105,9 @@ Camino.prototype._data = function( req, res, cb ) {
 
 	// parse request data and execute route callback
 	req.on( 'end', function() {
-		req.data = cb.call( null, req.raw );
+		req.data = ( req.raw.length > 0 && typeof cb === "function"
+			? cb.call( null, req.raw )
+			: {} );
 
 		self.emit( self.event.exec );
 
@@ -137,7 +132,7 @@ Camino.prototype.handle = function( type, cb ) {
  */
 
 Camino.prototype._handlers = {
-	'multipart/form-data': function( req, res ) {
+	"multipart/form-data": function( req, res ) {
 		var self = this;
 		var Busboy = require( 'busboy' );
 		var busboy = new Busboy({ headers: req.headers });
@@ -180,11 +175,11 @@ Camino.prototype._handlers = {
 		req.pipe( busboy );
 	},
 
-	'application/json': function( req, res ) {
+	"application/json": function( req, res ) {
 		this._data( req, res, JSON.parse );
 	},
 
-	'application/x-www-form-urlencoded': function( req, res ) {
+	"application/x-www-form-urlencoded": function( req, res ) {
 		this._data( req, res, querystring.parse );
 	}
 };
@@ -200,7 +195,7 @@ Camino.prototype._handlers = {
 
 
 Camino.prototype.error = function( err ) {
-	var responder = global.options.responder;
+	var responder = g.options.responder;
 
 	var data = JSON.stringify({
 		success: false,
