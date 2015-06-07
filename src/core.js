@@ -36,27 +36,27 @@ function Camino() { }
  * Compare request to routes list and look for a match
  */
 
-Camino.prototype.match = function( req ) {
+Camino.prototype.match = function match( req ) {
 	var match = null;
 
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
 	for( var route in g.routes ) {
-		match = RegExp( route, 'g' ).exec( req.request );
+		match = RegExp( route, 'g' ).exec( req.path );
 
 		// if a match was found, break the loop
 		if( match !== null )
 			break;
 	}
 
-	// if no route was found (no match), emit 404 (not found) error
+	// if no route was found, emit 404 (not found) error
 	if( ! match ) {
-		var err = new Error('Resource not found: ' + req.request);
+		var err = new Error('Resource not found: ' + req.path);
 		err.status = 404;
-		this.emit( this.event.error, err );
+		this.emit( this.event.error, err, req );
 
 		// stop the browser
-		return false;
+		return;
 	}
 
 	// shorten reference
@@ -67,10 +67,10 @@ Camino.prototype.match = function( req ) {
 		&& route.methods.indexOf( req.method ) === -1 ) {
 			var err = new Error('Method not allowed');
 			err.status = 405;
-			this.emit( this.event.error, err );
+			this.emit( this.event.error, err, req );
 
 			// stop the browser
-			return false;
+			return;
 	}
 
 	// pass matched route info to req object
@@ -95,7 +95,6 @@ Camino.prototype.match = function( req ) {
 	});
 
 	this.emit( this.event.match, req );
-	return true;
 };
 
 
@@ -104,7 +103,7 @@ Camino.prototype.match = function( req ) {
  * r: route, opt: options, cb: callback
  */
 
-Camino.prototype.route = function( r, opt, cb ) {
+Camino.prototype.route = function route( r, opt, cb ) {
 	// shift params
 	if( typeof opt === "function" ) {
 		cb = opt;
@@ -162,7 +161,7 @@ Camino.prototype.route = function( r, opt, cb ) {
  * Create event listener for each of camino's events (for debugging purposes)
  */
 
-Camino.prototype.logEvents = function() {
+Camino.prototype.logEvents = function logEvents() {
 	var c = this;
 	Object.keys(c.event).forEach(function(k) {
 		window.addEventListener(c.event[k], function(data) {

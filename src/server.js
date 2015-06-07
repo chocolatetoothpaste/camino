@@ -25,35 +25,39 @@ Camino.prototype.event = {
  * an event.
  */
 
-Camino.prototype.listen = function( emitter, responder ) {
+Camino.prototype.listen = function listen( emitter, responder ) {
 	emitter.on( 'request', (function( req, res ) {
 		// emit "request" event
 		this.emit( this.event.request );
 
 		// assign the global response object
-		responder = responder || res;
-		g.options.responder = responder;
+		var creq = { request: req, response: responder || res };
 
 		var url = require( 'url' ).parse( req.url );
 
 		// req.url without the querystring
-		req.request = url.pathname;
+		creq.path = url.pathname;
 
 		// query string parsed into object
-		req.query = querystring.parse( url.query );
+		creq.query = querystring.parse( url.query );
 
 		// the original query string, without '?'
-		req.qs = url.query;
+		creq.qs = url.query;
+
+		creq.method = req.method;
 
 		// try to match the request to a route
-		this.match( req, responder );
+		this.match( creq );
 
 	// bind callback to Camino's scope
 	}).bind( this ) );
 
 	// listen for "match" event to fire and execute callback
-	this.on( this.event.match, function( req, res ) {
-		this._exec.call( this, req, res );
+	// this.on( this.event.match, function( req, res ) {
+	// 	this._exec.call( this, req, res );
+	// });
+	this.on( this.event.match, function( req ) {
+		this._exec.call( this, req );
 	});
 };
 
@@ -62,26 +66,24 @@ Camino.prototype.listen = function( emitter, responder ) {
  * Execute the user callback associated with a route
  */
 
-Camino.prototype._exec = function( req, res ) {
-	var self = this;
-
+Camino.prototype._exec = function _exec( req ) {
 	// grab the content type or set an empty string
-	var type = ( req.headers["content-type"]
-		? req.headers["content-type"].split(';')[0].toLowerCase()
+	var type = ( req.request.headers["content-type"]
+		? req.request.headers["content-type"].split(';')[0].toLowerCase()
 		: "" );
 
-	// reference the responder, either custom or global
-	var responder = req.route.responder || g.options.responder;
+	// use the route responder if it's set, otherwise just the native/default
+	req.response = req.route.responder || req.response;
 
-	if( typeof self._handlers[type] === "function" ) {
-		self._handlers[type].call( self, req, responder );
+	if( typeof this._handler[type] === "function" ) {
+		this._handler[type].call( this, req );
 	}
 
 	else {
-		// parse request data and execute route callback
-		this._data( req, res );
-
-		req.resume();
+		// Throw an error since an acceptable content-type was not found
+		var err = new Error('Invalid content type: ' + type);
+		err.status = 415;
+		this.emit( this.event.error, err, req );
 	}
 
 };
@@ -92,27 +94,27 @@ Camino.prototype._exec = function( req, res ) {
  * parse it, this is a convenience method for grabbing that data
  */
 
-Camino.prototype._data = function( req, res, cb ) {
+Camino.prototype._data = function _data( req, cb ) {
 	var self = this;
 
 	// create empty string for appending request body data
-	req.raw = '';
+	req.body = '';
 
 	// grab the request body data, if provided
-	req.on( 'data', function( chunk ) {
-		req.raw += chunk;
+	req.request.on( 'data', function( chunk ) {
+		req.body += chunk;
 	});
 
 	// parse request data and execute route callback
-	req.on( 'end', function() {
-		req.data = ( req.raw.length > 0 && typeof cb === "function"
-			? cb.call( null, req.raw )
+	req.request.on( 'end', function() {
+		req.data = ( req.body.length > 0 && typeof cb === "function"
+			? cb.call( null, req.body )
 			: {} );
 
 		self.emit( self.event.exec );
 
 		// execute the callback, pass through request and responder handlers
-		req.route.callback.call( null, req, res );
+		req.route.callback.call( null, req );
 	});
 };
 
@@ -122,8 +124,8 @@ Camino.prototype._data = function( req, res, cb ) {
  * (fancy-talk for add a property to an object)
  */
 
-Camino.prototype.handle = function( type, cb ) {
-	this._handlers[type] = cb;
+Camino.prototype.handle = function handle( type, cb ) {
+	this._handler[type] = cb;
 };
 
 
@@ -131,92 +133,20 @@ Camino.prototype.handle = function( type, cb ) {
  * Container object for content type handlers, and some default handlers
  */
 
-Camino.prototype._handlers = {
-	"multipart/form-data": function( req, res ) {
-		var self = this;
-		var Busboy = require( 'busboy' );
-		var busboy = new Busboy({ headers: req.headers });
-
-		req.files = {};
-		req.data = {};
-
-		// grab uploaded files and stream them into buffers
-		busboy.on( 'file', function( field, file ) {
-			var buf = [];
-
-			file.on( 'data', function(data) {
-				// push data chunks into contrainer
-				buf.push( data );
-			});
-
-			file.on( 'end', function() {
-				// when finished capturing data, Buffer it
-				req.files[field] = Buffer.concat(buf);
-
-				// blow chunks
-				buf = undefined;
-			});
-		});
-
-		// capture incoming fields as they are parsed
-		busboy.on( 'field', function( field, val ) {
-			req.data[field] = val;
-		});
-
-		busboy.on( 'finish', function() {
-			self.emit( self.event.exec );
-
-			// fire off route callback
-			req.route.callback.call( null, req, res );
-
-		});
-
-		// believe in the cleansing power of the pipe! [ad s1e15]
-		req.pipe( busboy );
+Camino.prototype._handler = {
+	"application/json": function application_json( req ) {
+		this._data( req, JSON.parse );
 	},
 
-	"application/json": function( req, res ) {
-		this._data( req, res, JSON.parse );
-	},
-
-	"application/x-www-form-urlencoded": function( req, res ) {
-		this._data( req, res, querystring.parse );
+	"application/x-www-form-urlencoded": function application_x_www_form_urlencoded( req ) {
+		this._data( req, querystring.parse );
 	}
 };
 
 
-/**
- * Basic error handling
- *
- * This should be replaced by the user to conform with their implementation
- * but this basic implementation follows common practices and should be
- * adequate for getting started
- */
-
-
-Camino.prototype.error = function( err ) {
-	var responder = g.options.responder;
-
-	var data = JSON.stringify({
-		success: false,
-		status: err.status,
-		error: err.message
-	});
-
-	responder.writeHead( err.status, {
-		"Content-Type": "application/json",
-		"Content-Length": data.length
-	} );
-
-	responder.end( data );
-};
-
 // create an instance to export and attach event listeners
 var camino = new Camino;
 
-// fire up some basic error listening/reporting
-camino.on( camino.event.error, camino.error );
-
 // exporting an instance instead of a reference for convenience and to
-// discourage multiple instances (which may not even work)
+// discourage multiple instances (which probably wouldn't work)
 module.exports = camino;

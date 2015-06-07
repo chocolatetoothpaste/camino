@@ -18,7 +18,7 @@ Camino.prototype.event = {
 
 Camino.prototype.listen = function( emitter, opt, responder ) {
 	// available options and their defaults
-	var dict = { decode: true, history: false, hash: true, init: true };
+	var dict = { decode: true, history: true, hash: true, init: true };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -40,32 +40,30 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 	g.options = opt;
 
 	// set a default responder for testing/getting started
-	g.options.responder = responder || console.log.bind( console );
-
-	var req = emitter.location;
+	var req = {
+		request: emitter.location,
+		response: responder || console.log.bind( console )
+	};
 
 	// add listener for "match" event and execute callback if matched
-	emitter.addEventListener( this.event.match, (function() {
-		// assign the responder, either custom or global
-		var responder = req.route.responder || g.options.responder;
-
+	emitter.addEventListener( this.event.match, (function(event) {
 		this.emit( this.event.exec );
 
-		req.route.callback.call( null, req, responder );
+		event.detail.request.route.callback.call( null, event.detail.request );
 	}).bind(this));
 
 	// set event listener for history api if optioned
 	if( opt.history ) {
 		// adding a placeholder for the "current" location so popstates
 		// fired on hashchange events can be mitigated
-		var location = null;
+		var current_location = null;
 
 		emitter.addEventListener( "popstate", (function() {
 			// if request is the same as current location, don't execute again
-			if( req.pathname + req.search !== location ) {
+			if( req.request.pathname + req.request.search !== current_location ) {
 				// set the new "current" location
-				req.request = req.pathname
-				location = req.pathname + req.search;
+				req.path = req.request.pathname;
+				current_location = req.request.pathname + req.request.search;
 				this._exec( req );
 			}
 		}).bind(this), false );
@@ -78,15 +76,15 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
 
 	// set up all hash event code
 	if( opt.hash ) {
-		emitter.addEventListener( "hashchange", (function(e) {
+		emitter.addEventListener( "hashchange", (function() {
 			// no need to check for request vs current hash,
 			// browser obeserves hash CHANGE
-			req.request = req.hash;
+			req.path = req.request.hash;
 			this._exec( req );
 		}).bind(this) );
 
 		// fire initial "hashchange" event on page load
-		if( opt.init && req.hash !== '' ) {
+		if( opt.init && req.request.hash !== '' ) {
 			window.dispatchEvent( new Event('hashchange') );
 		}
 	}
@@ -101,7 +99,7 @@ Camino.prototype._exec = function( req ) {
 	this.emit( this.event.request, req );
 
 	// the query string with "?" trimmed
-	req.qs = req.search.substr( 1 );
+	req.qs = req.request.search.substr( 1 );
 
 	// initialize empty object
 	req.query = {};
@@ -123,8 +121,21 @@ Camino.prototype._exec = function( req ) {
  * Shim emit method for browsers
  */
 
-Camino.prototype.emit = function( event, data ) {
-	window.dispatchEvent( new CustomEvent( event, { detail: data }) );
+Camino.prototype.emit = function( event, err, req ) {
+	// musical vars
+	if( typeof req === "undefined" ) {
+		req = err;
+		err = null;
+	}
+
+	var detail = {
+		detail: {
+			error: err,
+			request: req
+		}
+	};
+
+	window.dispatchEvent( new CustomEvent( event, detail ) );
 };
 
 
@@ -133,7 +144,7 @@ Camino.prototype.emit = function( event, data ) {
  */
 
 Camino.prototype.error = function( event ) {
-	console.log( event.detail );
+	console.log("Error handler not implemented", event.detail );
 };
 
 // create a new instance in the global scope

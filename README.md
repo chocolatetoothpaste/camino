@@ -5,17 +5,15 @@ One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
-**Upcoming breaking change**
+**Breaking changes**
 
-* Starting in version 0.12.0, the "request" object will have a new structure with new properties.  Instead of polluting the native object, a new object will be used with the most useful properties and the native object will be wrapped with this new object.  The properties will be renamed to be more consistent with current standards/practices. See documentation when 0.12.0 is released in early 2015.
+v0.12.0
 
-* Also starting in 0.12.0, the "history" option will default to true.  This can be set to false using the options object.
+* User callbacks are only supplied one request object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects.  See the API section for updated documentation.
 
-**Possible breaking changes**
+* Generic handling of file uploads has been removed, and dependency on busboy has also been removed.  The code formerly used in the library has been moved to the polyfills section.
 
-* Starting in v0.11.0, Camino will fire initial events for the browser ("popstate" and/or "hashchange", depending on which ones you option to enable).  See examples below.  This can be overridden with the "init" option.
-
-* Rather than assume most of your users are using an older browser, I have opted to remove any polyfills from the library. This will probably only affect IE users.  For convenience, I have added a Polyfills section to the end of this document.
+* The HTML5 History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
@@ -281,6 +279,56 @@ Additionally, Camino.error can (should) be augmented/replaced with your own hand
 For browsers the error is logged to the console, so it REALLY should be replaced.
 
 ### Polyfills
+
+**Register handle for uploading files from form**
+    camino.hanlde('multipart/form-data', function( req ) {
+        var self = this;
+        var Busboy = require( 'busboy' );
+        var busboy = new Busboy({ headers: req.request.headers });
+
+        // container for uploaded files. it would be a much better idea to
+        // use readstreams instead of buffers stored in memory. just an example
+        req.files = {};
+
+        // container for form fields
+        req.data = {};
+
+        // grab uploaded files and stream them into buffers
+        busboy.on( 'file', function( field, file ) {
+            var buf = [];
+
+            file.on( 'data', function(data) {
+                // push data chunks into contrainer
+                buf.push( data );
+            });
+
+            file.on( 'end', function() {
+                // when finished capturing data, Buffer it
+                req.files[field] = Buffer.concat(buf);
+
+                // blow chunks
+                buf = undefined;
+            });
+        });
+
+        // capture incoming fields as they are parsed
+        busboy.on( 'field', function( field, val ) {
+            req.data[field] = val;
+        });
+
+        busboy.on( 'finish', function() {
+            self.emit( self.event.exec );
+
+            // fire off route callback
+            req.route.callback.call( null, req );
+
+        });
+
+        // cleansing power of the pipe!
+        req.request.pipe( busboy );
+    });
+
+
 **CustomEvent**
 
     // thank you @https://github.com/jonathantneal/EventListener
