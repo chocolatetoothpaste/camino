@@ -9,9 +9,11 @@ One-stop routing for server- and client-side web applications
 
 v0.12.0
 
-* User callbacks are only supplied one request object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects.  See the API section for updated documentation.
+* User callbacks are only supplied one object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects.  See the API section for updated documentation.
 
-* Generic handling of file uploads has been removed, and dependency on busboy has also been removed.  The code formerly used in the library has been moved to the polyfills section.
+* Server: Generic handling of file uploads has been removed, and dependency on busboy has also been removed.  The code formerly used in the library has been moved to the polyfills section.
+
+* A default listener for error events is removed. Camino still emits an event, but no longer tries to handle it for you.
 
 * The HTML5 History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
 
@@ -248,7 +250,7 @@ Valid options for camino.listen "options" (again, browser only) argument are:
 
 **decode** --- decode query string data using decodeURI, defaults to true
 
-**history** --- use history API for routing requests, defaults to false
+**history** --- use history API for routing requests, defaults to true
 
 **hash** --- listen to hashchange event and handle requests using URL hash, defaults to true
 

@@ -317,19 +317,8 @@ else {
 	};
 	
 	
-	/**
-	 * Please replace this, end user
-	 */
-	
-	Camino.prototype.error = function( event ) {
-		console.log("Error handler not implemented", event.detail );
-	};
-	
 	// create a new instance in the global scope
 	window.camino = new Camino;
-	
-	// attach listeners for errors
-	window.addEventListener( window.camino.event.error, window.camino.error );
 
 }
 
