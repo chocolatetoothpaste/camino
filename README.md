@@ -190,17 +190,20 @@ If you don't pass in a list of allowed methods, your code will always execute if
 
 YOUR code that is run when a request is matched to a route. Your callback should accept 2 parameters: a request object, and a response object. The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
 
-request.route --- an object of route specific data (that your provided) for the matched route. example:
+request.route --- an object of route specific data (that you provided) for the matched route. example:
 
     {
-        // the route
         route: /api/user/@company/%id,
+
+        callback: myCallback,
 
         // the "params" accepted by the route
         params: [
             "company",
             "id"
         ],
+
+        responder: myResponseObject
 
         // the array of allowed methods, defaults to empty array for type consistency
         methods: [ ]
@@ -288,8 +291,9 @@ For browsers the error is logged to the console, so it REALLY should be replaced
 
 ### Polyfills
 
-**Register handle for uploading files from form**
-    camino.hanlde('multipart/form-data', function( req ) {
+**Register handle for uploading files from a form**
+
+    camino.handle('multipart/form-data', function( req ) {
         var self = this;
         var Busboy = require( 'busboy' );
         var busboy = new Busboy({ headers: req.request.headers });
