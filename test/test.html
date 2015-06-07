@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title></title>
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+		<link rel="stylesheet" href="css/normalize.css">
+		<link rel="stylesheet" href="css/grid.css">
+
+		<script src="../../js/jquery-2.1.1.js"></script>
+		<!-- // <script src="js/observe-shim.js"></script> -->
+
+		<script src="../../epoch/epoch.js"></script>
+
+		<script src="../dist/camino-browser.js"></script>
+		<script type="text/javascript">
+			window.addEventListener(camino.event.error, function(err) {
+				// console.error( err.detail.message, err.detail.request );
+				console.error( err.detail.error.message, err.detail.request );
+			});
+
+			camino.route( "#/goo", function(req) {
+				console.log(req);
+				console.log('goo')
+			});
+
+			camino.route( "/profile", function(req) {
+				console.log(req);
+				console.log('profile');
+			});
+
+			camino.route( "", function(req) {
+				console.log(req);
+				console.log('index!');
+			});
+
+			camino.route('#delete', function(req) {
+				console.log(req);
+				console.log('deleted!')
+			});
+
+			camino.route( "/", function(req) {
+				console.log(req);
+				console.log('index!');
+			});
+
+
+			camino.listen( window ); // or just set it to true if you like
+
+			// write your own vanilla JS, but here's the super-simple jQuery version
+			$( function() {
+				$('body').on( {
+					click: function(event) {
+						window.history.pushState( null, null, this.getAttribute('href') );
+						window.dispatchEvent( new Event("popstate") );
+
+						event.preventDefault();
+					}
+				}, "a:not([href^=\\#])" );
+			} );
+		</script>
+
+
+	</head>
+	<body>
+		<a href="/">Home</a>
+		<a href="/profile">Profile</a>
+		<a href="/profile?sort=asc&start%20date=2014%2503-21&end%20date=2014%2505-08">Detailed Profile</a>
+		<a href="#/goo">Goo</a>
+		<a href="#delete">Delete</a>
+		<a href="/nowhere/land">404</a>
+	</body>
+</html>

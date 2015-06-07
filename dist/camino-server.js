@@ -108,36 +108,6 @@ Camino.prototype._exec = function _exec( req ) {
 
 
 /**
- * The majority of content types will just grab the incoming data stream and
- * parse it, this is a convenience method for grabbing that data
- */
-
-Camino.prototype._data = function _data( req, cb ) {
-	var self = this;
-
-	// create empty string for appending request body data
-	req.body = '';
-
-	// grab the request body data, if provided
-	req.request.on( 'data', function( chunk ) {
-		req.body += chunk;
-	});
-
-	// parse request data and execute route callback
-	req.request.on( 'end', function() {
-		req.data = ( req.body.length > 0 && typeof cb === "function"
-			? cb.call( null, req.body )
-			: {} );
-
-		self.emit( self.event.exec );
-
-		// execute the callback, pass through request and responder handlers
-		req.route.callback.call( null, req );
-	});
-};
-
-
-/**
  * Register a handler for a content type
  * (fancy-talk for add a property to an object)
  */
@@ -159,6 +129,36 @@ Camino.prototype._handler = {
 	"application/x-www-form-urlencoded": function application_x_www_form_urlencoded( req ) {
 		this._data( req, querystring.parse );
 	}
+};
+
+
+/**
+ * The majority of content types will just grab the incoming data stream and
+ * parse it, this is a convenience method for grabbing that data
+ */
+
+Camino.prototype._data = function _data( req, cb ) {
+	var self = this;
+
+	// create empty string for appending request body data
+	req.raw = '';
+
+	// grab the request body data, if provided
+	req.request.on( 'data', function( chunk ) {
+		req.raw += chunk;
+	});
+
+	// parse request data and execute route callback
+	req.request.on( 'end', function() {
+		req.data = ( req.raw.length > 0 && typeof cb === "function"
+			? cb.call( null, req.raw )
+			: {} );
+
+		self.emit( self.event.exec );
+
+		// execute the callback, pass through request and responder handlers
+		req.route.callback.call( null, req );
+	});
 };
 
 

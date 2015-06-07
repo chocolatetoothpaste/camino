@@ -15,6 +15,8 @@ v0.12.0
 
 * The HTML5 History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
 
+* If you see a bug in the documentation, please report it!
+
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
 First things first, some juicy examples.
@@ -32,20 +34,20 @@ First things first, some juicy examples.
     camino.route( "/api/organization/@id", { responder: SomeCustomResponderObject, methods: ["GET", "POST"] }, org.init );
 
     // using the response object
-    var callback = function( map, response ) {
+    var callback = function( request ) {
         var data = JSON.stringify({
             status: 200,
             success: true,
-            data: map
+            data: request
         });
 
         // HTTP response object passed from node
-        response.writeHead( 200, {
+        request.response.writeHead( 200, {
             "Content-Length": data.length,
             "Content-Type": "application/json"
         } );
 
-        response.end(data);
+        request.response.end(data);
     };
 
     // passing in a simple function as the callback for this route
@@ -84,7 +86,7 @@ First things first, some juicy examples.
      */
 
     // browser methods, maybe...?
-    // psuedo jQuery code
+    // psuedo jQuery code, really terrible example
     $('[data-method]').on( "click", function() {
             // I don't remember if this is frowned upon... not sure if I care
             window.location.method = $(this).data('method');
@@ -101,10 +103,10 @@ Using the History API requires a bit more boilerplate code, but works quite nice
     // include script and define routes
     camino.route( "/profile", user.init );
 
-    camino.route( "#delete", showDeleteConfirmation );
+    camino.route( "#delete", DeleteConfirmationBox );
 
-    // how you can conditionally use the History API if available
-    camino.listen( window, { history: !!( window.history.pushState ) } );
+    // History API is enabled by default
+    camino.listen( window );
 
     /**
      * These two event firings are no longer required if the "init" option is
@@ -202,7 +204,7 @@ request.route --- an object of route specific data (that your provided) for the 
         methods: [ ]
     }
 
-request.request --- the request string that was used for matching.
+request.path --- the request string that was used for matching.
 
 request.params --- an object, key-value pair of data extracted from the URLs.
 
@@ -210,15 +212,19 @@ request.query --- the query string received by the server, parsed into a JSON ob
 
 request.qs --- the original query string. This property should also be added to window.location soon
 
+request.request -- the native request object. Node.js: the http.IncomingMessage object, Browser: window.location
+
+request.response -- the reponse object. Node.js: http.ServerResponse native object, Browser: whatever you set as the reponder, either globally or per-route
+
 Node.js only:
 
 request.method --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
 
-request.raw -- the raw request body
+request.raw -- the raw request body (if using built in content-type handlers)
 
 request.data --- the request body after it has been parsed (if using built in content-type handlers).
 
-request.files --- an array of files that were uploaded, captured into Buffers (if applicable)
+The only built in content types are "application/x-www-form-urlencoded" and "application/json".  If you overwrite these handler, request.raw and request.data will not be set.
 
 In the browser it is possible to augment the location object with additional properties/data you want to pass around.
 
