@@ -73,9 +73,6 @@ Camino.prototype.match = function match( req ) {
 			return;
 	}
 
-	// pass matched route info to req object
-	req.route = route;
-
 	// clean up the misc data from the regexp match
 	// wish there were some flags to make the output cleaner...
 	delete match.index;
@@ -84,10 +81,10 @@ Camino.prototype.match = function match( req ) {
 	// the first key is the string that was matched, ditch it
 	match.shift();
 
-	// set empty params object for easier testing in user callback
+	req.route = route;
 	req.params = {};
 
-	// merge the param names and values
+	// make key/value pair from matched route params
 	match.forEach( function( v, k ) {
 		if( typeof match[k] !== 'undefined' ) {
 			req.params[route.params[k]] = v;
@@ -154,29 +151,6 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	};
 
 	this.emit( this.event.route, g.routes[route] );
-};
-
-
-/**
- * Create event listener for each of camino's events (for debugging purposes)
- */
-
-Camino.prototype.logEvents = function logEvents() {
-	var c = this;
-	Object.keys(c.event).forEach(function(k) {
-		window.addEventListener(c.event[k], function(data) {
-			console.log(c.event[k], ": ", data);
-		});
-	});
-};
-
-
-/**
- * print to console all defined routes (for testing purposes)
- */
-
-Camino.prototype.list = function() {
-	console.log( g.routes );
 };
 
 })();

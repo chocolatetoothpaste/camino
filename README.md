@@ -21,6 +21,8 @@ v0.12.0
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
+If you use Camino and love it, please consider [Donating](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
+
 First things first, some juicy examples.
 
 ### Usage:
@@ -217,15 +219,15 @@ request.query --- the query string received by the server, parsed into a JSON ob
 
 request.qs --- the original query string. This property should also be added to window.location soon
 
-request.request -- the native request object. Node.js: the http.IncomingMessage object, Browser: window.location
+request.request --- the native request object. Node.js: the http.IncomingMessage object, Browser: window.location
 
-request.response -- the reponse object. Node.js: http.ServerResponse native object, Browser: whatever you set as the reponder, either globally or per-route
+request.response --- the reponse object. Node.js: http.ServerResponse native object, Browser: whatever you set as the reponder, either globally or per-route
 
 Node.js only:
 
 request.method --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
 
-request.raw -- the raw request body (if using built in content-type handlers)
+request.raw --- the raw request body (if using built in content-type handlers)
 
 request.data --- the request body after it has been parsed (if using built in content-type handlers).
 

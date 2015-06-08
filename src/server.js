@@ -53,9 +53,6 @@ Camino.prototype.listen = function listen( emitter, responder ) {
 	}).bind( this ) );
 
 	// listen for "match" event to fire and execute callback
-	// this.on( this.event.match, function( req, res ) {
-	// 	this._exec.call( this, req, res );
-	// });
 	this.on( this.event.match, function( req ) {
 		this._exec.call( this, req );
 	});
@@ -76,6 +73,7 @@ Camino.prototype._exec = function _exec( req ) {
 	req.response = req.route.responder || req.response;
 
 	if( typeof this._handler[type] === "function" ) {
+		// maintaining context with call
 		this._handler[type].call( this, req );
 	}
 
@@ -100,7 +98,7 @@ Camino.prototype.handle = function handle( type, cb ) {
 
 
 /**
- * Container object for content type handlers, and some default handlers
+ * Container object for content type handlers, and a couple default handlers
  */
 
 Camino.prototype._handler = {

@@ -73,9 +73,6 @@ if( typeof module !== "undefined" && module.exports ) {
 		}).bind( this ) );
 	
 		// listen for "match" event to fire and execute callback
-		// this.on( this.event.match, function( req, res ) {
-		// 	this._exec.call( this, req, res );
-		// });
 		this.on( this.event.match, function( req ) {
 			this._exec.call( this, req );
 		});
@@ -96,6 +93,7 @@ if( typeof module !== "undefined" && module.exports ) {
 		req.response = req.route.responder || req.response;
 	
 		if( typeof this._handler[type] === "function" ) {
+			// maintaining context with call
 			this._handler[type].call( this, req );
 		}
 	
@@ -120,7 +118,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	
 	
 	/**
-	 * Container object for content type handlers, and some default handlers
+	 * Container object for content type handlers, and a couple default handlers
 	 */
 	
 	Camino.prototype._handler = {
@@ -194,7 +192,7 @@ else {
 	 * an event.
 	 */
 	
-	Camino.prototype.listen = function( emitter, opt, responder ) {
+	Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		// available options and their defaults
 		var dict = { decode: true, history: true, hash: true, init: true };
 	
@@ -273,7 +271,7 @@ else {
 	 * Prep the request and pass it off to be matched
 	 */
 	
-	Camino.prototype._exec = function( req ) {
+	Camino.prototype._exec = function _exec( req ) {
 		this.emit( this.event.request, req );
 	
 		// the query string with "?" trimmed
@@ -299,7 +297,7 @@ else {
 	 * Shim emit method for browsers
 	 */
 	
-	Camino.prototype.emit = function( event, err, req ) {
+	Camino.prototype.emit = function emit( event, err, req ) {
 		// musical vars
 		if( typeof req === "undefined" ) {
 			req = err;
@@ -378,9 +376,6 @@ Camino.prototype.match = function match( req ) {
 			return;
 	}
 
-	// pass matched route info to req object
-	req.route = route;
-
 	// clean up the misc data from the regexp match
 	// wish there were some flags to make the output cleaner...
 	delete match.index;
@@ -389,10 +384,10 @@ Camino.prototype.match = function match( req ) {
 	// the first key is the string that was matched, ditch it
 	match.shift();
 
-	// set empty params object for easier testing in user callback
+	req.route = route;
 	req.params = {};
 
-	// merge the param names and values
+	// make key/value pair from matched route params
 	match.forEach( function( v, k ) {
 		if( typeof match[k] !== 'undefined' ) {
 			req.params[route.params[k]] = v;
@@ -459,29 +454,6 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	};
 
 	this.emit( this.event.route, g.routes[route] );
-};
-
-
-/**
- * Create event listener for each of camino's events (for debugging purposes)
- */
-
-Camino.prototype.logEvents = function logEvents() {
-	var c = this;
-	Object.keys(c.event).forEach(function(k) {
-		window.addEventListener(c.event[k], function(data) {
-			console.log(c.event[k], ": ", data);
-		});
-	});
-};
-
-
-/**
- * print to console all defined routes (for testing purposes)
- */
-
-Camino.prototype.list = function() {
-	console.log( g.routes );
 };
 
 })();

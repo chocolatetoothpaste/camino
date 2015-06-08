@@ -16,7 +16,7 @@ Camino.prototype.event = {
  * an event.
  */
 
-Camino.prototype.listen = function( emitter, opt, responder ) {
+Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	// available options and their defaults
 	var dict = { decode: true, history: true, hash: true, init: true };
 
@@ -95,7 +95,7 @@ Camino.prototype.listen = function( emitter, opt, responder ) {
  * Prep the request and pass it off to be matched
  */
 
-Camino.prototype._exec = function( req ) {
+Camino.prototype._exec = function _exec( req ) {
 	this.emit( this.event.request, req );
 
 	// the query string with "?" trimmed
@@ -121,7 +121,7 @@ Camino.prototype._exec = function( req ) {
  * Shim emit method for browsers
  */
 
-Camino.prototype.emit = function( event, err, req ) {
+Camino.prototype.emit = function emit( event, err, req ) {
 	// musical vars
 	if( typeof req === "undefined" ) {
 		req = err;
