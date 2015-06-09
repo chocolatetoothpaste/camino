@@ -105,12 +105,16 @@ if( typeof module !== "undefined" && module.exports ) {
 			// create empty string for appending request body data
 			req.raw = '';
 	
-			req.request.on( 'data', function( chunk ) {
+			// concatenate incoming data chunks (=^･^=) meow :)
+			var cat_chunks = function cat_chunks1( chunk ) {
 				req.raw += chunk;
-			});
+			}
+	
+			req.request.on( 'data', cat_chunks );
 	
 			// parse request data and execute route callback
-			req.request.on( 'end', function() {
+			req.request.once( 'end', function() {
+				req.request.removeListener( 'data', cat_chunks );
 				req.data = {};
 	
 				self.emit( self.event.exec );
@@ -165,13 +169,18 @@ if( typeof module !== "undefined" && module.exports ) {
 		// create empty string for appending request body data
 		req.raw = '';
 	
-		// grab the request body data, if provided
-		req.request.on( 'data', function( chunk ) {
+		// concatenate incoming data chunks (=^･^=) meow :)
+		var cat_chunks = function cat_chunks2( chunk ) {
 			req.raw += chunk;
-		});
+		}
+	
+		// grab the request body data, if provided
+		req.request.on( 'data', cat_chunks );
 	
 		// parse request data and execute route callback
-		req.request.on( 'end', function() {
+		req.request.once( 'end', function() {
+			req.request.removeListener( 'data', cat_chunks );
+	
 			req.data = ( req.raw.length > 0 && typeof cb === "function"
 				? cb.call( null, req.raw )
 				: {} );
