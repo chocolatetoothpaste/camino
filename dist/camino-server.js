@@ -100,6 +100,9 @@ Camino.prototype._exec = function _exec( req ) {
 	else if( type === "" ) {
 		var self = this;
 
+		// create empty string for appending request body data
+		req.raw = '';
+
 		req.request.on( 'data', function( chunk ) {
 			req.raw += chunk;
 		});
@@ -113,8 +116,6 @@ Camino.prototype._exec = function _exec( req ) {
 			// execute the callback, pass through request and responder handlers
 			req.route.callback.call( null, req );
 		});
-
-		req.request.resume();
 	}
 
 	else {
