@@ -63,7 +63,8 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 			if( req.request.pathname + req.request.search !== current_location ) {
 				// set the new "current" location
 				req.path = req.request.pathname;
-				current_location = req.request.pathname + req.request.search;
+				req.url = req.request.pathname + req.request.search;
+				current_location = req.url;
 				this._exec( req );
 			}
 		}).bind(this), false );

@@ -35,6 +35,8 @@ Camino.prototype.listen = function listen( emitter, responder ) {
 
 		var url = require( 'url' ).parse( req.url );
 
+		creq.url = req.url;
+
 		// req.url without the querystring
 		creq.path = url.pathname;
 
@@ -77,13 +79,32 @@ Camino.prototype._exec = function _exec( req ) {
 		this._handler[type].call( this, req );
 	}
 
+	else if( type === "" ) {
+		var self = this;
+
+		req.request.on( 'data', function( chunk ) {
+			req.raw += chunk;
+		});
+
+		// parse request data and execute route callback
+		req.request.on( 'end', function() {
+			req.data = {};
+
+			self.emit( self.event.exec );
+
+			// execute the callback, pass through request and responder handlers
+			req.route.callback.call( null, req );
+		});
+
+		req.request.resume();
+	}
+
 	else {
 		// Throw an error since an acceptable content-type was not found
 		var err = new Error('Invalid content type: ' + type);
 		err.status = 415;
 		this.emit( this.event.error, err, req );
 	}
-
 };
 
 

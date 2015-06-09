@@ -55,6 +55,8 @@ if( typeof module !== "undefined" && module.exports ) {
 	
 			var url = require( 'url' ).parse( req.url );
 	
+			creq.url = req.url;
+	
 			// req.url without the querystring
 			creq.path = url.pathname;
 	
@@ -97,13 +99,32 @@ if( typeof module !== "undefined" && module.exports ) {
 			this._handler[type].call( this, req );
 		}
 	
+		else if( type === "" ) {
+			var self = this;
+	
+			req.request.on( 'data', function( chunk ) {
+				req.raw += chunk;
+			});
+	
+			// parse request data and execute route callback
+			req.request.on( 'end', function() {
+				req.data = {};
+	
+				self.emit( self.event.exec );
+	
+				// execute the callback, pass through request and responder handlers
+				req.route.callback.call( null, req );
+			});
+	
+			req.request.resume();
+		}
+	
 		else {
 			// Throw an error since an acceptable content-type was not found
 			var err = new Error('Invalid content type: ' + type);
 			err.status = 415;
 			this.emit( this.event.error, err, req );
 		}
-	
 	};
 	
 	
@@ -239,7 +260,8 @@ else {
 				if( req.request.pathname + req.request.search !== current_location ) {
 					// set the new "current" location
 					req.path = req.request.pathname;
-					current_location = req.request.pathname + req.request.search;
+					req.url = req.request.pathname + req.request.search;
+					current_location = req.url;
 					this._exec( req );
 				}
 			}).bind(this), false );

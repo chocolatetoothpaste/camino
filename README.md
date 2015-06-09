@@ -5,6 +5,8 @@ One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
+**Update for v0.12.1** - Due to internal changes, v0.12.0 may have introduced a bug where requests without a content-type header were throwing an "Invalid content type" error.  This fixed so requests without a content type simply passthru and request data to req.raw, and req.data is set to an empty object for type consistency.  Please update camino ASAP if you started using 0.12.0.
+
 **Breaking changes**
 
 v0.12.0
@@ -21,7 +23,7 @@ v0.12.0
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
-If you use Camino and love it, please consider [Donating](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
+If you use Camino and love it, please consider [donating](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
 
 First things first, some juicy examples.
 
@@ -211,7 +213,9 @@ request.route --- an object of route specific data (that you provided) for the m
         methods: [ ]
     }
 
-request.path --- the request string that was used for matching.
+request.path --- the request string that was used for matching, without query string.
+
+request.url --- same as path, but with full query string.
 
 request.params --- an object, key-value pair of data extracted from the URLs.
 
