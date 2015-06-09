@@ -5,7 +5,7 @@ One-stop routing for server- and client-side web applications
 
 **Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
 
-**Update for v0.12.1** - Due to internal changes, v0.12.0 may have introduced a bug where requests without a content-type header were throwing an "Invalid content type" error.  This fixed so requests without a content type simply passthru and request data to req.raw, and req.data is set to an empty object for type consistency.  Please update camino ASAP if you started using 0.12.0.
+**Notice for v0.12.0 users** - Due to internal changes, v0.12.0 may have introduced a bug where requests without a content-type header were throwing an "Invalid content type" error.  This fixed so requests without a content type simply passthru and request data to req.raw, and req.data is set to an empty object for type consistency.  Please update camino ASAP if you started using 0.12.0.
 
 **Breaking changes**
 
