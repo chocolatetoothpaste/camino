@@ -37,12 +37,12 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		}
 	}
 
-	g.options = opt;
+	_g.options = opt;
 
 	// set a default responder for testing/getting started
 	var req = {
 		request: emitter.location,
-		response: responder || console.log.bind( console )
+		response: responder
 	};
 
 	// add listener for "match" event and execute callback if matched
@@ -105,7 +105,7 @@ Camino.prototype._exec = function _exec( req ) {
 	// initialize empty object
 	req.query = {};
 
-	if( g.options.decode )
+	if( _g.options.decode )
 		req.qs = decodeURI(req.qs);
 
 	// split query string into pairs

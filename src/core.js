@@ -1,7 +1,7 @@
 (function() {
 "use strict";
 // containers for data that needs a broader scope
-var g = {
+var _g = {
 
 	// the main container for defined routes
 	routes: {},
@@ -9,14 +9,14 @@ var g = {
 	// array container for just route regexes (for sorting and looped matching)
 	rarr: [],
 
-	// the main container for global options
+	// server doesn't use this but the browser does
 	options: {}
 };
 
 // main object constructor
 function Camino() { }
 
-//=include
+//=@@include-camino@@
 
 
 /**
@@ -41,7 +41,7 @@ Camino.prototype.match = function match( req ) {
 
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
-	for( var route in g.routes ) {
+	for( var route in _g.routes ) {
 		match = RegExp( route, 'g' ).exec( req.path );
 
 		// if a match was found, break the loop
@@ -60,7 +60,7 @@ Camino.prototype.match = function match( req ) {
 	}
 
 	// shorten reference
-	route = g.routes[route];
+	route = _g.routes[route];
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
@@ -81,6 +81,8 @@ Camino.prototype.match = function match( req ) {
 	// the first key is the string that was matched, ditch it
 	match.shift();
 
+	// use the route responder if it's set, otherwise just the native/default
+	req.response = route.responder || req.response;
 	req.route = route;
 	req.params = {};
 
@@ -124,11 +126,11 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	route = "^" + route + "$";
 
 	// throw an error if trying to redefine a route
-	if( typeof g.routes[route] !== "undefined" )
+	if( typeof _g.routes[route] !== "undefined" )
 		throw new Error( "Route is already defined: " + r );
 
 	// define the route data object
-	g.routes[route] = {
+	_g.routes[route] = {
 
 		// the original route as defined by the user, before tokens are
 		// converted into regular expressions
@@ -150,7 +152,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		methods: opt.methods || []
 	};
 
-	this.emit( this.event.route, g.routes[route] );
+	this.emit( this.event.route, _g.routes[route] );
 };
 
 })();

@@ -6,7 +6,7 @@ var fs = require('fs');
 
 gulp.task('js', function() {
 
-	var rep = '//=include';
+	var rep = '//=@@include-camino@@';
 
 	var browser = fs.readFileSync('src/browser.js', {encoding: "utf8"});
 	var server = fs.readFileSync('src/server.js', {encoding: "utf8"});

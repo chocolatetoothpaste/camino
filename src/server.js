@@ -30,23 +30,23 @@ Camino.prototype.listen = function listen( emitter, responder ) {
 		// emit "request" event
 		this.emit( this.event.request );
 
-		// assign the global response object
-		var creq = { request: req, response: responder || res };
-
 		var url = require( 'url' ).parse( req.url );
 
-		creq.url = req.url;
+		var creq = {
+			request: req,
+			response: responder || res,
+			url: req.url,
+			method: req.method,
 
-		// req.url without the querystring
-		creq.path = url.pathname;
+			// req.url without the querystring
+			path: url.pathname,
 
-		// query string parsed into object
-		creq.query = querystring.parse( url.query );
+			// query string parsed into object
+			query: querystring.parse( url.query ),
 
-		// the original query string, without '?'
-		creq.qs = url.query;
-
-		creq.method = req.method;
+			// the original query string, without '?'
+			qs: url.query
+		};
 
 		// try to match the request to a route
 		this.match( creq );
@@ -71,37 +71,13 @@ Camino.prototype._exec = function _exec( req ) {
 		? req.request.headers["content-type"].split(';')[0].toLowerCase()
 		: "" );
 
-	// use the route responder if it's set, otherwise just the native/default
-	req.response = req.route.responder || req.response;
-
 	if( typeof this._handler[type] === "function" ) {
 		// maintaining context with call
 		this._handler[type].call( this, req );
 	}
 
 	else if( type === "" ) {
-		var self = this;
-
-		// create empty string for appending request body data
-		req.raw = '';
-
-		// concatenate incoming data chunks (=^･^=) meow :)
-		var cat_chunks = function cat_chunks1( chunk ) {
-			req.raw += chunk;
-		}
-
-		req.request.on( 'data', cat_chunks );
-
-		// parse request data and execute route callback
-		req.request.once( 'end', function() {
-			req.request.removeListener( 'data', cat_chunks );
-			req.data = {};
-
-			self.emit( self.event.exec );
-
-			// execute the callback, pass through request and responder handlers
-			req.route.callback.call( null, req );
-		});
+		this._data( req );
 	}
 
 	else {
@@ -150,7 +126,7 @@ Camino.prototype._data = function _data( req, cb ) {
 	req.raw = '';
 
 	// concatenate incoming data chunks (=^･^=) meow :)
-	var cat_chunks = function cat_chunks2( chunk ) {
+	var cat_chunks = function cat_chunks( chunk ) {
 		req.raw += chunk;
 	}
 

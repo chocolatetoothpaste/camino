@@ -1,7 +1,7 @@
 (function() {
 "use strict";
 // containers for data that needs a broader scope
-var g = {
+var _g = {
 
 	// the main container for defined routes
 	routes: {},
@@ -9,7 +9,7 @@ var g = {
 	// array container for just route regexes (for sorting and looped matching)
 	rarr: [],
 
-	// the main container for global options
+	// server doesn't use this but the browser does
 	options: {}
 };
 
@@ -48,23 +48,23 @@ Camino.prototype.listen = function listen( emitter, responder ) {
 		// emit "request" event
 		this.emit( this.event.request );
 
-		// assign the global response object
-		var creq = { request: req, response: responder || res };
-
 		var url = require( 'url' ).parse( req.url );
 
-		creq.url = req.url;
+		var creq = {
+			request: req,
+			response: responder || res,
+			url: req.url,
+			method: req.method,
 
-		// req.url without the querystring
-		creq.path = url.pathname;
+			// req.url without the querystring
+			path: url.pathname,
 
-		// query string parsed into object
-		creq.query = querystring.parse( url.query );
+			// query string parsed into object
+			query: querystring.parse( url.query ),
 
-		// the original query string, without '?'
-		creq.qs = url.query;
-
-		creq.method = req.method;
+			// the original query string, without '?'
+			qs: url.query
+		};
 
 		// try to match the request to a route
 		this.match( creq );
@@ -89,37 +89,13 @@ Camino.prototype._exec = function _exec( req ) {
 		? req.request.headers["content-type"].split(';')[0].toLowerCase()
 		: "" );
 
-	// use the route responder if it's set, otherwise just the native/default
-	req.response = req.route.responder || req.response;
-
 	if( typeof this._handler[type] === "function" ) {
 		// maintaining context with call
 		this._handler[type].call( this, req );
 	}
 
 	else if( type === "" ) {
-		var self = this;
-
-		// create empty string for appending request body data
-		req.raw = '';
-
-		// concatenate incoming data chunks (=^･^=) meow :)
-		var cat_chunks = function cat_chunks1( chunk ) {
-			req.raw += chunk;
-		}
-
-		req.request.on( 'data', cat_chunks );
-
-		// parse request data and execute route callback
-		req.request.once( 'end', function() {
-			req.request.removeListener( 'data', cat_chunks );
-			req.data = {};
-
-			self.emit( self.event.exec );
-
-			// execute the callback, pass through request and responder handlers
-			req.route.callback.call( null, req );
-		});
+		this._data( req );
 	}
 
 	else {
@@ -168,7 +144,7 @@ Camino.prototype._data = function _data( req, cb ) {
 	req.raw = '';
 
 	// concatenate incoming data chunks (=^･^=) meow :)
-	var cat_chunks = function cat_chunks2( chunk ) {
+	var cat_chunks = function cat_chunks( chunk ) {
 		req.raw += chunk;
 	}
 
@@ -221,7 +197,7 @@ Camino.prototype.match = function match( req ) {
 
 	// loop through and try to find a route that matches the request
 	// I wish there was a more efficient way to do this
-	for( var route in g.routes ) {
+	for( var route in _g.routes ) {
 		match = RegExp( route, 'g' ).exec( req.path );
 
 		// if a match was found, break the loop
@@ -240,7 +216,7 @@ Camino.prototype.match = function match( req ) {
 	}
 
 	// shorten reference
-	route = g.routes[route];
+	route = _g.routes[route];
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
 	if( route.methods.length > 0
@@ -261,6 +237,8 @@ Camino.prototype.match = function match( req ) {
 	// the first key is the string that was matched, ditch it
 	match.shift();
 
+	// use the route responder if it's set, otherwise just the native/default
+	req.response = route.responder || req.response;
 	req.route = route;
 	req.params = {};
 
@@ -304,11 +282,11 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	route = "^" + route + "$";
 
 	// throw an error if trying to redefine a route
-	if( typeof g.routes[route] !== "undefined" )
+	if( typeof _g.routes[route] !== "undefined" )
 		throw new Error( "Route is already defined: " + r );
 
 	// define the route data object
-	g.routes[route] = {
+	_g.routes[route] = {
 
 		// the original route as defined by the user, before tokens are
 		// converted into regular expressions
@@ -330,7 +308,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		methods: opt.methods || []
 	};
 
-	this.emit( this.event.route, g.routes[route] );
+	this.emit( this.event.route, _g.routes[route] );
 };
 
 })();
