@@ -66,6 +66,13 @@
 					}
 				}, "a:not([href^=\\#])" );
 			} );
+
+			window.addEventListener('popstate', function(event) {
+				console.log(event);
+				event.preventDefault();
+				event.stopPropagation();
+				window.history.replaceState( null, null, window.location );
+			})
 		</script>
 
 

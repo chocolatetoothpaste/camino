@@ -39,12 +39,6 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	_g.options = opt;
 
-	// set a default responder for testing/getting started
-	var req = {
-		request: emitter.location,
-		response: responder
-	};
-
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (function(event) {
 		this.emit( this.event.exec );
@@ -56,16 +50,43 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	if( opt.history ) {
 		// adding a placeholder for the "current" location so popstates
 		// fired on hashchange events can be mitigated
-		var current_location = null;
+		var current_location = {};
 
-		emitter.addEventListener( "popstate", (function() {
+		var phash = '';
+
+		emitter.addEventListener( "popstate", (function(event) {
+			// set a default responder for testing/getting started
+			var req = {
+				request: emitter.location,
+				response: responder
+			};
+
+			var request = {
+				path: req.request.pathname,
+				query: req.request.search
+			};
+
 			// if request is the same as current location, don't execute again
-			if( req.request.pathname + req.request.search !== current_location ) {
+			if( JSON.stringify(request) !== JSON.stringify(current_location) ) {
 				// set the new "current" location
 				req.path = req.request.pathname;
 				req.url = req.request.pathname + req.request.search;
-				current_location = req.url;
+				current_location = {
+					path: req.request.pathname,
+					query: req.request.search
+				};
 				this._exec( req );
+			}
+
+			if( opt.hash && req.request.hash !== phash ) {
+				event.preventDefault();
+				// history.replaceState(null, null, '/profile');
+				req.path = req.request.pathname;
+				phash = req.request.hash;
+
+				if( phash !== '' ) {
+					this._exec( req );
+				}
 			}
 		}).bind(this), false );
 
@@ -75,20 +96,30 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		}
 	}
 
-	// set up all hash event code
+	/*// set up all hash event code
 	if( opt.hash ) {
 		emitter.addEventListener( "hashchange", (function() {
-			// no need to check for request vs current hash,
-			// browser obeserves hash CHANGE
-			req.path = req.request.hash;
-			this._exec( req );
+			console.log('hashchange');
+
+			if( emitter.location.hash !== '' ) {
+				// set a default responder for testing/getting started
+				var req = {
+					request: emitter.location,
+					response: responder
+				};
+
+				// no need to check for request vs current hash,
+				// browser obeserves hash CHANGE
+				req.path = req.request.hash;
+				this._exec( req );
+			}
 		}).bind(this) );
 
 		// fire initial "hashchange" event on page load
-		if( opt.init && req.request.hash !== '' ) {
+		if( opt.init ) {
 			window.dispatchEvent( new Event('hashchange') );
 		}
-	}
+	}//*/
 };
 
 
