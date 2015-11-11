@@ -116,11 +116,11 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		.map( function( v ) { return v.substr( 1 ) } );
 
 	// replace param names with regexes
-	var route = r.replace( /@(\w+)/g, "(\\w+)" )
+	var route = r.replace( /@(\w+)/g, "([\\w\\-\\.]+)" )
 
 		// this one was hard to write. it checks for 0 or 1 occ. of "/"
 		// or, 0 or 1 param (string, not "/") if 1 occ. of "/"" was found
-		.replace( /\/%(\w+)/g, "(?:/?|/(\\w+))" );
+		.replace( /\/%(\w+)/g, "(?:/?|/([\\w\\-\\.]+))" );
 
 	// wrap the route with regexp string delimiters
 	route = "^" + route + "$";
