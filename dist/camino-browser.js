@@ -35,10 +35,8 @@ Camino.prototype.event = {
  */
 
 Camino.prototype.listen = function listen( emitter, opt, responder ) {
-	this.init();
-
 	// available options and their defaults
-	var dict = { decode: true, history: true, hash: true, init: true };
+	var dict = { decode: true, history: true, hash: true, init: true, sort: true };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -58,6 +56,8 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	}
 
 	_g.options = opt;
+
+	this.init();
 
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (function(event) {
@@ -200,12 +200,14 @@ window.camino = new Camino;
  */
 
 Camino.prototype.init = function init() {
-	_g.routes.sort(function(a, b) {
-		// sort routes based on their modified length
-		// param names are scrubbed so the playing field is level
-		// knock routes with @/% to the bottom so explicit routes match first
-		return b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort );
-	});
+	if( _g.options.sort ) {
+		_g.routes.sort(function(a, b) {
+			// sort routes based on their modified length
+			// param names are scrubbed so the playing field is level
+			// put routes with @/% at the bottom so explicit routes match first
+			return b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort );
+		});
+	}
 };
 
 
@@ -238,6 +240,13 @@ Camino.prototype.match = function match( req ) {
 			// the first key is the string that was matched, ditch it
 			match.shift();
 
+			// make key/value pair from matched route params
+			match.forEach( function( v, k ) {
+				if( typeof match[k] !== 'undefined' ) {
+					req.params[route.params[k]] = v;
+				}
+			});
+
 			break;
 		}
 	}
@@ -267,13 +276,6 @@ Camino.prototype.match = function match( req ) {
 	req.response = route.responder || req.response;
 	req.route = route;
 	req.params = {};
-
-	// make key/value pair from matched route params
-	match.forEach( function( v, k ) {
-		if( typeof match[k] !== 'undefined' ) {
-			req.params[route.params[k]] = v;
-		}
-	});
 
 	this.emit( this.event.match, req );
 };

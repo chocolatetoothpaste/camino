@@ -17,10 +17,8 @@ Camino.prototype.event = {
  */
 
 Camino.prototype.listen = function listen( emitter, opt, responder ) {
-	this.init();
-
 	// available options and their defaults
-	var dict = { decode: true, history: true, hash: true, init: true };
+	var dict = { decode: true, history: true, hash: true, init: true, sort: true };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -40,6 +38,8 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	}
 
 	_g.options = opt;
+
+	this.init();
 
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (function(event) {

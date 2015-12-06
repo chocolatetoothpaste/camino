@@ -7,7 +7,13 @@ One-stop routing for server- and client-side web applications
 
 **Breaking changes**
 
-v0.12.0
+v0.14.0+
+
+* Routes are now sorted using an alogirthm to try and complete the most complete or explicit path first. For example, if your request URL is /api/user/data, and you have set up routes for /api/user/%user_id and /api/user/data, it will match /api/user/data first.  This could affect how your existing routes are matched, so test carefully.  Optionally, you can do (psuedo code) `camino.listen([server||window], {sort: false});` to disable sorting.
+
+* Browser: camino.listen() and the main matching logic were rewritten. This is due to the fact that the popstate event is fired, even on hashchanges, making the hashchange event listener redundant.  Most likely this isn't a breaking change, but the code is different so test carefully.
+
+v0.12.0+
 
 * User callbacks are only supplied one object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects.  See the API section for updated documentation.
 
@@ -239,11 +245,7 @@ In the browser it is possible to augment the location object with additional pro
 
 * * *
 
-    camino.listen( server [, responder] ); // Node.js (server)
-
-OR
-
-    camino.listen( window [, options] [, responder] ); // Browser
+    camino.listen( window [, options] [, responder] );
 
 When you call the listen() function, you have the option of passing in a custom "response" object/function.
 
@@ -253,7 +255,13 @@ On the server, it defaults to the HTTP response object, but feel free to be crea
 
 The reason for passing through the HTTP response object is to give the user total control over how requests are responded too. The intent of this library is to stay out of the way.
 
-Valid options for camino.listen "options" (again, browser only) argument are:
+Valid options for camino.listen "options" argument are:
+
+Server and Browser:
+
+**sort** --- boolean, if true will sort routes for best possible URL resolution
+
+Browser only:
 
 **decode** --- decode query string data using decodeURI, defaults to true
 

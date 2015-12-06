@@ -25,7 +25,29 @@ Camino.prototype.event = {
  * an event.
  */
 
-Camino.prototype.listen = function listen( emitter, responder ) {
+Camino.prototype.listen = function listen( emitter, opt, responder ) {
+	// available options and their defaults
+	var dict = { sort: true };
+
+	// musical vars
+	if( typeof opt === "function" ) {
+		responder = opt;
+		opt = dict;
+	}
+
+	else if( typeof opt === "undefined" ) {
+		opt = dict;
+	}
+
+	// merge user and default options
+	else {
+		for( var i in dict ) {
+			opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+		}
+	}
+
+	_g.options = opt;
+
 	this.init();
 
 	emitter.on( 'request', (function( req, res ) {
