@@ -17,6 +17,8 @@ Camino.prototype.event = {
  */
 
 Camino.prototype.listen = function listen( emitter, opt, responder ) {
+	this.init();
+
 	// available options and their defaults
 	var dict = { decode: true, history: true, hash: true, init: true };
 

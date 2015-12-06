@@ -26,6 +26,8 @@ Camino.prototype.event = {
  */
 
 Camino.prototype.listen = function listen( emitter, responder ) {
+	this.init();
+
 	emitter.on( 'request', (function( req, res ) {
 		// emit "request" event
 		this.emit( this.event.request );

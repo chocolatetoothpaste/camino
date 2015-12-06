@@ -3,9 +3,7 @@ One-stop routing for server- and client-side web applications
 
 [![NPM](https://nodei.co/npm/camino.png?downloads=true)](https://nodei.co/npm/camino/)
 
-**Active development, please submit bugs and suggestions to GitHub repository to make Camino more awesome!!**
-
-**Notice for v0.12.0 users** - Due to internal changes, v0.12.0 may have introduced a bug where requests without a content-type header were throwing an "Invalid content type" error.  This fixed so requests without a content type simply passthru and request data to req.raw, and req.data is set to an empty object for type consistency.  Please update camino ASAP if you started using 0.12.0.
+**Bugs, suggestions, and pull requests welcome! Please submit to GitHub repository**
 
 **Breaking changes**
 
@@ -17,7 +15,7 @@ v0.12.0
 
 * A default listener for error events is removed. Camino still emits an event, but no longer tries to handle it for you.
 
-* The HTML5 History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
+* The History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
 
 * If you see a bug in the documentation, please report it!
 

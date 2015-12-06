@@ -4,11 +4,11 @@ var util = require('util');
 
 // log all events that camino emits:
 ///
-Object.keys(camino.event).forEach(function(k) {
-	camino.on(camino.event[k], function(data) {
-		console.log(camino.event[k], ": ", data);
-	});
-});
+// Object.keys(camino.event).forEach(function(k) {
+// 	camino.on(camino.event[k], function(data) {
+// 		console.log(camino.event[k], ": ", data);
+// 	});
+// });
 //*/
 
 
@@ -30,14 +30,33 @@ camino.on('error', function(err, req) {
 });
 
 
-camino.route('/api/ross/almon/%param', function(req) {
-	req.response.write(JSON.stringify({ request: util.inspect(req) }));
+camino.route('/api/user/%user_id', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response
+	res.write(JSON.stringify({ user_id: req }));
+	res.end();
+});
+
+camino.route('/api/user/@user_id/messages/%id', function(req) {
+	req.response.write(JSON.stringify({ req: util.inspect(req) }));
 	req.response.end();
 });
 
-camino.route('/api/ross/@company/%name', function(req) {
-	req.response.write(JSON.stringify({ req: util.inspect(req) }));
-	req.response.end();
+camino.route('/api/user/auth', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response
+	res.write(JSON.stringify({ auth: req }));
+	res.end();
+});
+
+camino.route('/api/user/data', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response
+	res.write(JSON.stringify({ data: req }));
+	res.end();
 });
 
 camino.route('/api/sawyer/brown', {methods: ['GET', 'PUT']}, function(req) {
