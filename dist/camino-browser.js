@@ -6,9 +6,6 @@ var _g = {
 	// the main container for defined routes
 	routes: [],
 
-	// array container for just route regexes (for sorting and looped matching)
-	// roots: [],
-
 	// server doesn't use this but the browser does
 	options: {}
 };
@@ -240,13 +237,6 @@ Camino.prototype.match = function match( req ) {
 			// the first key is the string that was matched, ditch it
 			match.shift();
 
-			// make key/value pair from matched route params
-			match.forEach( function( v, k ) {
-				if( typeof match[k] !== 'undefined' ) {
-					req.params[route.params[k]] = v;
-				}
-			});
-
 			break;
 		}
 	}
@@ -276,6 +266,13 @@ Camino.prototype.match = function match( req ) {
 	req.response = route.responder || req.response;
 	req.route = route;
 	req.params = {};
+
+	// make key/value pair from matched route params
+	match.forEach( function( v, k ) {
+		if( typeof match[k] !== 'undefined' ) {
+			req.params[route.params[k]] = v;
+		}
+	});
 
 	this.emit( this.event.match, req );
 };
@@ -320,7 +317,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		// converted into regular expressions
 		route: r,
 
-		// these properties are used for internal purposes and get deleted
+		// these properties are used for internal purposes and are removed
 		// before the route is exposed to the end user
 		match: match,
 		sort: r.replace(/([@|%])\w+/g, '$1'),
