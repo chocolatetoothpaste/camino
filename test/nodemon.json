@@ -1,5 +1,6 @@
 {
   "watch": [
-    "../dist/camino-server.js"
+    "../dist/camino-server.js",
+    "app.js"
   ]
 }

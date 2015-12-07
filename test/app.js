@@ -51,6 +51,14 @@ camino.route('/api/user/auth', function(req) {
 	res.end();
 });
 
+camino.route('/api/appointment/%id', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response
+	res.write(JSON.stringify({ appointment: req }));
+	res.end();
+});
+
 camino.route('/api/user/data', function(req) {
 	var res = req.response;
 	delete req.request;
@@ -66,6 +74,14 @@ camino.route('/api/sawyer/brown', {methods: ['GET', 'PUT']}, function(req) {
 		request: util.inspect(req),
 		"data": ["Soybean"]
 	}));
+});
+
+camino.route('/api/appointment/type/%id', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response
+	res.write(JSON.stringify({ appointment_type: req }));
+	res.end();
 });
 
 

@@ -5,6 +5,7 @@ var _g = {
 
 	// the main container for defined routes
 	routes: [],
+	def: [],
 
 	// server doesn't use this but the browser does
 	options: {}
@@ -397,6 +398,10 @@ Camino.prototype.init = function init() {
 			return b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort );
 		});
 	}
+
+	_g.routes.forEach(function(r) {
+		console.log(r.sort);
+	});
 };
 
 
@@ -499,10 +504,10 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	match = "^" + match + "$";
 
 	// throw an error if trying to redefine a route
-	// if( typeof _g.routes[route] !== "undefined" )
-	// 	throw new Error( "Route is already defined: " + r );
+	if( _g.def.indexOf(r) !== -1 )
+		throw new Error( "Route is already defined: " + r );
 
-	// define the route data object
+	// define the route object
 	var route = {
 
 		// the original route as defined by the user, before tokens are
@@ -530,7 +535,14 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		methods: opt.methods || []
 	};
 
+	// throw an error if trying to redefine a route
+	if( _g.def.indexOf(route.sort) !== -1 )
+		throw new Error( "Route is already defined: "
+			+ _g.routes[_g.def.indexOf(route.sort)].route
+			+ ',  Your route: ' + r );
+
 	_g.routes.push(route);
+	_g.def.push(route.sort);
 
 	this.emit( this.event.route, route );
 };
