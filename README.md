@@ -5,7 +5,7 @@ One-stop routing for server- and client-side web applications
 
 **Bugs, suggestions, and pull requests welcome! Please submit to GitHub repository**
 
-**Breaking changes**
+**Important changes**
 
 v0.14.0+
 
@@ -13,17 +13,7 @@ v0.14.0+
 
 * Browser: In previous versions, if you attempted to load a request more than once (in a row) the subsequent requests were ignored.  This has been changed so requests are always processed.
 
-* Browser: camino.listen() and the main matching logic were rewritten. This is due to the fact that the popstate event is fired, even on hashchanges, making the hashchange event listener redundant.  Most likely this isn't a breaking change, but the code is different so test carefully.
-
-v0.12.0+
-
-* User callbacks are only supplied one object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects.  See the API section for updated documentation.
-
-* Server: Generic handling of file uploads has been removed, and dependency on busboy has also been removed.  The code formerly used in the library has been moved to the polyfills section.
-
-* A default listener for error events is removed. Camino still emits an event, but no longer tries to handle it for you.
-
-* The History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
+* Browser: camino only listens to the popstate event, including for hash updates. The hashchange event is not longer monitored. This means only IE 9+ is supported.
 
 * If you see a bug in the documentation, please report it!
 
@@ -43,7 +33,10 @@ First things first, some juicy examples.
 
     // org.init would be part of the same pretend controller framework
     // passing in some sample options
-    camino.route( "/api/organization/@id", { responder: SomeCustomResponderObject, methods: ["GET", "POST"] }, org.init );
+    camino.route( "/api/organization/@id", {
+        responder: SomeCustomResponderObject,
+        methods: ["GET", "POST"]
+    }, org.init );
 
     // using the response object
     var callback = function( request ) {
@@ -78,7 +71,10 @@ First things first, some juicy examples.
     camino.route( "#!/team/@user_id", team.init );
 
     // using "methods" in the browser
-    camino.route( "#!/message/%id", { responder: SomeMessageBoxObject, methods: ["read", "delete"] }, message.init );
+    camino.route( "#!/message/%id", {
+        responder: SomeMessageBoxObject,
+        methods: ["read", "delete"]
+    }, message.init );
 
     camino.listen(window);
     OR
@@ -306,6 +302,18 @@ For convenience, Camino.event container object exists with references to Camino'
 **exec** --- fired when the callback is executed
 
 **error** --- fired when an error is encountered
+
+## Upgrading
+
+v0.12.0+
+
+* User callbacks are only supplied one object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects. See the API section for updated documentation.
+
+* Server: Generic handling of file uploads has been removed, and dependency on busboy has also been removed.  The code formerly used in the library has been moved to the polyfills section.
+
+* A default listener for error events is removed. Camino still emits an event, but no longer tries to handle it for you.
+
+* The History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
 
 ## Polyfills
 

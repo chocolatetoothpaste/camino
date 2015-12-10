@@ -259,22 +259,29 @@ else {
 			response: responder
 		};
 	
-		var prev_loc = null;
-		var prev_hash = null;
+		var prev_loc = '';
+		var prev_hash = '';
 	
 		// set event listener for history api if optioned
 		emitter.addEventListener( "popstate", (function(event) {
-			req.path = req.request.pathname;
-			req.url = req.request.pathname + req.request.search;
-			this._exec( req );
-		}).bind(this), false );
+			var current_loc = JSON.stringify({
+				path: req.request.pathname,
+				query: req.request.search
+			});
 	
+			if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
+				|| req.request.hash === '' ) ) {
+					prev_loc = current_loc;
+					req.path = req.request.pathname;
+					req.url = req.request.pathname + req.request.search;
+					this._exec( req );
+			}
 	
-		emitter.addEventListener( "hashchange", (function(event) {
-			if( opt.hash && ( ! prev_hash || req.request.hash !== prev_hash ) ) {
-				req.path = req.request.hash;
+			if( opt.hash ) {
+				prev_hash = req.path = req.request.hash;
 	
 				if( req.request.hash === '' ) {
+					prev_hash = '';
 					this.emit( this.event.nohash, null, req );
 				}
 				else {
@@ -303,12 +310,14 @@ else {
 		// initialize empty object
 		req.query = {};
 	
-		if( _g.options.decode )
-			req.qs = decodeURI(req.qs);
-	
 		// split query string into pairs
 		req.qs.split( "&" ).forEach(function( val ) {
 			var v = val.split( '=' );
+	
+			if( _g.options.decode ) {
+				v.map(decodeURIComponent);
+			}
+	
 			req.query[ v[0] ] = v[1];
 		});
 	
