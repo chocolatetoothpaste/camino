@@ -247,10 +247,6 @@ else {
 	
 		this.init();
 	
-		emitter.addEventListener( this.event.nohash, (function(event) {
-			console.log("no hash", event)
-		}).bind(this), false);
-	
 		// add listener for "match" event and execute callback if matched
 		emitter.addEventListener( this.event.match, (function(event) {
 			this.emit( this.event.exec );
@@ -268,20 +264,9 @@ else {
 	
 		// set event listener for history api if optioned
 		emitter.addEventListener( "popstate", (function(event) {
-	
-			// var current_loc = JSON.stringify({
-			// 	path: req.request.pathname,
-			// 	query: req.request.search
-			// });
-	
-			// if request is the same as current location, don't execute again
-			// if( opt.history && ! prev_loc || current_loc !== prev_loc) {
-				// set the new "current" location
-				req.path = req.request.pathname;
-				req.url = req.request.pathname + req.request.search;
-				// prev_loc = current_loc;
-				this._exec( req );
-			// }
+			req.path = req.request.pathname;
+			req.url = req.request.pathname + req.request.search;
+			this._exec( req );
 		}).bind(this), false );
 	
 	

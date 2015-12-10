@@ -33,7 +33,7 @@ If you use Camino and love it, please consider [donating](https://www.paypal.com
 
 First things first, some juicy examples.
 
-### Usage:
+## Usage:
 **Server**
 
     var camino = require("camino");
@@ -164,10 +164,10 @@ These browser examples are in no way exhaustive, nor "recommended practice". The
 
 * * *
 
-### API
+## API
     camino.route( route [, options], callback )
 
-**route** --- String
+#### route --- String
 
 The URL you are attempting to match. You can also capture "parameters" in your URL by using the @ symbol for a required param, or a % for an optional param. The difference between the two types is, if your URL has a required param but one is not provided, it will result in a (404 error).
 
@@ -186,7 +186,7 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 * /api/user
 * /api/user/
 
-**options** --- Object
+#### options --- Object
 
 Camino.route accepts 2 options:
 
@@ -196,11 +196,11 @@ Camino.route accepts 2 options:
 
 If you don't pass in a list of allowed methods, your code will always execute if a request matches a route.  Think of it like methods = "*"
 
-**callback** --- Function
+#### callback --- Function
 
 YOUR code that is run when a request is matched to a route. Your callback should accept 2 parameters: a request object, and a response object. The request object is either the http.request object (node.js) or the window.location object (browser), augmented with these additional properties (depending on the presence of matching data):
 
-request.route --- an object of route specific data (that you provided) for the matched route. example:
+**request.route** --- an object of route specific data (that you provided) for the matched route. example:
 
     {
         route: /api/user/@company/%id,
@@ -219,27 +219,27 @@ request.route --- an object of route specific data (that you provided) for the m
         methods: [ ]
     }
 
-request.path --- the request string that was used for matching, without query string.
+**request.path** --- the request string that was used for matching, without query string.  In the browser, this will be either a URL or the hash fragment.
 
-request.url --- same as path, but with full query string.
+**request.url** --- same as path, but with full query string.
 
-request.params --- an object, key-value pair of data extracted from the URLs.
+**request.params** --- an object, key-value pair of data extracted from the URLs.
 
-request.query --- the query string received by the server, parsed into a JSON object.
+**request.query** --- the query string received by the server, parsed into a JSON object.
 
-request.qs --- the original query string. This property should also be added to window.location soon
+**request.qs** --- the original query string. This property should also be added to window.location soon
 
-request.request --- the native request object. Node.js: the http.IncomingMessage object, Browser: window.location
+**request.request** --- the native request object. Node.js: the http.IncomingMessage object, Browser: window.location
 
-request.response --- the reponse object. Node.js: http.ServerResponse native object, Browser: whatever you set as the reponder, either globally or per-route
+**request.response** --- the reponse object. Node.js: http.ServerResponse native object, Browser: whatever you set as the reponder, either globally or per-route
 
-Node.js only:
+#### Server only:
 
-request.method --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
+**request.method** --- a string, in the case of a server the request method. You could augment the window.location object with a "method" in the onclick event or something like that
 
-request.raw --- the raw request body (if using built in content-type handlers)
+**request.raw** --- the raw request body (if using built in content-type handlers)
 
-request.data --- the request body after it has been parsed (if using built in content-type handlers).
+**request.data** --- the request body after it has been parsed (if using built in content-type handlers).
 
 The only built in content types are "application/x-www-form-urlencoded" and "application/json".  If you overwrite these handler, request.raw and request.data will not be set.
 
@@ -259,11 +259,11 @@ The reason for passing through the HTTP response object is to give the user tota
 
 Valid options for camino.listen "options" argument are:
 
-Server and Browser:
+#### Server and Browser:
 
 **sort** --- boolean, if true will sort routes for best possible URL resolution
 
-Browser only:
+#### Browser only:
 
 **decode** --- decode query string data using decodeURI, defaults to true
 
@@ -283,7 +283,20 @@ Registers a content type and it's corresponding handler.  There are three conten
 
 **callback** --- Function
 
-### Events
+* * *
+
+    camino.location( location [, data] [, title ] );
+
+Executes a request.  This can be used instead of `window.location` to redirect to a different page.  This is essentially just a wrapper for `history.pushState()` that also fires the popstate event to kick camino into action.  Data and title are optional and correspond directly to the data and title arguments for `history.pushState()`.
+
+* * *
+
+    camino.replace( location [, data] [, title ] );
+
+Works the same as `camino.location()`, but executes `history.replaceState()` instead of `history.pushState()`.
+
+## Events
+
 For convenience, Camino.event container object exists with references to Camino's events. The following are Camino.event's properties:
 
 **request** --- fired when a request is received by Camino
@@ -294,18 +307,9 @@ For convenience, Camino.event container object exists with references to Camino'
 
 **error** --- fired when an error is encountered
 
-### Error Handling
-Very basic error handling was introduced for server instances only.
+## Polyfills
 
-This was done to handle 404/405 errors to prevent hanging when testing.
-
-Additionally, Camino.error can (should) be augmented/replaced with your own handling of response back to the server.  Look at the default implementation of Camino.error for an idea how to accomplish this.
-
-For browsers the error is logged to the console, so it REALLY should be replaced.
-
-### Polyfills
-
-**Register handle for uploading files from a form**
+**(Bad) Exmaple of uploading files from a form**
 
     camino.handle('multipart/form-data', function( req ) {
         var self = this;
