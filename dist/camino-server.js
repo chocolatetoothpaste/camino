@@ -211,9 +211,9 @@ Camino.prototype.init = function init() {
 		});
 	}
 
-	_g.routes.forEach(function(r) {
-		console.log(r.sort);
-	});
+	// _g.routes.forEach(function(r) {
+	// 	console.log(r.sort);
+	// });
 };
 
 

@@ -68,41 +68,37 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	if( opt.history ) {
 		// adding a placeholder for the "current" location so popstates
 		// fired on hashchange events can be mitigated
-		var current_location = {};
-
-		var phash = '';
+		var prev_loc = null;
+		var prev_hash = null;
 
 		emitter.addEventListener( "popstate", (function(event) {
-			// set a default responder for testing/getting started
 			var req = {
 				request: emitter.location,
 				response: responder
 			};
 
-			var request = {
+			var current_loc = JSON.stringify({
 				path: req.request.pathname,
 				query: req.request.search
-			};
+			});
 
 			// if request is the same as current location, don't execute again
-			if( JSON.stringify(request) !== JSON.stringify(current_location) ) {
+			if( ! prev_loc || current_loc !== prev_loc) {
 				// set the new "current" location
 				req.path = req.request.pathname;
 				req.url = req.request.pathname + req.request.search;
-				current_location = {
-					path: req.request.pathname,
-					query: req.request.search
-				};
+				prev_loc = current_loc;
 				this._exec( req );
 			}
 
-			if( opt.hash && req.request.hash !== phash ) {
-				event.preventDefault();
-				// history.replaceState(null, null, '/profile');
-				req.path = req.request.pathname;
-				phash = req.request.hash;
+			if( opt.hash && ! prev_hash || req.request.hash !== prev_hash ) {
+				req.path = req.request.hash;
+				prev_hash = req.request.hash;
 
-				if( phash !== '' ) {
+				if( prev_hash === '' ) {
+
+				}
+				else {
 					this._exec( req );
 				}
 			}
@@ -113,31 +109,6 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 			window.dispatchEvent( new Event('popstate') );
 		}
 	}
-
-	/*// set up all hash event code
-	if( opt.hash ) {
-		emitter.addEventListener( "hashchange", (function() {
-			console.log('hashchange');
-
-			if( emitter.location.hash !== '' ) {
-				// set a default responder for testing/getting started
-				var req = {
-					request: emitter.location,
-					response: responder
-				};
-
-				// no need to check for request vs current hash,
-				// browser obeserves hash CHANGE
-				req.path = req.request.hash;
-				this._exec( req );
-			}
-		}).bind(this) );
-
-		// fire initial "hashchange" event on page load
-		if( opt.init ) {
-			window.dispatchEvent( new Event('hashchange') );
-		}
-	}//*/
 };
 
 
@@ -189,6 +160,18 @@ Camino.prototype.emit = function emit( event, err, req ) {
 };
 
 
+Camino.prototype.location = function location(loc, data, title) {
+	history.pushState(data, title, loc);
+	window.dispatchEvent( new Event('popstate') );
+};
+
+
+Camino.prototype.replace = function replace(loc, data, title) {
+	history.replaceState(data, title, loc);
+	window.dispatchEvent( new Event('popstate') );
+};
+
+
 // create a new instance in the global scope
 window.camino = new Camino;
 
@@ -207,9 +190,9 @@ Camino.prototype.init = function init() {
 		});
 	}
 
-	_g.routes.forEach(function(r) {
-		console.log(r.sort);
-	});
+	// _g.routes.forEach(function(r) {
+	// 	console.log(r.sort);
+	// });
 };
 
 
