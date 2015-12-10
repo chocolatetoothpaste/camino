@@ -11,6 +11,8 @@ v0.14.0+
 
 * Routes are now sorted using an alogirthm to try and complete the most complete or explicit path first. For example, if your request URL is /api/user/data, and you have set up routes for /api/user/%user_id and /api/user/data, it will match /api/user/data first.  This could affect how your existing routes are matched, so test carefully.  Optionally, you can do (psuedo code) `camino.listen([server||window], {sort: false});` to disable sorting.
 
+* Browser: In previous versions, if you attempted to load a request more than once (in a row) the subsequent requests were ignored.  This has been changed so requests are always processed.
+
 * Browser: camino.listen() and the main matching logic were rewritten. This is due to the fact that the popstate event is fired, even on hashchanges, making the hashchange event listener redundant.  Most likely this isn't a breaking change, but the code is different so test carefully.
 
 v0.12.0+

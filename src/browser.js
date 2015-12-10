@@ -7,6 +7,7 @@ Camino.prototype.event = {
 	route: "camino.route",
 	request: "camino.request",
 	match: "camino.match",
+	nohash: "camino.nohash",
 	exec: "camino.exec"
 };
 
@@ -41,6 +42,10 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	this.init();
 
+	emitter.addEventListener( this.event.nohash, (function(event) {
+		console.log("no hash", event)
+	}).bind(this), false);
+
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (function(event) {
 		this.emit( this.event.exec );
@@ -48,50 +53,49 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		event.detail.request.route.callback.call( null, event.detail.request );
 	}).bind(this));
 
+	var req = {
+		request: emitter.location,
+		response: responder
+	};
+
+	var prev_loc = null;
+	var prev_hash = null;
+
 	// set event listener for history api if optioned
-	if( opt.history ) {
-		// adding a placeholder for the "current" location so popstates
-		// fired on hashchange events can be mitigated
-		var prev_loc = null;
-		var prev_hash = null;
+	emitter.addEventListener( "popstate", (function(event) {
 
-		emitter.addEventListener( "popstate", (function(event) {
-			var req = {
-				request: emitter.location,
-				response: responder
-			};
+		// var current_loc = JSON.stringify({
+		// 	path: req.request.pathname,
+		// 	query: req.request.search
+		// });
 
-			var current_loc = JSON.stringify({
-				path: req.request.pathname,
-				query: req.request.search
-			});
+		// if request is the same as current location, don't execute again
+		// if( opt.history && ! prev_loc || current_loc !== prev_loc) {
+			// set the new "current" location
+			req.path = req.request.pathname;
+			req.url = req.request.pathname + req.request.search;
+			// prev_loc = current_loc;
+			this._exec( req );
+		// }
+	}).bind(this), false );
 
-			// if request is the same as current location, don't execute again
-			if( ! prev_loc || current_loc !== prev_loc) {
-				// set the new "current" location
-				req.path = req.request.pathname;
-				req.url = req.request.pathname + req.request.search;
-				prev_loc = current_loc;
+
+	emitter.addEventListener( "hashchange", (function(event) {
+		if( opt.hash && ( ! prev_hash || req.request.hash !== prev_hash ) ) {
+			req.path = req.request.hash;
+
+			if( req.request.hash === '' ) {
+				this.emit( this.event.nohash, null, req );
+			}
+			else {
 				this._exec( req );
 			}
-
-			if( opt.hash && ! prev_hash || req.request.hash !== prev_hash ) {
-				req.path = req.request.hash;
-				prev_hash = req.request.hash;
-
-				if( prev_hash === '' ) {
-
-				}
-				else {
-					this._exec( req );
-				}
-			}
-		}).bind(this), false );
-
-		// fire initial "popstate" event to route on page load
-		if( opt.init ) {
-			window.dispatchEvent( new Event('popstate') );
 		}
+	}).bind(this), false );
+
+	// fire initial "popstate" event to route on page load
+	if( opt.init ) {
+		window.dispatchEvent( new Event('popstate') );
 	}
 };
 
