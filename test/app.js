@@ -33,54 +33,72 @@ camino.on('error', function(err, req) {
 camino.route('/api/user/%user_id', function(req) {
 	var res = req.response;
 	delete req.request;
-	delete req.response
-	res.write(JSON.stringify({ user_id: req }));
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
 	res.end();
 });
 
 camino.route('/api/user/@user_id/messages/%id', function(req) {
-	req.response.write(JSON.stringify({ req: util.inspect(req) }));
-	req.response.end();
+	var res = req.response;
+	delete req.request;
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
+	res.end();
 });
 
 camino.route('/api/user/auth', function(req) {
 	var res = req.response;
 	delete req.request;
-	delete req.response
-	res.write(JSON.stringify({ auth: req }));
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
+	res.end();
+});
+
+camino.route('/api/user/type', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
 	res.end();
 });
 
 camino.route('/api/appointment/%id', function(req) {
 	var res = req.response;
 	delete req.request;
-	delete req.response
-	res.write(JSON.stringify({ appointment: req }));
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
 	res.end();
 });
 
-camino.route('/api/user/data', function(req) {
+camino.route('/api/user/@id/data', function(req) {
 	var res = req.response;
 	delete req.request;
-	delete req.response
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
 	res.write(JSON.stringify({ data: req }));
 	res.end();
 });
 
 camino.route('/api/sawyer/brown', {methods: ['GET', 'PUT']}, function(req) {
-	req.response.writeHead(200, { 'Content-Type': 'application/json'})
-	req.response.end(JSON.stringify({
-		"success": true,
-		request: util.inspect(req),
-		"data": ["Soybean"]
-	}));
-});
-
-camino.route('/api/appointment/type/%id', function(req) {
 	var res = req.response;
 	delete req.request;
-	delete req.response
-	res.write(JSON.stringify({ appointment_type: req }));
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
+	res.end();
+});
+
+camino.route('/api/message/@id', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ data: req }));
 	res.end();
 });
 

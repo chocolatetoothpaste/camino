@@ -1,18 +1,20 @@
 {
   "name": "camino",
-  "version": "0.12.6",
+  "version": "0.14.0",
+  "description": "One-stop routing for server- and client-side web applications",
   "main": "./dist/camino-browser.js",
-  "homepage": "https://github.com/chocolatetoothpaste/camino",
   "authors": [
     "Ross Paskett <ross@paskett.me>"
   ],
-  "description": "Server- and client-side routing for web applications. Hashes and History API support.",
+  "homepage": "https://github.com/chocolatetoothpaste/camino",
   "keywords": [
-    "history",
-    "hash",
-    "routing",
     "router",
-    "route"
+    "routing",
+    "route",
+    "REST",
+    "API",
+    "hash",
+    "history"
   ],
   "ignore": [
     "**/.*",

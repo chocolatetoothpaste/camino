@@ -65,21 +65,22 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		event.detail.request.route.callback.call( null, event.detail.request );
 	}).bind(this));
 
-	var req = {
-		request: emitter.location,
-		response: responder
-	};
-
 	var prev_loc = '';
 	var prev_hash = '';
 
 	// set event listener for history api if optioned
 	emitter.addEventListener( "popstate", (function(event) {
+		var req = {
+			request: emitter.location,
+			response: responder
+		};
+
 		var current_loc = JSON.stringify({
 			path: req.request.pathname,
 			query: req.request.search
 		});
 
+		// avoid routing the URL when hash changes happen consecutively
 		if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
 			|| req.request.hash === '' ) ) {
 				prev_loc = current_loc;
@@ -126,7 +127,7 @@ Camino.prototype._exec = function _exec( req ) {
 		var v = val.split( '=' );
 
 		if( _g.options.decode ) {
-			v.map(decodeURIComponent);
+			v = v.map(decodeURIComponent);
 		}
 
 		req.query[ v[0] ] = v[1];

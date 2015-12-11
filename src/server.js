@@ -27,7 +27,7 @@ Camino.prototype.event = {
 
 Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	// available options and their defaults
-	var dict = { sort: true };
+	var dict = { sort: true, defaultType: '' };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -50,19 +50,19 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	this.init();
 
-	emitter.on( 'request', (function( req, res ) {
+	emitter.on( 'request', (function( request, res ) {
 		// emit "request" event
 		this.emit( this.event.request );
 
-		var url = require( 'url' ).parse( req.url );
+		var url = require( 'url' ).parse( request.url );
 
-		var creq = {
-			request: req,
+		var req = {
+			request: request,
 			response: responder || res,
-			url: req.url,
-			method: req.method,
+			url: request.url,
+			method: request.method,
 
-			// req.url without the querystring
+			// request.url without the querystring
 			path: url.pathname,
 
 			// query string parsed into object
@@ -73,7 +73,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		};
 
 		// try to match the request to a route
-		this.match( creq );
+		this.match( req );
 
 	// bind callback to Camino's scope
 	}).bind( this ) );
@@ -93,14 +93,15 @@ Camino.prototype._exec = function _exec( req ) {
 	// grab the content type or set an empty string
 	var type = ( req.request.headers["content-type"]
 		? req.request.headers["content-type"].split(';')[0].toLowerCase()
-		: "" );
+		: _g.options );
 
-	if( typeof this._handler[type] === "function" ) {
+	if( typeof handler[type] === "function" ) {
 		// maintaining context with call
-		this._handler[type].call( this, req );
+		handler[type].call( this, req );
 	}
 
 	else if( type === "" ) {
+		console.log('blank content type')
 		this._data( req );
 	}
 
@@ -119,7 +120,8 @@ Camino.prototype._exec = function _exec( req ) {
  */
 
 Camino.prototype.handle = function handle( type, cb ) {
-	this._handler[type] = cb;
+	// this._handler[type] = cb;
+	handler[type] = cb;
 };
 
 
@@ -127,7 +129,8 @@ Camino.prototype.handle = function handle( type, cb ) {
  * Container object for content type handlers, and a couple default handlers
  */
 
-Camino.prototype._handler = {
+// Camino.prototype._handler = {
+var handler = {
 	"application/json": function application_json( req ) {
 		this._data( req, JSON.parse );
 	},

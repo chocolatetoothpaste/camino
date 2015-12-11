@@ -45,7 +45,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	
 	Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		// available options and their defaults
-		var dict = { sort: true };
+		var dict = { sort: true, defaultType: '' };
 	
 		// musical vars
 		if( typeof opt === "function" ) {
@@ -68,19 +68,19 @@ if( typeof module !== "undefined" && module.exports ) {
 	
 		this.init();
 	
-		emitter.on( 'request', (function( req, res ) {
+		emitter.on( 'request', (function( request, res ) {
 			// emit "request" event
 			this.emit( this.event.request );
 	
-			var url = require( 'url' ).parse( req.url );
+			var url = require( 'url' ).parse( request.url );
 	
-			var creq = {
-				request: req,
+			var req = {
+				request: request,
 				response: responder || res,
-				url: req.url,
-				method: req.method,
+				url: request.url,
+				method: request.method,
 	
-				// req.url without the querystring
+				// request.url without the querystring
 				path: url.pathname,
 	
 				// query string parsed into object
@@ -91,7 +91,7 @@ if( typeof module !== "undefined" && module.exports ) {
 			};
 	
 			// try to match the request to a route
-			this.match( creq );
+			this.match( req );
 	
 		// bind callback to Camino's scope
 		}).bind( this ) );
@@ -111,14 +111,15 @@ if( typeof module !== "undefined" && module.exports ) {
 		// grab the content type or set an empty string
 		var type = ( req.request.headers["content-type"]
 			? req.request.headers["content-type"].split(';')[0].toLowerCase()
-			: "" );
+			: _g.options );
 	
-		if( typeof this._handler[type] === "function" ) {
+		if( typeof handler[type] === "function" ) {
 			// maintaining context with call
-			this._handler[type].call( this, req );
+			handler[type].call( this, req );
 		}
 	
 		else if( type === "" ) {
+			console.log('blank content type')
 			this._data( req );
 		}
 	
@@ -137,7 +138,8 @@ if( typeof module !== "undefined" && module.exports ) {
 	 */
 	
 	Camino.prototype.handle = function handle( type, cb ) {
-		this._handler[type] = cb;
+		// this._handler[type] = cb;
+		handler[type] = cb;
 	};
 	
 	
@@ -145,7 +147,8 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Container object for content type handlers, and a couple default handlers
 	 */
 	
-	Camino.prototype._handler = {
+	// Camino.prototype._handler = {
+	var handler = {
 		"application/json": function application_json( req ) {
 			this._data( req, JSON.parse );
 		},
@@ -254,21 +257,22 @@ else {
 			event.detail.request.route.callback.call( null, event.detail.request );
 		}).bind(this));
 	
-		var req = {
-			request: emitter.location,
-			response: responder
-		};
-	
 		var prev_loc = '';
 		var prev_hash = '';
 	
 		// set event listener for history api if optioned
 		emitter.addEventListener( "popstate", (function(event) {
+			var req = {
+				request: emitter.location,
+				response: responder
+			};
+	
 			var current_loc = JSON.stringify({
 				path: req.request.pathname,
 				query: req.request.search
 			});
 	
+			// avoid routing the URL when hash changes happen consecutively
 			if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
 				|| req.request.hash === '' ) ) {
 					prev_loc = current_loc;
@@ -315,7 +319,7 @@ else {
 			var v = val.split( '=' );
 	
 			if( _g.options.decode ) {
-				v.map(decodeURIComponent);
+				v = v.map(decodeURIComponent);
 			}
 	
 			req.query[ v[0] ] = v[1];
