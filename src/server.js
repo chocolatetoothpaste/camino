@@ -101,7 +101,6 @@ Camino.prototype._exec = function _exec( req ) {
 	}
 
 	else if( type === "" ) {
-		console.log('blank content type')
 		this._data( req );
 	}
 
@@ -120,7 +119,6 @@ Camino.prototype._exec = function _exec( req ) {
  */
 
 Camino.prototype.handle = function handle( type, cb ) {
-	// this._handler[type] = cb;
 	handler[type] = cb;
 };
 
@@ -129,7 +127,6 @@ Camino.prototype.handle = function handle( type, cb ) {
  * Container object for content type handlers, and a couple default handlers
  */
 
-// Camino.prototype._handler = {
 var handler = {
 	"application/json": function application_json( req ) {
 		this._data( req, JSON.parse );

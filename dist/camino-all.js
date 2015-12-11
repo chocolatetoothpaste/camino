@@ -119,7 +119,6 @@ if( typeof module !== "undefined" && module.exports ) {
 		}
 	
 		else if( type === "" ) {
-			console.log('blank content type')
 			this._data( req );
 		}
 	
@@ -138,7 +137,6 @@ if( typeof module !== "undefined" && module.exports ) {
 	 */
 	
 	Camino.prototype.handle = function handle( type, cb ) {
-		// this._handler[type] = cb;
 		handler[type] = cb;
 	};
 	
@@ -147,7 +145,6 @@ if( typeof module !== "undefined" && module.exports ) {
 	 * Container object for content type handlers, and a couple default handlers
 	 */
 	
-	// Camino.prototype._handler = {
 	var handler = {
 		"application/json": function application_json( req ) {
 			this._data( req, JSON.parse );
@@ -383,10 +380,6 @@ Camino.prototype.init = function init() {
 			return b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort );
 		});
 	}
-
-	// _g.routes.forEach(function(r) {
-	// 	console.log(r.sort);
-	// });
 };
 
 
@@ -404,6 +397,8 @@ Camino.prototype.match = function match( req ) {
 
 		// if a match was found, break the loop and do some clean up
 		if( match !== null ) {
+			// if won't work to use JSON to clone _g.routes[ii] since callback
+			// is a function, so a copy has to be made the long way
 			route = {
 				route: _g.routes[ii].route,
 				callback: _g.routes[ii].callback,
@@ -470,6 +465,10 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	if( typeof opt === "function" ) {
 		cb = opt;
 		opt = {};
+	}
+
+	if( typeof cb !== 'function' ) {
+		throw new Error('Invalid callback type: ' + typeof cb);
 	}
 
 	// extract param names from the route
