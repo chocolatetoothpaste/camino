@@ -283,7 +283,7 @@ else {
 	
 				if( req.request.hash === '' ) {
 					prev_hash = '';
-					this.emit( this.event.nohash, null, req );
+					this.emit( this.event.nohash, req );
 				}
 				else {
 					this._exec( req );

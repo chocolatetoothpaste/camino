@@ -186,11 +186,9 @@ The URL you are attempting to match. You can also capture "parameters" in your U
 
 Camino.route accepts 2 options:
 
-**methods** is an array of supported methods for the URL. On the server, this will most likely be request methods. In the browser, whatever you want, really...
+**methods** is an array of supported methods for the URL. On the server, this will most likely be request methods. There is nothing built in to work in the browser, so you can devise your own trickery to use this however you want. If you don't pass in a list of allowed methods, any method will be accepted as long as a request matches a route.
 
 **responder** is a custom function/library/whatever that you pass in to handle responses from your callbacks.  If you provide a responder at the route level, it will be used instead of the global response object (if one even exists)
-
-If you don't pass in a list of allowed methods, your code will always execute if a request matches a route.  Think of it like methods = "*"
 
 #### callback --- Function
 
