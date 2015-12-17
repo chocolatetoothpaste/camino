@@ -19,7 +19,7 @@ v0.14.0+
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
 
-If you use Camino and love it, please consider [donating](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
+[Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
 
 First things first, some juicy examples.
 
