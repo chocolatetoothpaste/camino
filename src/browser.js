@@ -54,6 +54,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	// set event listener for history api if optioned
 	emitter.addEventListener( "popstate", (function(event) {
+		// the main request object to pass around
 		var req = {
 			request: emitter.location,
 			response: responder

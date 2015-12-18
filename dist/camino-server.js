@@ -18,6 +18,19 @@ var util = require( "util" ),
 	events = require( "events" ),
 	querystring = require( 'querystring' );
 
+// a couple default handlers for common content types
+
+var handler = {
+	"application/json": function application_json( req ) {
+		this._data( req, JSON.parse );
+	},
+
+	"application/x-www-form-urlencoded": function application_x_www_form_urlencoded( req ) {
+		this._data( req, querystring.parse );
+	}
+};
+
+
 // inherit event emitter prototype to allow camino to emit/listen to events
 events.EventEmitter.call( Camino );
 util.inherits( Camino, events.EventEmitter );
@@ -140,21 +153,6 @@ Camino.prototype.handle = function handle( type, cb ) {
 
 
 /**
- * Container object for content type handlers, and a couple default handlers
- */
-
-var handler = {
-	"application/json": function application_json( req ) {
-		this._data( req, JSON.parse );
-	},
-
-	"application/x-www-form-urlencoded": function application_x_www_form_urlencoded( req ) {
-		this._data( req, querystring.parse );
-	}
-};
-
-
-/**
  * The majority of content types will just grab the incoming data stream and
  * parse it, this is a convenience method for grabbing that data
  */
@@ -188,13 +186,9 @@ Camino.prototype._data = function _data( req, cb ) {
 	});
 };
 
-
-// create an instance to export and attach event listeners
-var camino = new Camino;
-
 // exporting an instance instead of a reference for convenience and to
 // discourage multiple instances (which probably wouldn't work)
-module.exports = camino;
+module.exports = new Camino;
 
 
 /**
@@ -227,8 +221,7 @@ Camino.prototype.match = function match( req ) {
 
 		// if a match was found, break the loop and do some clean up
 		if( match !== null ) {
-			// if won't work to use JSON to clone _g.routes[ii] since callback
-			// is a function, so a copy has to be made the long way
+			// make a copy (the long way so callback doesn't get dropped)
 			route = {
 				route: _g.routes[ii].route,
 				callback: _g.routes[ii].callback,
@@ -259,14 +252,13 @@ Camino.prototype.match = function match( req ) {
 	}
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
-	if( route.methods.length > 0
-		&& route.methods.indexOf( req.method ) === -1 ) {
-			var err = new Error('Method not allowed');
-			err.status = 405;
-			this.emit( this.event.error, err, req );
+	if( route.methods.length > 0 && route.methods.indexOf( req.method ) === -1 ) {
+		var err = new Error('Method not allowed');
+		err.status = 405;
+		this.emit( this.event.error, err, req );
 
-			// stop the browser
-			return;
+		// stop the browser
+		return;
 	}
 
 	// use the route responder if it's set, otherwise just the native/default

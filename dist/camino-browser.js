@@ -70,6 +70,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	// set event listener for history api if optioned
 	emitter.addEventListener( "popstate", (function(event) {
+		// the main request object to pass around
 		var req = {
 			request: emitter.location,
 			response: responder
@@ -205,8 +206,7 @@ Camino.prototype.match = function match( req ) {
 
 		// if a match was found, break the loop and do some clean up
 		if( match !== null ) {
-			// if won't work to use JSON to clone _g.routes[ii] since callback
-			// is a function, so a copy has to be made the long way
+			// make a copy (the long way so callback doesn't get dropped)
 			route = {
 				route: _g.routes[ii].route,
 				callback: _g.routes[ii].callback,
@@ -237,14 +237,13 @@ Camino.prototype.match = function match( req ) {
 	}
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
-	if( route.methods.length > 0
-		&& route.methods.indexOf( req.method ) === -1 ) {
-			var err = new Error('Method not allowed');
-			err.status = 405;
-			this.emit( this.event.error, err, req );
+	if( route.methods.length > 0 && route.methods.indexOf( req.method ) === -1 ) {
+		var err = new Error('Method not allowed');
+		err.status = 405;
+		this.emit( this.event.error, err, req );
 
-			// stop the browser
-			return;
+		// stop the browser
+		return;
 	}
 
 	// use the route responder if it's set, otherwise just the native/default
