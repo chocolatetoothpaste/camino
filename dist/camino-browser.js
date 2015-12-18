@@ -171,6 +171,10 @@ Camino.prototype.replace = function replace(loc, data, title) {
 	window.dispatchEvent( new Event('popstate') );
 };
 
+Camino.prototype.request = function request(req) {
+	this._exec( { qs: '', query: '', path: req, request: { search: '' } } );
+};
+
 
 // create a new instance in the global scope
 window.camino = new Camino;
