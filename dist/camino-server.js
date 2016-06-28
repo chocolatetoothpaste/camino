@@ -56,7 +56,7 @@ Camino.prototype.event = {
 
 Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	// available options and their defaults
-	var dict = { sort: true, defaultType: '' };
+	var dict = { sort: true, defaultType: '', defaultMethods: [] };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -122,7 +122,7 @@ Camino.prototype._exec = function _exec( req ) {
 	// grab the content type or set an empty string
 	var type = ( req.request.headers["content-type"]
 		? req.request.headers["content-type"].split(';')[0].toLowerCase()
-		: _g.options );
+		: _g.options.defaultType );
 
 	if( typeof handler[type] === "function" ) {
 		// maintaining context with call
@@ -189,6 +189,7 @@ Camino.prototype._data = function _data( req, cb ) {
 // exporting an instance instead of a reference for convenience and to
 // discourage multiple instances (which probably wouldn't work)
 module.exports = new Camino;
+
 
 
 /**
@@ -338,7 +339,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		responder: opt.responder,
 
 		// default to empty array for convenience and type consistency
-		methods: opt.methods || []
+		methods: opt.methods.concat(_g.options.defaultMethods) || []
 	};
 
 	// throw an error if trying to redefine a route

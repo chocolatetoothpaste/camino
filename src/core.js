@@ -164,7 +164,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		responder: opt.responder,
 
 		// default to empty array for convenience and type consistency
-		methods: opt.methods || []
+		methods: opt.methods.concat(_g.options.defaultMethods) || []
 	};
 
 	// throw an error if trying to redefine a route

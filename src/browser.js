@@ -89,7 +89,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	// fire initial "popstate" event to route on page load
 	if( opt.init ) {
-		window.dispatchEvent( new Event('popstate') );
+		window.dispatchEvent( new CustomEvent('popstate') );
 	}
 };
 
@@ -146,14 +146,15 @@ Camino.prototype.emit = function emit( event, err, req ) {
 
 Camino.prototype.location = function location(loc, data, title) {
 	history.pushState(data, title, loc);
-	window.dispatchEvent( new Event('popstate') );
+	window.dispatchEvent( new CustomEvent('popstate') );
 };
 
 
 Camino.prototype.replace = function replace(loc, data, title) {
 	history.replaceState(data, title, loc);
-	window.dispatchEvent( new Event('popstate') );
+	window.dispatchEvent( new CustomEvent('popstate') );
 };
+
 
 Camino.prototype.request = function request(req) {
 	this._exec( { qs: '', query: '', path: req, request: { search: '' } } );

@@ -105,7 +105,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	// fire initial "popstate" event to route on page load
 	if( opt.init ) {
-		window.dispatchEvent( new Event('popstate') );
+		window.dispatchEvent( new CustomEvent('popstate') );
 	}
 };
 
@@ -162,14 +162,15 @@ Camino.prototype.emit = function emit( event, err, req ) {
 
 Camino.prototype.location = function location(loc, data, title) {
 	history.pushState(data, title, loc);
-	window.dispatchEvent( new Event('popstate') );
+	window.dispatchEvent( new CustomEvent('popstate') );
 };
 
 
 Camino.prototype.replace = function replace(loc, data, title) {
 	history.replaceState(data, title, loc);
-	window.dispatchEvent( new Event('popstate') );
+	window.dispatchEvent( new CustomEvent('popstate') );
 };
+
 
 Camino.prototype.request = function request(req) {
 	this._exec( { qs: '', query: '', path: req, request: { search: '' } } );
@@ -178,6 +179,7 @@ Camino.prototype.request = function request(req) {
 
 // create a new instance in the global scope
 window.camino = new Camino;
+
 
 
 /**
@@ -327,7 +329,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		responder: opt.responder,
 
 		// default to empty array for convenience and type consistency
-		methods: opt.methods || []
+		methods: opt.methods.concat(_g.options.defaultMethods) || []
 	};
 
 	// throw an error if trying to redefine a route

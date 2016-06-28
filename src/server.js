@@ -40,7 +40,7 @@ Camino.prototype.event = {
 
 Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	// available options and their defaults
-	var dict = { sort: true, defaultType: '' };
+	var dict = { sort: true, defaultType: '', defaultMethods: [] };
 
 	// musical vars
 	if( typeof opt === "function" ) {
@@ -106,7 +106,7 @@ Camino.prototype._exec = function _exec( req ) {
 	// grab the content type or set an empty string
 	var type = ( req.request.headers["content-type"]
 		? req.request.headers["content-type"].split(';')[0].toLowerCase()
-		: _g.options );
+		: _g.options.defaultType );
 
 	if( typeof handler[type] === "function" ) {
 		// maintaining context with call

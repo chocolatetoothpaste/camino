@@ -58,7 +58,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	
 	Camino.prototype.listen = function listen( emitter, opt, responder ) {
 		// available options and their defaults
-		var dict = { sort: true, defaultType: '' };
+		var dict = { sort: true, defaultType: '', defaultMethods: [] };
 	
 		// musical vars
 		if( typeof opt === "function" ) {
@@ -124,7 +124,7 @@ if( typeof module !== "undefined" && module.exports ) {
 		// grab the content type or set an empty string
 		var type = ( req.request.headers["content-type"]
 			? req.request.headers["content-type"].split(';')[0].toLowerCase()
-			: _g.options );
+			: _g.options.defaultType );
 	
 		if( typeof handler[type] === "function" ) {
 			// maintaining context with call
@@ -191,6 +191,7 @@ if( typeof module !== "undefined" && module.exports ) {
 	// exporting an instance instead of a reference for convenience and to
 	// discourage multiple instances (which probably wouldn't work)
 	module.exports = new Camino;
+	
 
 }
 
@@ -288,7 +289,7 @@ else {
 	
 		// fire initial "popstate" event to route on page load
 		if( opt.init ) {
-			window.dispatchEvent( new Event('popstate') );
+			window.dispatchEvent( new CustomEvent('popstate') );
 		}
 	};
 	
@@ -345,14 +346,15 @@ else {
 	
 	Camino.prototype.location = function location(loc, data, title) {
 		history.pushState(data, title, loc);
-		window.dispatchEvent( new Event('popstate') );
+		window.dispatchEvent( new CustomEvent('popstate') );
 	};
 	
 	
 	Camino.prototype.replace = function replace(loc, data, title) {
 		history.replaceState(data, title, loc);
-		window.dispatchEvent( new Event('popstate') );
+		window.dispatchEvent( new CustomEvent('popstate') );
 	};
+	
 	
 	Camino.prototype.request = function request(req) {
 		this._exec( { qs: '', query: '', path: req, request: { search: '' } } );
@@ -361,6 +363,7 @@ else {
 	
 	// create a new instance in the global scope
 	window.camino = new Camino;
+	
 
 }
 
@@ -513,7 +516,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		responder: opt.responder,
 
 		// default to empty array for convenience and type consistency
-		methods: opt.methods || []
+		methods: opt.methods.concat(_g.options.defaultMethods) || []
 	};
 
 	// throw an error if trying to redefine a route
