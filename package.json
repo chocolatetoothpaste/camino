@@ -1,6 +1,6 @@
 {
   "name": "camino",
-  "version": "0.14.3",
+  "version": "0.14.4",
   "description": "One-stop routing for server- and client-side web applications",
   "main": "./dist/camino-server.js",
   "author": {
@@ -22,10 +22,10 @@
   },
   "devDependencies": {
     "async": "^0.9.0",
-    "gulp": "^3.9.0",
+    "gulp": "^3.9.1",
     "gulp-concat": "^2.4.2",
     "gulp-replace": "^0.5.0",
-    "gulp-uglify": "^1.0.2",
+    "gulp-uglify": "^2.0.0",
     "request": "^2.44.0"
   }
 }

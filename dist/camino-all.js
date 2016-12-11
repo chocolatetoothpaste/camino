@@ -12,7 +12,9 @@ var _g = {
 };
 
 // main object constructor
-function Camino() { }
+function Camino() {
+	this.version = '0.14.4';
+}
 
 // node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
@@ -366,6 +368,7 @@ else {
 	
 
 }
+
 
 
 

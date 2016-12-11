@@ -12,9 +12,12 @@ var _g = {
 };
 
 // main object constructor
-function Camino() { }
+function Camino() {
+	this.version = //=@@camino-version@@
+}
 
 //=@@include-camino@@
+
 
 
 /**

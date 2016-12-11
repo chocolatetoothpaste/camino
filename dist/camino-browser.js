@@ -12,7 +12,9 @@ var _g = {
 };
 
 // main object constructor
-function Camino() { }
+function Camino() {
+	this.version = '0.14.4';
+}
 
 /**
  *	Shim for event names (namespacing for browsers)
@@ -179,6 +181,7 @@ Camino.prototype.request = function request(req) {
 
 // create a new instance in the global scope
 window.camino = new Camino;
+
 
 
 

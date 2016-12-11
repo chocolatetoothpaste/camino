@@ -12,7 +12,9 @@ var _g = {
 };
 
 // main object constructor
-function Camino() { }
+function Camino() {
+	this.version = '0.14.4';
+}
 
 var util = require( "util" ),
 	events = require( "events" ),
@@ -189,6 +191,7 @@ Camino.prototype._data = function _data( req, cb ) {
 // exporting an instance instead of a reference for convenience and to
 // discourage multiple instances (which probably wouldn't work)
 module.exports = new Camino;
+
 
 
 
