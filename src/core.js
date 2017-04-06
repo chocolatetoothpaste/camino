@@ -8,7 +8,11 @@ var _g = {
 	def: [],
 
 	// server doesn't use this but the browser does
-	options: {}
+	options: {},
+
+	// store location (and hash) from request to request (browser only)
+	location: '',
+	hash: ''
 };
 
 // main object constructor

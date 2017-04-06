@@ -8,12 +8,16 @@ var _g = {
 	def: [],
 
 	// server doesn't use this but the browser does
-	options: {}
+	options: {},
+
+	// store location (and hash) from request to request (browser only)
+	location: '',
+	hash: ''
 };
 
 // main object constructor
 function Camino() {
-	this.version = '0.15.0';
+	this.version = '0.15.2';
 }
 
 var util = require( 'util' ),

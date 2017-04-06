@@ -8,12 +8,16 @@ var _g = {
 	def: [],
 
 	// server doesn't use this but the browser does
-	options: {}
+	options: {},
+
+	// store location (and hash) from request to request (browser only)
+	location: '',
+	hash: ''
 };
 
 // main object constructor
 function Camino() {
-	this.version = '0.15.0';
+	this.version = '0.15.2';
 }
 
 /**
@@ -79,24 +83,20 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 
 Camino.prototype.resolve = function resolve(event, responder, opt) {
-	var prev_loc = '',
-		prev_hash = '';
-
-	// the main request object to pass around
 	var req = {
 		request: event.target.location,
 		response: responder
 	};
 
-	var current_loc = JSON.stringify({
-		path: req.request.pathname,
-		query: req.request.search
-	});
 
 	// avoid routing the URL when hash changes happen consecutively
-	if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
+	if( opt.history && ( ! _g.location && _g.hash !== req.request.hash
 		|| req.request.hash === '' ) ) {
-			prev_loc = current_loc;
+			_g.location = JSON.stringify({
+				path: req.request.pathname,
+				query: req.request.search
+			});
+
 			req.path = req.request.pathname;
 			req.url = req.request.pathname + req.request.search;
 			this._exec( req );
@@ -104,13 +104,13 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 
 	// hash requests are always executed, not instead of 
 	if( opt.hash ) {
-		prev_hash = req.path = req.request.hash;
+		_g.hash = req.request.hash;
 
 		if( req.request.hash === '' ) {
-			prev_hash = '';
 			this.emit( this.event.nohash, req );
 		}
 		else {
+			req.path = _g.hash;
 			this._exec( req );
 		}
 	}
@@ -126,7 +126,7 @@ Camino.prototype.init = function init() {
 			// remove query string, check base request
 			// this is probably not reliable and will need testing or
 			// possilby more robust parsing to extract pathname
-			if( _g.def.indexOf( href.split('?')[0] ) !== -1 ) {
+			if( href !== null ) {
 				window.history.pushState( null, null, href );
 				window.dispatchEvent( new CustomEvent('popstate') );	
 				event.preventDefault();
