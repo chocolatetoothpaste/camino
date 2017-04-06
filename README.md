@@ -11,12 +11,13 @@ One-stop routing for server- and client-side web applications
 
 v0.15.0
 
-* In an effort to reduce boilerplate code in browsers, an event listener was added (to window object) to listen for clicks on "A" tags. If the href attribute matches a route defined in camino, the request is routed in the following manner:
+* In an effort to reduce boilerplate code in browsers, an event listener was added (to window object) to listen for clicks on "A" tags. If the href attribute matches a route defined in camino, the request is routed in the following manner
 
-
-    window.history.pushState( null, null, href );
-    window.dispatchEvent( new CustomEvent("popstate") );    
-    event.preventDefault();
+```
+window.history.pushState( null, null, href );
+window.dispatchEvent( new CustomEvent("popstate") );    
+event.preventDefault();
+```
 
 This may not be the best way to handle it, but it works. Comments/pull requests welcome.
 
