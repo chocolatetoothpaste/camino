@@ -13,7 +13,7 @@ var _g = {
 
 // main object constructor
 function Camino() {
-	this.version = '0.15.0';
+	this.version = '0.15.1';
 }
 
 // node.js specific stuff
