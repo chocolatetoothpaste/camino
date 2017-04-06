@@ -16,8 +16,8 @@ function Camino() {
 	this.version = '0.15.0';
 }
 
-var util = require( "util" ),
-	events = require( "events" ),
+var util = require( 'util' ),
+	events = require( 'events' ),
 	querystring = require( 'querystring' );
 
 // a couple default handlers for common content types
@@ -61,25 +61,25 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	var dict = { sort: true, defaultType: '', defaultMethods: [] };
 
 	// musical vars
-	if( typeof opt === "function" ) {
+	if( typeof opt === 'function' ) {
 		responder = opt;
 		opt = dict;
 	}
 
-	else if( typeof opt === "undefined" ) {
+	else if( typeof opt === 'undefined' ) {
 		opt = dict;
 	}
 
 	// merge user and default options
 	else {
 		for( var i in dict ) {
-			opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+			opt[i] = ( typeof opt[i] === 'undefined' ? dict[i] : opt[i] );
 		}
 	}
 
 	_g.options = opt;
 
-	this.init();
+	this.sort();
 
 	emitter.on( 'request', (function( request, res ) {
 		// emit "request" event
@@ -122,11 +122,11 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 Camino.prototype._exec = function _exec( req ) {
 	// grab the content type or set an empty string
-	var type = ( req.request.headers["content-type"]
-		? req.request.headers["content-type"].split(';')[0].toLowerCase()
+	var type = ( req.request.headers['content-type']
+		? req.request.headers['content-type'].split(';')[0].toLowerCase()
 		: _g.options.defaultType );
 
-	if( typeof handler[type] === "function" ) {
+	if( typeof handler[type] === 'function' ) {
 		// maintaining context with call
 		handler[type].call( this, req );
 	}
@@ -177,7 +177,7 @@ Camino.prototype._data = function _data( req, cb ) {
 	req.request.once( 'end', function() {
 		req.request.removeListener( 'data', cat_chunks );
 
-		req.data = ( req.raw.length > 0 && typeof cb === "function"
+		req.data = ( req.raw.length > 0 && typeof cb === 'function'
 			? cb.call( null, req.raw )
 			: {} );
 
@@ -199,7 +199,7 @@ module.exports = new Camino;
  * Do some set up before firing off the main listener
  */
 
-Camino.prototype.init = function init() {
+Camino.prototype.sort = function sort() {
 	if( _g.options.sort ) {
 		_g.routes.sort(function(a, b) {
 			// sort routes based on their modified length

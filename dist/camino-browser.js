@@ -40,93 +40,102 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	var dict = { decode: true, history: true, hash: true, init: true, sort: true };
 
 	// musical vars
-	if( typeof opt === "function" ) {
+	if( typeof opt === 'function' ) {
 		responder = opt;
 		opt = dict;
 	}
 
-	else if( typeof opt === "undefined" ) {
+	else if( typeof opt === 'undefined' ) {
 		opt = dict;
 	}
 
 	// merge user and default options
 	else {
 		for( var i in dict ) {
-			opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+			opt[i] = ( typeof opt[i] === 'undefined' ? dict[i] : opt[i] );
 		}
 	}
 
 	_g.options = opt;
 
-	this.init();
+	this.sort();
 
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (function(event) {
 		this.emit( this.event.exec );
-
 		event.detail.request.route.callback.call( null, event.detail.request );
 	}).bind(this));
 
-	var prev_loc = '';
-	var prev_hash = '';
-
 	// set event listener for history api if optioned
-	emitter.addEventListener( "popstate", (function(event) {
-		// the main request object to pass around
-		var req = {
-			request: emitter.location,
-			response: responder
-		};
-
-		var current_loc = JSON.stringify({
-			path: req.request.pathname,
-			query: req.request.search
-		});
-
-		// avoid routing the URL when hash changes happen consecutively
-		if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
-			|| req.request.hash === '' ) ) {
-				prev_loc = current_loc;
-				req.path = req.request.pathname;
-				req.url = req.request.pathname + req.request.search;
-				this._exec( req );
-		}
-
-		// hash requests are always executed, not instead of 
-		if( opt.hash ) {
-			prev_hash = req.path = req.request.hash;
-
-			if( req.request.hash === '' ) {
-				prev_hash = '';
-				this.emit( this.event.nohash, req );
-			}
-			else {
-				this._exec( req );
-			}
-		}
+	emitter.addEventListener( 'popstate', (function() {
+		this.resolve(event, responder, opt);
 	}).bind(this), false );
 
 	// fire initial "popstate" event to route on page load
 	if( opt.init ) {
-		// intercept clicks and check if they match existing routes
-		window.addEventListener('click', function(event) {
-			if( event.target.tagName === 'A' ) {
-				var href = event.target.getAttribute('href');
-
-				// remove query string, check base request
-				// this is probably not reliable and will need testing or
-				// possilby more robust parsing to extract pathname
-				if( _g.def.indexOf( href.split('?')[0] ) !== -1 ) {
-					window.history.pushState( null, null, href );
-					window.dispatchEvent( new CustomEvent("popstate") );	
-					event.preventDefault();
-				}
-			}
-		});
-
-		// fire off initial event on page load to route initial request
-		window.dispatchEvent( new CustomEvent('popstate') );
+		this.init();
 	}
+};
+
+
+Camino.prototype.resolve = function resolve(event, responder, opt) {
+	var prev_loc = '',
+		prev_hash = '';
+
+	// the main request object to pass around
+	var req = {
+		request: event.target.location,
+		response: responder
+	};
+
+	var current_loc = JSON.stringify({
+		path: req.request.pathname,
+		query: req.request.search
+	});
+
+	// avoid routing the URL when hash changes happen consecutively
+	if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
+		|| req.request.hash === '' ) ) {
+			prev_loc = current_loc;
+			req.path = req.request.pathname;
+			req.url = req.request.pathname + req.request.search;
+			this._exec( req );
+	}
+
+	// hash requests are always executed, not instead of 
+	if( opt.hash ) {
+		prev_hash = req.path = req.request.hash;
+
+		if( req.request.hash === '' ) {
+			prev_hash = '';
+			this.emit( this.event.nohash, req );
+		}
+		else {
+			this._exec( req );
+		}
+	}
+};
+
+
+Camino.prototype.init = function init() {
+	// intercept clicks and check if they match existing routes
+	window.addEventListener('click', function(event) {
+		if( event.target.tagName === 'A' ) {
+			var href = event.target.getAttribute('href');
+
+			// remove query string, check base request
+			// this is probably not reliable and will need testing or
+			// possilby more robust parsing to extract pathname
+			if( _g.def.indexOf( href.split('?')[0] ) !== -1 ) {
+				window.history.pushState( null, null, href );
+				window.dispatchEvent( new CustomEvent('popstate') );	
+				event.preventDefault();
+			}
+		}
+	});
+
+	// fire off initial event on page load to route initial request
+	window.dispatchEvent( new CustomEvent('popstate') );
 };
 
 
@@ -164,7 +173,7 @@ Camino.prototype._exec = function _exec( req ) {
 
 Camino.prototype.emit = function emit( event, err, req ) {
 	// musical vars
-	if( typeof req === "undefined" ) {
+	if( typeof req === 'undefined' ) {
 		req = err;
 		err = null;
 	}
@@ -207,7 +216,7 @@ window.camino = new Camino;
  * Do some set up before firing off the main listener
  */
 
-Camino.prototype.init = function init() {
+Camino.prototype.sort = function sort() {
 	if( _g.options.sort ) {
 		_g.routes.sort(function(a, b) {
 			// sort routes based on their modified length

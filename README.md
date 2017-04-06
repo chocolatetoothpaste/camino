@@ -9,6 +9,8 @@ One-stop routing for server- and client-side web applications
 
 **Important changes**
 
+With IE 11 usage at a very low percentage (depending on who's data you believe) support will start phasing out to take advantage of es6 features. If you require IE11 support, use version 0.15.x. 
+
 v0.15.0
 
 * In an effort to reduce boilerplate code in browsers, an event listener was added (to window object) to listen for clicks on "A" tags. If the href attribute matches a route defined in camino, the request is routed in the following manner:

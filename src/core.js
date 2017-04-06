@@ -24,7 +24,7 @@ function Camino() {
  * Do some set up before firing off the main listener
  */
 
-Camino.prototype.init = function init() {
+Camino.prototype.sort = function sort() {
 	if( _g.options.sort ) {
 		_g.routes.sort(function(a, b) {
 			// sort routes based on their modified length

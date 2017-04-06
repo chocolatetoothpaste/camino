@@ -18,8 +18,8 @@ function Camino() {
 
 // node.js specific stuff
 if( typeof module !== "undefined" && module.exports ) {
-	var util = require( "util" ),
-		events = require( "events" ),
+	var util = require( 'util' ),
+		events = require( 'events' ),
 		querystring = require( 'querystring' );
 	
 	// a couple default handlers for common content types
@@ -63,25 +63,25 @@ if( typeof module !== "undefined" && module.exports ) {
 		var dict = { sort: true, defaultType: '', defaultMethods: [] };
 	
 		// musical vars
-		if( typeof opt === "function" ) {
+		if( typeof opt === 'function' ) {
 			responder = opt;
 			opt = dict;
 		}
 	
-		else if( typeof opt === "undefined" ) {
+		else if( typeof opt === 'undefined' ) {
 			opt = dict;
 		}
 	
 		// merge user and default options
 		else {
 			for( var i in dict ) {
-				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+				opt[i] = ( typeof opt[i] === 'undefined' ? dict[i] : opt[i] );
 			}
 		}
 	
 		_g.options = opt;
 	
-		this.init();
+		this.sort();
 	
 		emitter.on( 'request', (function( request, res ) {
 			// emit "request" event
@@ -124,11 +124,11 @@ if( typeof module !== "undefined" && module.exports ) {
 	
 	Camino.prototype._exec = function _exec( req ) {
 		// grab the content type or set an empty string
-		var type = ( req.request.headers["content-type"]
-			? req.request.headers["content-type"].split(';')[0].toLowerCase()
+		var type = ( req.request.headers['content-type']
+			? req.request.headers['content-type'].split(';')[0].toLowerCase()
 			: _g.options.defaultType );
 	
-		if( typeof handler[type] === "function" ) {
+		if( typeof handler[type] === 'function' ) {
 			// maintaining context with call
 			handler[type].call( this, req );
 		}
@@ -179,7 +179,7 @@ if( typeof module !== "undefined" && module.exports ) {
 		req.request.once( 'end', function() {
 			req.request.removeListener( 'data', cat_chunks );
 	
-			req.data = ( req.raw.length > 0 && typeof cb === "function"
+			req.data = ( req.raw.length > 0 && typeof cb === 'function'
 				? cb.call( null, req.raw )
 				: {} );
 	
@@ -224,93 +224,102 @@ else {
 		var dict = { decode: true, history: true, hash: true, init: true, sort: true };
 	
 		// musical vars
-		if( typeof opt === "function" ) {
+		if( typeof opt === 'function' ) {
 			responder = opt;
 			opt = dict;
 		}
 	
-		else if( typeof opt === "undefined" ) {
+		else if( typeof opt === 'undefined' ) {
 			opt = dict;
 		}
 	
 		// merge user and default options
 		else {
 			for( var i in dict ) {
-				opt[i] = ( typeof opt[i] === "undefined" ? dict[i] : opt[i] );
+				opt[i] = ( typeof opt[i] === 'undefined' ? dict[i] : opt[i] );
 			}
 		}
 	
 		_g.options = opt;
 	
-		this.init();
+		this.sort();
 	
 		// add listener for "match" event and execute callback if matched
 		emitter.addEventListener( this.event.match, (function(event) {
 			this.emit( this.event.exec );
-	
 			event.detail.request.route.callback.call( null, event.detail.request );
 		}).bind(this));
 	
-		var prev_loc = '';
-		var prev_hash = '';
-	
 		// set event listener for history api if optioned
-		emitter.addEventListener( "popstate", (function(event) {
-			// the main request object to pass around
-			var req = {
-				request: emitter.location,
-				response: responder
-			};
-	
-			var current_loc = JSON.stringify({
-				path: req.request.pathname,
-				query: req.request.search
-			});
-	
-			// avoid routing the URL when hash changes happen consecutively
-			if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
-				|| req.request.hash === '' ) ) {
-					prev_loc = current_loc;
-					req.path = req.request.pathname;
-					req.url = req.request.pathname + req.request.search;
-					this._exec( req );
-			}
-	
-			// hash requests are always executed, not instead of 
-			if( opt.hash ) {
-				prev_hash = req.path = req.request.hash;
-	
-				if( req.request.hash === '' ) {
-					prev_hash = '';
-					this.emit( this.event.nohash, req );
-				}
-				else {
-					this._exec( req );
-				}
-			}
+		emitter.addEventListener( 'popstate', (function() {
+			this.resolve(event, responder, opt);
 		}).bind(this), false );
 	
 		// fire initial "popstate" event to route on page load
 		if( opt.init ) {
-			// intercept clicks and check if they match existing routes
-			window.addEventListener('click', function(event) {
-				if( event.target.tagName === 'A' ) {
-					var href = event.target.getAttribute('href');
-	
-					// remove query string, check base request
-					// this is probably not reliable and will need testing or
-					// possilby more robust parsing to extract pathname
-					if( _g.def.indexOf( href.split('?')[0] ) !== -1 ) {
-						window.history.pushState( null, null, href );
-						window.dispatchEvent( new CustomEvent("popstate") );	
-						event.preventDefault();
-					}
-				}
-			});
-	
-			// fire off initial event on page load to route initial request
-			window.dispatchEvent( new CustomEvent('popstate') );
+			this.init();
 		}
+	};
+	
+	
+	Camino.prototype.resolve = function resolve(event, responder, opt) {
+		var prev_loc = '',
+			prev_hash = '';
+	
+		// the main request object to pass around
+		var req = {
+			request: event.target.location,
+			response: responder
+		};
+	
+		var current_loc = JSON.stringify({
+			path: req.request.pathname,
+			query: req.request.search
+		});
+	
+		// avoid routing the URL when hash changes happen consecutively
+		if( opt.history && ( ! prev_loc && prev_hash !== req.request.hash
+			|| req.request.hash === '' ) ) {
+				prev_loc = current_loc;
+				req.path = req.request.pathname;
+				req.url = req.request.pathname + req.request.search;
+				this._exec( req );
+		}
+	
+		// hash requests are always executed, not instead of 
+		if( opt.hash ) {
+			prev_hash = req.path = req.request.hash;
+	
+			if( req.request.hash === '' ) {
+				prev_hash = '';
+				this.emit( this.event.nohash, req );
+			}
+			else {
+				this._exec( req );
+			}
+		}
+	};
+	
+	
+	Camino.prototype.init = function init() {
+		// intercept clicks and check if they match existing routes
+		window.addEventListener('click', function(event) {
+			if( event.target.tagName === 'A' ) {
+				var href = event.target.getAttribute('href');
+	
+				// remove query string, check base request
+				// this is probably not reliable and will need testing or
+				// possilby more robust parsing to extract pathname
+				if( _g.def.indexOf( href.split('?')[0] ) !== -1 ) {
+					window.history.pushState( null, null, href );
+					window.dispatchEvent( new CustomEvent('popstate') );	
+					event.preventDefault();
+				}
+			}
+		});
+	
+		// fire off initial event on page load to route initial request
+		window.dispatchEvent( new CustomEvent('popstate') );
 	};
 	
 	
@@ -348,7 +357,7 @@ else {
 	
 	Camino.prototype.emit = function emit( event, err, req ) {
 		// musical vars
-		if( typeof req === "undefined" ) {
+		if( typeof req === 'undefined' ) {
 			req = err;
 			err = null;
 		}
@@ -394,7 +403,7 @@ else {
  * Do some set up before firing off the main listener
  */
 
-Camino.prototype.init = function init() {
+Camino.prototype.sort = function sort() {
 	if( _g.options.sort ) {
 		_g.routes.sort(function(a, b) {
 			// sort routes based on their modified length
