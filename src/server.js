@@ -63,7 +63,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	this.sort();
 
-	emitter.on( 'request', (function( request, res ) {
+	emitter.on( 'request', ( request, res ) => {
 		// emit "request" event
 		this.emit( this.event.request );
 
@@ -87,12 +87,10 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 		// try to match the request to a route
 		this.match( req );
-
-	// bind callback to Camino's scope
-	}).bind( this ) );
+	});
 
 	// listen for "match" event to fire and execute callback
-	this.on( this.event.match, function( req ) {
+	this.on( this.event.match, ( req ) => {
 		this._exec.call( this, req );
 	});
 };
@@ -142,8 +140,6 @@ Camino.prototype.handle = function handle( type, cb ) {
  */
 
 Camino.prototype._data = function _data( req, cb ) {
-	var self = this;
-
 	// create empty string for appending request body data
 	req.raw = '';
 
@@ -156,14 +152,14 @@ Camino.prototype._data = function _data( req, cb ) {
 	req.request.on( 'data', cat_chunks );
 
 	// parse request data and execute route callback
-	req.request.once( 'end', function() {
+	req.request.once( 'end', () => {
 		req.request.removeListener( 'data', cat_chunks );
 
 		req.data = ( req.raw.length > 0 && typeof cb === 'function'
 			? cb.call( null, req.raw )
 			: {} );
 
-		self.emit( self.event.exec );
+		this.emit( this.event.exec );
 
 		// execute the callback, pass through request and responder handlers
 		req.route.callback.call( null, req );

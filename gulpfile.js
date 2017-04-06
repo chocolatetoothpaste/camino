@@ -2,6 +2,7 @@ var gulp = require('gulp');
 var replace = require('gulp-replace');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
+var babel  = require('gulp-babel');
 var fs = require('fs');
 
 
@@ -38,6 +39,7 @@ gulp.task('js', function() {
 		.pipe(replace('//=@@camino-version@@', `'${pkg.version}';`))
 		.pipe(concat('camino-browser.js'))
 		.pipe(gulp.dest('./dist'))
+		.pipe(babel({presets: ['es2015']}))
 		.pipe(uglify().on("error", handleError))
 		.pipe(concat('camino-browser.min.js'))
 		.pipe(gulp.dest('./dist'));

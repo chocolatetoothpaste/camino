@@ -43,15 +43,15 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 	this.sort();
 
 	// add listener for "match" event and execute callback if matched
-	emitter.addEventListener( this.event.match, (function(event) {
+	emitter.addEventListener( this.event.match, (event) => {
 		this.emit( this.event.exec );
 		event.detail.request.route.callback.call( null, event.detail.request );
-	}).bind(this));
+	});
 
 	// set event listener for history api if optioned
-	emitter.addEventListener( 'popstate', (function() {
+	emitter.addEventListener( 'popstate', () => {
 		this.resolve(event, responder, opt);
-	}).bind(this), false );
+	}, false );
 
 	// fire initial "popstate" event to route on page load
 	if( opt.init ) {
@@ -61,11 +61,11 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 
 Camino.prototype.resolve = function resolve(event, responder, opt) {
+	// the main request object to pass around
 	var req = {
 		request: event.target.location,
 		response: responder
 	};
-
 
 	// avoid routing the URL when hash changes happen consecutively
 	if( opt.history && ( ! _g.location && _g.hash !== req.request.hash
@@ -97,7 +97,7 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 
 Camino.prototype.init = function init() {
 	// intercept clicks and check if they match existing routes
-	window.addEventListener('click', function(event) {
+	window.addEventListener('click', (event) => {
 		if( event.target.tagName === 'A' ) {
 			var href = event.target.getAttribute('href');
 
@@ -131,7 +131,7 @@ Camino.prototype._exec = function _exec( req ) {
 	req.query = {};
 
 	// split query string into pairs
-	req.qs.split( "&" ).forEach(function( val ) {
+	req.qs.split( "&" ).forEach( ( val ) => {
 		var v = val.split( '=' );
 
 		if( _g.options.decode ) {

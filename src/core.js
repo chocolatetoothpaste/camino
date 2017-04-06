@@ -30,12 +30,11 @@ function Camino() {
 
 Camino.prototype.sort = function sort() {
 	if( _g.options.sort ) {
-		_g.routes.sort(function(a, b) {
-			// sort routes based on their modified length
-			// param names are scrubbed so the playing field is level
-			// put routes with @/% at the bottom so explicit routes match first
-			return b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort );
-		});
+
+		// sort routes based on their modified length
+		// param names are scrubbed so the playing field is level
+		// put routes with @/% at the bottom so explicit routes match first
+		_g.routes.sort( (a, b) => b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort ) );
 	}
 };
 
@@ -100,7 +99,7 @@ Camino.prototype.match = function match( req ) {
 	req.params = {};
 
 	// make key/value pair from matched route params
-	match.forEach( function( v, k ) {
+	match.forEach( ( v, k ) => {
 		if( typeof match[k] !== 'undefined' ) {
 			req.params[route.params[k]] = v;
 		}
@@ -130,7 +129,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	var params = ( r.match( /[@|%]\w+/g ) || [] )
 
 		// trim @/% from param name
-		.map( function( v ) { return v.substr( 1 ) } );
+		.map( ( v ) => v.substr( 1 ) );
 
 	// replace param names with regexes
 	var match = r.replace( /@(\w+)/g, "([\\w\\-\\.]+)" )

@@ -17,7 +17,7 @@ var _g = {
 
 // main object constructor
 function Camino() {
-	this.version = '0.15.2';
+	this.version = '1.0.0';
 }
 
 var util = require( 'util' ),
@@ -85,7 +85,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	this.sort();
 
-	emitter.on( 'request', (function( request, res ) {
+	emitter.on( 'request', ( request, res ) => {
 		// emit "request" event
 		this.emit( this.event.request );
 
@@ -109,12 +109,10 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 		// try to match the request to a route
 		this.match( req );
-
-	// bind callback to Camino's scope
-	}).bind( this ) );
+	});
 
 	// listen for "match" event to fire and execute callback
-	this.on( this.event.match, function( req ) {
+	this.on( this.event.match, ( req ) => {
 		this._exec.call( this, req );
 	});
 };
@@ -164,8 +162,6 @@ Camino.prototype.handle = function handle( type, cb ) {
  */
 
 Camino.prototype._data = function _data( req, cb ) {
-	var self = this;
-
 	// create empty string for appending request body data
 	req.raw = '';
 
@@ -178,14 +174,14 @@ Camino.prototype._data = function _data( req, cb ) {
 	req.request.on( 'data', cat_chunks );
 
 	// parse request data and execute route callback
-	req.request.once( 'end', function() {
+	req.request.once( 'end', () => {
 		req.request.removeListener( 'data', cat_chunks );
 
 		req.data = ( req.raw.length > 0 && typeof cb === 'function'
 			? cb.call( null, req.raw )
 			: {} );
 
-		self.emit( self.event.exec );
+		this.emit( this.event.exec );
 
 		// execute the callback, pass through request and responder handlers
 		req.route.callback.call( null, req );
@@ -205,12 +201,11 @@ module.exports = new Camino;
 
 Camino.prototype.sort = function sort() {
 	if( _g.options.sort ) {
-		_g.routes.sort(function(a, b) {
-			// sort routes based on their modified length
-			// param names are scrubbed so the playing field is level
-			// put routes with @/% at the bottom so explicit routes match first
-			return b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort );
-		});
+
+		// sort routes based on their modified length
+		// param names are scrubbed so the playing field is level
+		// put routes with @/% at the bottom so explicit routes match first
+		_g.routes.sort( (a, b) => b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort ) );
 	}
 };
 
@@ -275,7 +270,7 @@ Camino.prototype.match = function match( req ) {
 	req.params = {};
 
 	// make key/value pair from matched route params
-	match.forEach( function( v, k ) {
+	match.forEach( ( v, k ) => {
 		if( typeof match[k] !== 'undefined' ) {
 			req.params[route.params[k]] = v;
 		}
@@ -305,7 +300,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	var params = ( r.match( /[@|%]\w+/g ) || [] )
 
 		// trim @/% from param name
-		.map( function( v ) { return v.substr( 1 ) } );
+		.map( ( v ) => v.substr( 1 ) );
 
 	// replace param names with regexes
 	var match = r.replace( /@(\w+)/g, "([\\w\\-\\.]+)" )
