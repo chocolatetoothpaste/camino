@@ -4,6 +4,13 @@ var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var fs = require('fs');
 
+
+function handleError(err) {
+	console.log(err.toString());
+	this.emit('end');
+}
+
+
 gulp.task('js', function() {
 	var rep = '//=@@include-camino@@';
 
@@ -31,7 +38,7 @@ gulp.task('js', function() {
 		.pipe(replace('//=@@camino-version@@', `'${pkg.version}';`))
 		.pipe(concat('camino-browser.js'))
 		.pipe(gulp.dest('./dist'))
-		.pipe(uglify())
+		.pipe(uglify().on("error", handleError))
 		.pipe(concat('camino-browser.min.js'))
 		.pipe(gulp.dest('./dist'));
 
