@@ -74,6 +74,7 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 				this._exec( req );
 		}
 
+		// hash requests are always executed, not instead of 
 		if( opt.hash ) {
 			prev_hash = req.path = req.request.hash;
 
@@ -89,6 +90,23 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	// fire initial "popstate" event to route on page load
 	if( opt.init ) {
+		// intercept clicks and check if they match existing routes
+		window.addEventListener('click', function(event) {
+			if( event.target.tagName === 'A' ) {
+				var href = event.target.getAttribute('href');
+
+				// remove query string, check base request
+				// this is probably not reliable and will need testing or
+				// possilby more robust parsing to extract pathname
+				if( _g.def.indexOf( href.split('?')[0] ) !== -1 ) {
+					window.history.pushState( null, null, href );
+					window.dispatchEvent( new CustomEvent("popstate") );	
+					event.preventDefault();
+				}
+			}
+		});
+
+		// fire off initial event on page load to route initial request
 		window.dispatchEvent( new CustomEvent('popstate') );
 	}
 };

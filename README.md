@@ -3,9 +3,21 @@ One-stop routing for server- and client-side web applications
 
 [![NPM](https://nodei.co/npm/camino.png?downloads=true)](https://nodei.co/npm/camino/)
 
+[Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
+
 **Bugs, suggestions, and pull requests welcome! Please submit to GitHub repository**
 
 **Important changes**
+
+v0.15.0
+
+* In an effort to reduce boilerplate code in browsers, an event listener was added (to window object) to listen for clicks on "A" tags. If the href attribute matches a route defined in camino, the request is routed in the following manner:
+
+    window.history.pushState( null, null, href );
+    window.dispatchEvent( new CustomEvent("popstate") );    
+    event.preventDefault();
+
+This may not be the best way to handle it, but it works. Comments/pull requests welcome.
 
 v0.14.0+
 
@@ -20,8 +32,6 @@ v0.14.0+
 * If you see a bug in the documentation, please report it!
 
 Camino is a request middle layer. It connects requests with callback functions and does not enforce any particular application paradigm. MVC, MVVM, or just write some closures to run some code, Camino doesn't care!
-
-[Support Development](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4M7XDUZES7DZU)
 
 First things first, some juicy examples.
 

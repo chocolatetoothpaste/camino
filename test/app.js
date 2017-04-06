@@ -30,6 +30,15 @@ camino.on('error', function(err, req) {
 });
 
 
+camino.route('/', function(req) {
+	var res = req.response;
+	delete req.request;
+	delete req.response;
+	res.writeHead(200, { 'Content-Type': 'application/json'});
+	res.write(JSON.stringify({ page: 'index', data: req }));
+	res.end();
+});
+
 camino.route('/api/user/%user_id', function(req) {
 	var res = req.response;
 	delete req.request;
