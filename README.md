@@ -19,7 +19,7 @@ window.dispatchEvent( new CustomEvent("popstate") );
 event.preventDefault();
 ```
 
-This may not be the best way to handle it, but it works. Comments/pull requests welcome.
+This may not be the best way to handle it, but it works. Comments/pull requests welcome. This behavior can be turned off by setting the `init` option to false (see docs for setting options). This will also turn off initial firing of popstate event for routing on first page load.
 
 v0.14.0+
 
@@ -92,7 +92,7 @@ First things first, some juicy examples.
 
     camino.listen(window);
     OR
-    camino.listen(window, jQueryUIMessageBoxObjectWrapper);
+    camino.listen(window, UIMessageBoxOfSomeKind);
 
     // using the Camino.event object
     window.addEventListener( camino.event.request, function() {
@@ -118,8 +118,6 @@ First things first, some juicy examples.
     <a href="/#!/message/23" data-method="read">View Message</a>
     <a href="/#!/message/23" data-method="delete">Delete Message</a>
 
-Using the History API requires a bit more boilerplate code, but works quite nicely
-
 **Browser (History API, condensed example)**
 
     // include script and define routes
@@ -130,35 +128,9 @@ Using the History API requires a bit more boilerplate code, but works quite nice
     // History API is enabled by default
     camino.listen( window );
 
-    /**
-     * These two event firings are no longer required if the "init" option is
-     * set to true (default). They are left here in the examples so you can see
-     * what happens under the hood or so you can override them if desired.
-
-    // fire off route on initial page load
-    window.dispatchEvent( new Event('popstate') );
-
-    // hashes and history can live together!
-    if( window.location.hash !== '' )
-        window.dispatchEvent( new Event('hashchange') );
-
-     */
-
     // using the Camino.event object
     window.addEventListener( camino.event.request, function() {
         // replace page body with a spinner...?
-    });
-
-    // write your own vanilla JS, but here's the super-simple jQuery version
-    $( function() {
-        $('body').on( {
-            click: function(event) {
-                window.history.pushState( null, null, this.getAttribute('href') );
-                window.dispatchEvent( new Event("popstate") );
-
-                event.preventDefault();
-            }
-        }, "a:not([href^=\\#])" );
     });
 
 Then put this in .htaccess
