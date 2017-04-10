@@ -101,14 +101,6 @@ First things first, some juicy examples.
         // replace page body with a spinner...?
     });
 
-    /**
-     * This is no longer required, see History API example below for explanation
-
-    // fire a hashchange event for initial page loads
-    window.dispatchEvent( new Event("hashchange") );
-
-     */
-
     // browser methods, maybe...?
     // psuedo jQuery code, really terrible example
     $('[data-method]').on( "click", function() {
@@ -289,19 +281,7 @@ For convenience, Camino.event container object exists with references to Camino'
 
 **error** --- fired when an error is encountered
 
-## Upgrading
-
-v0.12.0+
-
-* User callbacks are only supplied one object instead of two.  The request object has been restructured internally. Some properties have new names.  The new object contains the native request/response (along with convenience properties), rather than pollute those native objects. See the API section for updated documentation.
-
-* Server: Generic handling of file uploads has been removed, and dependency on busboy has also been removed.  The code formerly used in the library has been moved to the polyfills section.
-
-* A default listener for error events is removed. Camino still emits an event, but no longer tries to handle it for you.
-
-* The History API is now enabled by default.  It can be disabled by passsing {history: false} to camino.listen() (see docs)
-
-## Polyfills
+## File Uploads
 
 **(Bad) Exmaple of uploading files from a form**
 
@@ -351,97 +331,3 @@ v0.12.0+
         // cleansing power of the pipe!
         req.request.pipe( busboy );
     });
-
-
-**CustomEvent**
-
-    // thank you @https://github.com/jonathantneal/EventListener
-    // polyfill for using CustomEvent constructor in IE 9/10
-    ! window.CustomEvent && (function() {
-        window.CustomEvent = function CustomEvent( type, dict ) {
-            dict = dict || {
-                bubbles: false,
-                cancelable: false,
-                detail: undefined
-            };
-
-            try {
-                var ev = document.createEvent('CustomEvent');
-                ev.initCustomEvent(
-                    type,
-                    dict.bubbles,
-                    dict.cancelable,
-                    dict.detail
-                );
-            } catch( error ) {
-                // for browsers which don't support CustomEvent at all,
-                // we use a regular event instead
-                var ev = document.createEvent('Event');
-                ev.initEvent( type, dict.bubbles, dict.cancelable );
-                ev.detail = dict.detail;
-            }
-
-            return ev;
-        };
-    })();
-
-**Array.forEach**
-
-    // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
-    if (!Array.prototype.forEach) {
-
-        Array.prototype.forEach = function(callback, thisArg) {
-
-            var T, k;
-
-            if (this == null) {
-                throw new TypeError(' this is null or not defined');
-            }
-
-            // 1. Let O be the result of calling ToObject passing the |this| value as the argument.
-            var O = Object(this);
-
-            // 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".
-            // 3. Let len be ToUint32(lenValue).
-            var len = O.length >>> 0;
-
-            // 4. If IsCallable(callback) is false, throw a TypeError exception.
-            // See: http://es5.github.com/#x9.11
-            if (typeof callback !== "function") {
-                throw new TypeError(callback + ' is not a function');
-            }
-
-            // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
-            if (arguments.length > 1) {
-                T = thisArg;
-            }
-
-            // 6. Let k be 0
-            k = 0;
-
-            // 7. Repeat, while k < len
-            while (k < len) {
-
-                var kValue;
-
-                // a. Let Pk be ToString(k).
-                //   This is implicit for LHS operands of the in operator
-                // b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.
-                //   This step can be combined with c
-                // c. If kPresent is true, then
-                if (k in O) {
-
-                    // i. Let kValue be the result of calling the Get internal method of O with argument Pk.
-                    kValue = O[k];
-
-                    // ii. Call the Call internal method of callback with T as the this value and
-                    // argument list containing kValue, k, and O.
-                    callback.call(T, kValue, k, O);
-                }
-
-                // d. Increase k by 1.
-                k++;
-            }
-            // 8. return undefined
-        };
-    }

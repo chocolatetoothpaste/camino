@@ -17,7 +17,7 @@ var _g = {
 
 // main object constructor
 function Camino() {
-	this.version = '1.0.0';
+	this.version = '0.15.2';
 }
 
 /**
@@ -62,7 +62,9 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	_g.options = opt;
 
-	this.sort();
+	if( opt.sort ) {
+		this.sort();
+	}
 
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (event) => {
@@ -89,8 +91,9 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 		response: responder
 	};
 
-	// avoid routing the URL when hash changes happen consecutively
-	if( opt.history && ( ! _g.location && _g.hash !== req.request.hash
+	// route request if location has changed, but not if hash only has changed
+	if( opt.history
+		&& ( ! _g.location && _g.hash !== req.request.hash
 		|| req.request.hash === '' ) ) {
 			_g.location = JSON.stringify({
 				path: req.request.pathname,
@@ -119,7 +122,7 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 
 Camino.prototype.init = function init() {
 	// intercept clicks and check if they match existing routes
-	window.addEventListener('click', (event) => {
+	window.addEventListener('click', ( event ) => {
 		if( event.target.tagName === 'A' ) {
 			var href = event.target.getAttribute('href');
 
@@ -153,7 +156,7 @@ Camino.prototype._exec = function _exec( req ) {
 	req.query = {};
 
 	// split query string into pairs
-	req.qs.split( "&" ).forEach( ( val ) => {
+	req.qs.split( '&' ).forEach( ( val ) => {
 		var v = val.split( '=' );
 
 		if( _g.options.decode ) {
@@ -213,17 +216,14 @@ window.camino = new Camino;
 
 
 /**
- * Do some set up before firing off the main listener
+ * Sort routes to match most complete path first
  */
 
 Camino.prototype.sort = function sort() {
-	if( _g.options.sort ) {
-
-		// sort routes based on their modified length
-		// param names are scrubbed so the playing field is level
-		// put routes with @/% at the bottom so explicit routes match first
-		_g.routes.sort( (a, b) => b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort ) );
-	}
+	// sort routes based on their modified length
+	// param names are scrubbed so the playing field is level
+	// put routes with @/% at the bottom so explicit routes match first
+	_g.routes.sort( (a, b) => b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort ) );
 };
 
 
@@ -268,7 +268,7 @@ Camino.prototype.match = function match( req ) {
 		this.emit( this.event.error, err, req );
 
 		// stop the browser
-		return;
+		return false;
 	}
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
@@ -278,7 +278,7 @@ Camino.prototype.match = function match( req ) {
 		this.emit( this.event.error, err, req );
 
 		// stop the browser
-		return;
+		return false;
 	}
 
 	// use the route responder if it's set, otherwise just the native/default
@@ -327,7 +327,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		.replace( /\/%(\w+)/g, "(?:/?|/([\\w\\-\\.]+))" );
 
 	// wrap the route with regexp string delimiters
-	match = "^" + match + "$";
+	match = `^${match}$`;
 
 	// throw an error if trying to redefine a route
 	if( _g.def.indexOf(r) !== -1 )
@@ -364,11 +364,12 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	if( typeof _g.options.defaultMethods !== 'undefined' )
 		route.methods = route.methods.concat(_g.options.defaultMethods)
 
+	var idx = _g.def.indexOf(route.sort);
 	// throw an error if trying to redefine a route
-	if( _g.def.indexOf(route.sort) !== -1 )
-		throw new Error( "Route is already defined: "
-			+ _g.routes[_g.def.indexOf(route.sort)].route
-			+ ',  Your route: ' + r );
+	if( idx !== -1 ) {
+		let def = _g.routes[idx].route;
+		throw new Error( `Route is already defined: ${def}, new route: ${r}` );
+	}
 
 	_g.routes.push(route);
 	_g.def.push(route.sort);

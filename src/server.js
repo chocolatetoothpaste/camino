@@ -61,7 +61,9 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	_g.options = opt;
 
-	this.sort();
+	if( opt.sort ) {
+		this.sort();
+	}
 
 	emitter.on( 'request', ( request, res ) => {
 		// emit "request" event
@@ -107,7 +109,6 @@ Camino.prototype._exec = function _exec( req ) {
 		: _g.options.defaultType );
 
 	if( typeof handler[type] === 'function' ) {
-		// maintaining context with call
 		handler[type].call( this, req );
 	}
 

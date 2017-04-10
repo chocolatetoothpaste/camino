@@ -40,7 +40,9 @@ Camino.prototype.listen = function listen( emitter, opt, responder ) {
 
 	_g.options = opt;
 
-	this.sort();
+	if( opt.sort ) {
+		this.sort();
+	}
 
 	// add listener for "match" event and execute callback if matched
 	emitter.addEventListener( this.event.match, (event) => {
@@ -67,8 +69,9 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 		response: responder
 	};
 
-	// avoid routing the URL when hash changes happen consecutively
-	if( opt.history && ( ! _g.location && _g.hash !== req.request.hash
+	// route request if location has changed, but not if hash only has changed
+	if( opt.history
+		&& ( ! _g.location && _g.hash !== req.request.hash
 		|| req.request.hash === '' ) ) {
 			_g.location = JSON.stringify({
 				path: req.request.pathname,
@@ -97,7 +100,7 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 
 Camino.prototype.init = function init() {
 	// intercept clicks and check if they match existing routes
-	window.addEventListener('click', (event) => {
+	window.addEventListener('click', ( event ) => {
 		if( event.target.tagName === 'A' ) {
 			var href = event.target.getAttribute('href');
 
@@ -131,7 +134,7 @@ Camino.prototype._exec = function _exec( req ) {
 	req.query = {};
 
 	// split query string into pairs
-	req.qs.split( "&" ).forEach( ( val ) => {
+	req.qs.split( '&' ).forEach( ( val ) => {
 		var v = val.split( '=' );
 
 		if( _g.options.decode ) {

@@ -25,17 +25,14 @@ function Camino() {
 
 
 /**
- * Do some set up before firing off the main listener
+ * Sort routes to match most complete path first
  */
 
 Camino.prototype.sort = function sort() {
-	if( _g.options.sort ) {
-
-		// sort routes based on their modified length
-		// param names are scrubbed so the playing field is level
-		// put routes with @/% at the bottom so explicit routes match first
-		_g.routes.sort( (a, b) => b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort ) );
-	}
+	// sort routes based on their modified length
+	// param names are scrubbed so the playing field is level
+	// put routes with @/% at the bottom so explicit routes match first
+	_g.routes.sort( (a, b) => b.sort.length - a.sort.length || ! /[@|%]/g.test( a.sort ) );
 };
 
 
@@ -80,7 +77,7 @@ Camino.prototype.match = function match( req ) {
 		this.emit( this.event.error, err, req );
 
 		// stop the browser
-		return;
+		return false;
 	}
 
 	// if method is not allowed for route, emit 405 (method not allowed) error
@@ -90,7 +87,7 @@ Camino.prototype.match = function match( req ) {
 		this.emit( this.event.error, err, req );
 
 		// stop the browser
-		return;
+		return false;
 	}
 
 	// use the route responder if it's set, otherwise just the native/default
@@ -139,7 +136,7 @@ Camino.prototype.route = function route( r, opt, cb ) {
 		.replace( /\/%(\w+)/g, "(?:/?|/([\\w\\-\\.]+))" );
 
 	// wrap the route with regexp string delimiters
-	match = "^" + match + "$";
+	match = `^${match}$`;
 
 	// throw an error if trying to redefine a route
 	if( _g.def.indexOf(r) !== -1 )
@@ -176,11 +173,12 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	if( typeof _g.options.defaultMethods !== 'undefined' )
 		route.methods = route.methods.concat(_g.options.defaultMethods)
 
+	var idx = _g.def.indexOf(route.sort);
 	// throw an error if trying to redefine a route
-	if( _g.def.indexOf(route.sort) !== -1 )
-		throw new Error( "Route is already defined: "
-			+ _g.routes[_g.def.indexOf(route.sort)].route
-			+ ',  Your route: ' + r );
+	if( idx !== -1 ) {
+		let def = _g.routes[idx].route;
+		throw new Error( `Route is already defined: ${def}, new route: ${r}` );
+	}
 
 	_g.routes.push(route);
 	_g.def.push(route.sort);
