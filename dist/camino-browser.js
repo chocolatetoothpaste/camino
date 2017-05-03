@@ -17,7 +17,7 @@ var _g = {
 
 // main object constructor
 function Camino() {
-	this.version = '1.0.0';
+	this.version = '1.0.1';
 }
 
 /**
@@ -125,9 +125,9 @@ Camino.prototype.init = function init() {
 	window.addEventListener('click', ( event ) => {
 		if( event.target.tagName === 'A' && event.target.hasAttribute('href') ) {
 			// remove query string, it's not part of the routes
-			var href = event.target.getAttribute('href').split('?')[0];
+			var href = event.target.getAttribute('href');
 			
-			if( routex.test(href) ) {
+			if( routex.test(href.split('?')[0]) ) {
 				window.history.pushState( null, null, href );
 				window.dispatchEvent( new CustomEvent('popstate') );	
 				event.preventDefault();

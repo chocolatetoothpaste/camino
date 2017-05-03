@@ -17,7 +17,7 @@ var _g = {
 
 // main object constructor
 function Camino() {
-	this.version = '1.0.0';
+	this.version = '1.0.1';
 }
 
 var util = require( 'util' ),
