@@ -139,8 +139,8 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	match = `^${match}$`;
 
 	// throw an error if trying to redefine a route
-	if( _g.def.indexOf(r) !== -1 )
-		throw new Error( "Route is already defined: " + r );
+	if( _g.def.indexOf(match) !== -1 )
+		throw new Error( `Route is already defined: ${r}` );
 
 	// define the route object
 	var route = {
@@ -173,15 +173,15 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	if( typeof _g.options.defaultMethods !== 'undefined' )
 		route.methods = route.methods.concat(_g.options.defaultMethods)
 
-	var idx = _g.def.indexOf(route.sort);
-	// throw an error if trying to redefine a route
-	if( idx !== -1 ) {
-		let def = _g.routes[idx].route;
-		throw new Error( `Route is already defined: ${def}, new route: ${r}` );
-	}
+	// var idx = _g.def.indexOf(match);
+	// // throw an error if trying to redefine a route
+	// if( idx !== -1 ) {
+	// 	let def = _g.routes[idx].route;
+	// 	throw new Error( `Route is already defined: ${def}, new route: ${r}` );
+	// }
 
 	_g.routes.push(route);
-	_g.def.push(route.sort);
+	_g.def.push(match);
 
 	this.emit( this.event.route, route );
 };

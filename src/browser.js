@@ -70,17 +70,15 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 	};
 
 	// route request if location has changed, but not if hash only has changed
-	if( opt.history
-		&& ( ! _g.location && _g.hash !== req.request.hash
-		|| req.request.hash === '' ) ) {
-			_g.location = JSON.stringify({
-				path: req.request.pathname,
-				query: req.request.search
-			});
+	if( opt.history && ( ! _g.location && _g.hash !== req.request.hash || req.request.hash === '' ) ) {
+		_g.location = JSON.stringify({
+			path: req.request.pathname,
+			query: req.request.search
+		});
 
-			req.path = req.request.pathname;
-			req.url = req.request.pathname + req.request.search;
-			this._exec( req );
+		req.path = req.request.pathname;
+		req.url = req.request.pathname + req.request.search;
+		this._exec( req );
 	}
 
 	// hash requests are always executed, not instead of 
@@ -100,14 +98,14 @@ Camino.prototype.resolve = function resolve(event, responder, opt) {
 
 Camino.prototype.init = function init() {
 	// intercept clicks and check if they match existing routes
-	window.addEventListener('click', ( event ) => {
-		if( event.target.tagName === 'A' ) {
-			var href = event.target.getAttribute('href');
+	var routex = new RegExp(_g.def.join('|'));
 
-			// remove query string, check base request
-			// this is probably not reliable and will need testing or
-			// possilby more robust parsing to extract pathname
-			if( href !== null ) {
+	window.addEventListener('click', ( event ) => {
+		if( event.target.tagName === 'A' && event.target.hasAttribute('href') ) {
+			// remove query string, it's not part of the routes
+			var href = event.target.getAttribute('href').split('?')[0];
+			
+			if( routex.test(href) ) {
 				window.history.pushState( null, null, href );
 				window.dispatchEvent( new CustomEvent('popstate') );	
 				event.preventDefault();

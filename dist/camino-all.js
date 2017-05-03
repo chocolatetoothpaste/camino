@@ -273,17 +273,15 @@ else {
 		};
 	
 		// route request if location has changed, but not if hash only has changed
-		if( opt.history
-			&& ( ! _g.location && _g.hash !== req.request.hash
-			|| req.request.hash === '' ) ) {
-				_g.location = JSON.stringify({
-					path: req.request.pathname,
-					query: req.request.search
-				});
+		if( opt.history && ( ! _g.location && _g.hash !== req.request.hash || req.request.hash === '' ) ) {
+			_g.location = JSON.stringify({
+				path: req.request.pathname,
+				query: req.request.search
+			});
 	
-				req.path = req.request.pathname;
-				req.url = req.request.pathname + req.request.search;
-				this._exec( req );
+			req.path = req.request.pathname;
+			req.url = req.request.pathname + req.request.search;
+			this._exec( req );
 		}
 	
 		// hash requests are always executed, not instead of 
@@ -303,14 +301,14 @@ else {
 	
 	Camino.prototype.init = function init() {
 		// intercept clicks and check if they match existing routes
-		window.addEventListener('click', ( event ) => {
-			if( event.target.tagName === 'A' ) {
-				var href = event.target.getAttribute('href');
+		var routex = new RegExp(_g.def.join('|'));
 	
-				// remove query string, check base request
-				// this is probably not reliable and will need testing or
-				// possilby more robust parsing to extract pathname
-				if( href !== null ) {
+		window.addEventListener('click', ( event ) => {
+			if( event.target.tagName === 'A' && event.target.hasAttribute('href') ) {
+				// remove query string, it's not part of the routes
+				var href = event.target.getAttribute('href').split('?')[0];
+				
+				if( routex.test(href) ) {
 					window.history.pushState( null, null, href );
 					window.dispatchEvent( new CustomEvent('popstate') );	
 					event.preventDefault();
@@ -514,8 +512,8 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	match = `^${match}$`;
 
 	// throw an error if trying to redefine a route
-	if( _g.def.indexOf(r) !== -1 )
-		throw new Error( "Route is already defined: " + r );
+	if( _g.def.indexOf(match) !== -1 )
+		throw new Error( `Route is already defined: ${r}` );
 
 	// define the route object
 	var route = {
@@ -548,15 +546,15 @@ Camino.prototype.route = function route( r, opt, cb ) {
 	if( typeof _g.options.defaultMethods !== 'undefined' )
 		route.methods = route.methods.concat(_g.options.defaultMethods)
 
-	var idx = _g.def.indexOf(route.sort);
-	// throw an error if trying to redefine a route
-	if( idx !== -1 ) {
-		let def = _g.routes[idx].route;
-		throw new Error( `Route is already defined: ${def}, new route: ${r}` );
-	}
+	// var idx = _g.def.indexOf(match);
+	// // throw an error if trying to redefine a route
+	// if( idx !== -1 ) {
+	// 	let def = _g.routes[idx].route;
+	// 	throw new Error( `Route is already defined: ${def}, new route: ${r}` );
+	// }
 
 	_g.routes.push(route);
-	_g.def.push(route.sort);
+	_g.def.push(match);
 
 	this.emit( this.event.route, route );
 };
